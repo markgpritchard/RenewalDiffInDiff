@@ -96,27 +96,48 @@ sim1fit0plot = plotrenewalequationsamples(
 function keyvalues(fitteddf, fittedvaluesset)
     deltamean = exp(mean(fitteddf.logdelta))
     deltap05_95 = exp.(quantile(fitteddf.logdelta, [ 0.05, 0.95 ]))
-    totalcases = Matrix{Int}(undef, length(fittedvaluesset.y_matrix_poisson_vec), size(fittedvaluesset.y_matrix_poisson_vec[1], 2))
-    peakcases = Matrix{Int}(undef, length(fittedvaluesset.y_matrix_poisson_vec), size(fittedvaluesset.y_matrix_poisson_vec[1], 2))
-    peakcasesdate = Matrix{Int}(undef, length(fittedvaluesset.y_matrix_poisson_vec), size(fittedvaluesset.y_matrix_poisson_vec[1], 2))
+    totalcases = Matrix{Int}(
+        undef, 
+        length(fittedvaluesset.y_matrix_poisson_vec), 
+        size(fittedvaluesset.y_matrix_poisson_vec[1], 2)
+    )
+    peakcases = Matrix{Int}(
+        undef, 
+        length(fittedvaluesset.y_matrix_poisson_vec),
+        size(fittedvaluesset.y_matrix_poisson_vec[1], 2)
+    )
+    peakcasesdate = Matrix{Int}(
+        undef, 
+        length(fittedvaluesset.y_matrix_poisson_vec), 
+        size(fittedvaluesset.y_matrix_poisson_vec[1], 2)
+    )
     for i ∈ eachindex(fittedvaluesset.y_matrix_poisson_vec)
         totalcases[i, :] = [
-            sum(fittedvaluesset.y_matrix_poisson_vec[i][:, j]) - sum(fittedvaluesset.y_matrix_poisson_vec_counterfactual[i][:, j])
+            sum(fittedvaluesset.y_matrix_poisson_vec[i][:, j]) - 
+                sum(fittedvaluesset.y_matrix_poisson_vec_counterfactual[i][:, j])
             for j ∈ axes(fittedvaluesset.y_matrix_poisson_vec[i], 2)
         ]
         for j ∈  axes(fittedvaluesset.y_matrix_poisson_vec[i], 2)
             x, ind = findmax(fittedvaluesset.y_matrix_poisson_vec[i][:, j])
-            x_cf, ind_cf = findmax(fittedvaluesset.y_matrix_poisson_vec_counterfactual[i][:, j])
+            x_cf, ind_cf = findmax(
+                fittedvaluesset.y_matrix_poisson_vec_counterfactual[i][:, j]
+            )
             peakcases[i, j] = x - x_cf 
             peakcasesdate[i, j] = ind - ind_cf
         end
     end
     totalcasesmeaneffect = [ mean(totalcases[:, i]) for i ∈ axes(totalcases, 2) ]
-    totalcasesp05_90 = [ quantile(totalcases[:, i], [ 0.05, 0.95 ]) for i ∈ axes(totalcases, 2) ]
+    totalcasesp05_90 = [ 
+        quantile(totalcases[:, i], [ 0.05, 0.95 ]) 
+        for i ∈ axes(totalcases, 2) 
+    ]
     peakcasesmeaneffect = [ mean(peakcases[:, i]) for i ∈ axes(peakcases, 2) ]
     peakcasesp05_90 = [ quantile(peakcases[:, i], [ 0.05, 0.95 ]) for i ∈ axes(peakcases, 2) ]
     peakcasesdatemeaneffect = [ mean(peakcasesdate[:, i]) for i ∈ axes(peakcasesdate, 2) ]
-    peakcasesdatep05_90 = [ quantile(peakcasesdate[:, i], [ 0.05, 0.95 ]) for i ∈ axes(peakcasesdate, 2) ]
+    peakcasesdatep05_90 = [ 
+        quantile(peakcasesdate[:, i], [ 0.05, 0.95 ]) 
+        for i ∈ axes(peakcasesdate, 2) 
+    ]
     return (
         deltamean=deltamean,
         deltap05_95=deltap05_95,
@@ -451,4 +472,6 @@ datafit10 = samplerenewalequation_2sets(
         MC1E_1, MC1E_2, MC1E_3, MC6E_1, MC6E_2, MC7E_1, MC7E_2, MH3E_1, MH8E_1
     ],
 )
-datafit10plot = plotrenewalequationsamples(covidcases[1:191, :], W_coviddata191[1:191, :], POPULATION2020, datafit10)
+datafit10plot = plotrenewalequationsamples(
+    covidcases[1:191, :], W_coviddata191[1:191, :], POPULATION2020, datafit10
+)

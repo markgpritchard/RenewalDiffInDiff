@@ -51,7 +51,10 @@ end
 function plotrenewalequationsamples(dataset::Dict, w, fittedvaluesset; kwargs...)
     @unpack cases, cases_counterfactual, Ns = dataset 
     fittedws = fitws(cases, Ns, fittedvaluesset)
-    return plotrenewalequationsamples(cases, cases_counterfactual, w, Ns, fittedvaluesset, fittedws; kwargs...)
+    return plotrenewalequationsamples(
+        cases, cases_counterfactual, w, Ns, fittedvaluesset, fittedws; 
+        kwargs...
+    )
 end
 
 function plotrenewalequationsamples(cases::Matrix, w, Ns::Vector, fittedvaluesset; kwargs...)
@@ -59,8 +62,14 @@ function plotrenewalequationsamples(cases::Matrix, w, Ns::Vector, fittedvaluesse
     return plotrenewalequationsamples(cases, w, Ns, fittedvaluesset, fittedws; kwargs...)
 end
 
-function plotrenewalequationsamples(cases::Matrix, w, Ns::Vector, fittedvaluesset, fittedws; kwargs...)
-    return plotrenewalequationsamples(cases, nothing, w, Ns, fittedvaluesset, fittedws; kwargs...)
+function plotrenewalequationsamples(
+    cases::Matrix, w, Ns::Vector, fittedvaluesset, fittedws; 
+    kwargs...
+)
+    return plotrenewalequationsamples(
+        cases, nothing, w, Ns, fittedvaluesset, fittedws; 
+        kwargs...
+    )
 end
 
 function plotrenewalequationsamples(
@@ -77,12 +86,16 @@ function plotrenewalequationsamples(
     axs2 = [ Axis(fig[2, i]) for i ∈ 1:nlocations ]
     axs3 = [ Axis(fig[3, i]) for i ∈ 1:nlocations ]
     axs4 = [ Axis(fig[4, i]) for i ∈ 1:nlocations ]
+    #axs5 = [ Axis(fig[5, i]) for i ∈ 1:nlocations ]
 
     for i ∈ 1:nlocations
         ws = _modelquantiles(fittedws, i)
         rhoqs = _modelquantiles(fittedvaluesset, :rho_matrix_vec, i)
         yqs = _modelquantiles(fittedvaluesset, :y_matrix_poisson_vec, i)
-        yqs_cf = _modelquantiles(fittedvaluesset, :y_matrix_poisson_vec, :y_matrix_poisson_vec_counterfactual, i)
+        yqs_cf = _modelquantiles(
+            fittedvaluesset, :y_matrix_poisson_vec, :y_matrix_poisson_vec_counterfactual, i
+        )
+        #logyqs_cf = _logmodelquantiles(fittedvaluesset, :y_matrix_poisson_vec, :y_matrix_poisson_vec_counterfactual, i)
         
         band!(axs1[i], xs, ws[:, 1], ws[:, 2]; color=fittedcolour)
         #for j ∈ eachindex(fittedvaluesset.rho_matrix_vec)
@@ -99,13 +112,21 @@ function plotrenewalequationsamples(
         #end
         band!(axs2[i], xs, (rhoqs[:, 1]), (rhoqs[:, 2]); color=fittedcolour)
 
-        band!(axs3[i], xs, 100_000 .* yqs[:, 1] ./ Ns[i], 100_000 .* yqs[:, 2] ./ Ns[i]; color=fittedcolour)
+        band!(
+            axs3[i], xs, 100_000 .* yqs[:, 1] ./ Ns[i], 100_000 .* yqs[:, 2] ./ Ns[i]; 
+            color=fittedcolour
+        )
         scatter!(
             axs3[i], 100_000 .* cases[:, i] ./ Ns[i]; 
             color=datacolour, markersize
         )
 
-        band!(axs4[i], xs, 100_000 .* yqs_cf[:, 1] ./ Ns[i], 100_000 .* yqs_cf[:, 2] ./ Ns[i]; color=fittedcolour)
+        band!(
+            axs4[i], xs, 100_000 .* yqs_cf[:, 1] ./ Ns[i], 100_000 .* yqs_cf[:, 2] ./ Ns[i]; 
+            color=fittedcolour
+        )
+        
+        #band!(axs5[i], xs, logyqs_cf[:, 1], logyqs_cf[:, 2]; color=fittedcolour)
 
         isnothing(betafunctions) && continue
         scatter!(
@@ -186,10 +207,15 @@ function _modelquantiles(vec, col; quantiles=[ 0.05, 0.95 ])
 end
 
 function _modelquantiles(dataset, var, col; quantiles=[ 0.05, 0.95 ])
-    output = Matrix{Float64}(undef, length(getproperty(dataset, var)[1][:, col]), length(quantiles))
+    output = Matrix{Float64}(
+        undef, length(getproperty(dataset, var)[1][:, col]), length(quantiles)
+    )
     for i ∈ axes(output, 1)
         output[i, :] = quantile(
-            [ getproperty(dataset, var)[x][i, col] for x ∈ eachindex(getproperty(dataset, var)) ],
+            [ 
+                getproperty(dataset, var)[x][i, col] 
+                for x ∈ eachindex(getproperty(dataset, var)) 
+            ],
             quantiles
         )
     end
@@ -197,10 +223,16 @@ function _modelquantiles(dataset, var, col; quantiles=[ 0.05, 0.95 ])
 end
 
 function _modelquantiles(dataset, var, var_counterfactual, col; quantiles=[ 0.05, 0.95 ])
-    output = Matrix{Float64}(undef, length(getproperty(dataset, var)[1][:, col]), length(quantiles))
+    output = Matrix{Float64}(
+        undef, length(getproperty(dataset, var)[1][:, col]), length(quantiles)
+    )
     for i ∈ axes(output, 1)
         output[i, :] = quantile(
-            [ getproperty(dataset, var)[x][i, col] - getproperty(dataset, var_counterfactual)[x][i, col] for x ∈ eachindex(getproperty(dataset, var)) ],
+            [ 
+                getproperty(dataset, var)[x][i, col] - 
+                    getproperty(dataset, var_counterfactual)[x][i, col] 
+                for x ∈ eachindex(getproperty(dataset, var)) 
+            ],
             quantiles
         )
     end
@@ -214,7 +246,8 @@ function fitws(cases::Matrix, Ns::Vector, fittedvaluesset)
         if t == 1 
             ws1[t, g] = log(rho_matrix_vec[1][t, g]) + log(1)
         else
-            ws1[t, g] = log(rho_matrix_vec[1][t, g]) + log(1 - sum(cases[1:(t - 1), g]) / (psi_vec[1] * Ns[g]))
+            ws1[t, g] = log(rho_matrix_vec[1][t, g]) + 
+                log(1 - sum(cases[1:(t - 1), g]) / (psi_vec[1] * Ns[g]))
         end
     end
     w_vec = Vector{typeof(ws1)}(undef, length(psi_vec))
@@ -226,7 +259,8 @@ function fitws(cases::Matrix, Ns::Vector, fittedvaluesset)
                 if t == 1 
                     ws1[t, g] = log(rho_matrix_vec[j][t, g]) + log(1)
                 else
-                    ws1[t, g] = log(rho_matrix_vec[j][t, g]) + log(1 - sum(cases[1:(t - 1), g]) / (psi_vec[j] * Ns[g]))
+                    ws1[t, g] = log(rho_matrix_vec[j][t, g]) + 
+                        log(1 - sum(cases[1:(t - 1), g]) / (psi_vec[j] * Ns[g]))
                 end
             end
             w_vec[j] = deepcopy(ws1)
