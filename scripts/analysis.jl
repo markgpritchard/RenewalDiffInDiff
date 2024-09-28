@@ -122,7 +122,9 @@ end
 ## Analysis 0 
 # No effect of interventions 
 
-W_sim1_0 = generatew_gt(f_seirvector, simulation1dataset["cases_counterfactual"], simulation1dataset["Ns"])
+W_sim1_0 = generatew_gt(
+    f_seirvector, simulation1dataset["cases_counterfactual"], simulation1dataset["Ns"]
+)
 
 sim1model0 = diffindiffparameters_discretetimes(
     W_sim1_0, 
