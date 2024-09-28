@@ -12,7 +12,7 @@ testrun = true
 
 if length(ARGS) == 2 
     id = parse(Int, ARGS[1])
-    n_rounds = min(10, parse(Int, ARGS[2]))
+    n_rounds = parse(Int, ARGS[2])
 else
     id = 1 
     if testrun 
