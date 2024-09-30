@@ -2,7 +2,7 @@
 
 julia_version = "1.9.3"
 manifest_format = "2.0"
-project_hash = "07126b7f2abca6cbc5132df7ec45151c5c8f5f2d"
+project_hash = "5627dfd22d46a5c9a82931b76ba7e4c2559da942"
 
 [[deps.ADTypes]]
 git-tree-sha1 = "016833eb52ba2d6bea9fcb50ca295980e728ee24"
@@ -2064,14 +2064,6 @@ weakdeps = ["ChainRulesCore", "InverseFunctions"]
     [deps.StatsFuns.extensions]
     StatsFunsChainRulesCoreExt = "ChainRulesCore"
     StatsFunsInverseFunctionsExt = "InverseFunctions"
-
-[[deps.StochasticTransitionModels]]
-deps = ["Random", "StatsBase"]
-git-tree-sha1 = "c9c261a9938224dfed543e240fd29cb71b23ac0f"
-repo-rev = "main"
-repo-url = "https://github.com/markgpritchard/StochasticTransitionModels.jl"
-uuid = "cb0f9aa6-69ae-4225-ab71-86b2d1c03969"
-version = "0.1.0"
 
 [[deps.StringManipulation]]
 deps = ["PrecompileTools"]

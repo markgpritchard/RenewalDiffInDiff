@@ -1,7 +1,8 @@
 
 module RenewalDiffInDiff
 
-using CubicSplines, DataFrames, Distributions, ForwardDiff, NaNMath, Random, Turing, UnPack
+using DrWatson
+using CubicSplines, DataFrames, Distributions, ForwardDiff, NaNMath, Random, Turing
 import Base: getindex, length, size
 
 include("types.jl")
@@ -26,7 +27,7 @@ export renewalequation_expectedcases, renewalequation_expectedcases!,
 ## parameterfitting.jl
 export diffindiffparameters, diffindiffparameters_discretetimes, 
     diffindiffparameters_polytimes, diffindiffparameters_splinetimes, generatew_gt, 
-    generatew_gtrow, generatez_gtminus1
+    generatew_gtrow, generatez_gtminus1, keyvalues, loadanalysisdictsasdf
 
 ## extras.jl
 export getindex, interventionsoffset, length, size
