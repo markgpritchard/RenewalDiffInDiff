@@ -57,6 +57,15 @@ function plotrenewalequationsamples(dataset::Dict, w, fittedvaluesset; kwargs...
     )
 end
 
+function plotrenewalequationsamples(dataset::NamedTuple, w, fittedvaluesset; kwargs...) 
+    @unpack cases, counterfactualcases, Ns = dataset 
+    fittedws = fitws(cases, Ns, fittedvaluesset)
+    return plotrenewalequationsamples(
+        cases, counterfactualcases, w, Ns, fittedvaluesset, fittedws; 
+        kwargs...
+    )
+end
+
 function plotrenewalequationsamples(cases::Matrix, w, Ns::Vector, fittedvaluesset; kwargs...)
     fittedws = fitws(cases, Ns, fittedvaluesset)
     return plotrenewalequationsamples(cases, w, Ns, fittedvaluesset, fittedws; kwargs...)

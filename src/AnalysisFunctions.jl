@@ -12,7 +12,7 @@ export anyminimum, getindex, length, size, sum
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Types 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
+#=
 abstract type AbstractModelParameters{S, T} end 
 
 struct SEIRParameters{S, T} <: AbstractModelParameters{S, T}
@@ -23,24 +23,8 @@ struct SEIRParameters{S, T} <: AbstractModelParameters{S, T}
 end
 
 SEIRParameters(; beta, gamma, nu, psi) = SEIRParameters(beta, gamma, nu, psi)
+=#
 
-abstract type AbstractCompartments{T} <: AbstractVector{T} end
-
-struct SEIRCompartments{T} <: AbstractCompartments{T}
-    S                       :: T 
-    E                       :: T 
-    I                       :: T 
-    R                       :: T 
-    IdentifiedCases         :: T 
-    Cumulative_I            :: T 
-    Cumulative_Identified   :: T
-end
-
-function SEIRCompartments(args::Vararg{T}) where T
-    u = zeros(T, 7)
-    for (i, a) ∈ enumerate(args) u[i] = a end 
-    return SEIRCompartments(u...)
-end
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

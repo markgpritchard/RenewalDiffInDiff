@@ -44,3 +44,14 @@ function InterventionsVector(T::DataType, ::Nothing, duration)
 end
 
 InterventionsVector(args...) = InterventionsVector(Int, args...)
+
+abstract type AbstractModelParameters{S, T} end 
+
+struct SEIRParameters{S, T} <: AbstractModelParameters{S, T} 
+    β           :: S 
+    μ           :: T 
+    γ           :: T 
+    θ           :: T
+end
+
+SEIRParameters(; beta, gamma, nu, psi) = SEIRParameters(beta, gamma, nu, psi)
