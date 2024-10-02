@@ -102,15 +102,15 @@ end
 # No effect of interventions 
 
 W_sim1_0 = generatew_gt(
-    f_seirvector, simulation1dataset.counterfactualcases, simulation1dataset.Ns
+    f_seirvector, simulation1dataset["cases_counterfactual"], simulation1dataset["Ns"]
 )
 
 sim1model0 = diffindiffparameters_splinetimes(
     W_sim1_0, 
-    simulation1dataset.counterfactualcases,
-    simulation1dataset.interventions, 
+    simulation1dataset["cases_counterfactual"],
+    simulation1dataset["interventions"], 
     [ [ 1 ]; collect(11:89/4:100) ],
-    simulation1dataset.Ns;
+    simulation1dataset["Ns"];
     psiprior=0.8
 )
 
@@ -124,10 +124,10 @@ W_sim1 = generatew_gt(f_seirvector, simulation1dataset.cases, simulation1dataset
 
 sim1model1 = diffindiffparameters_splinetimes(
     W_sim1, 
-    simulation1dataset.cases,
-    simulation1dataset.interventions, 
+    simulation1dataset["cases"],
+    simulation1dataset["interventions"], 
     [ [ 1 ]; collect(11:89/4:100) ],
-    simulation1dataset.Ns;
+    simulation1dataset["Ns"];
     psiprior=0.8,
 )
 
@@ -146,10 +146,10 @@ W_sim2 = generatew_gt(f_seirvector, simulation2dataset.cases, simulation2dataset
 
 sim2model1 = diffindiffparameters_splinetimes(
     W_sim1, 
-    simulation2dataset.cases,
-    simulation2dataset.interventions, 
+    simulation2dataset["cases"],
+    simulation2dataset["interventions"], 
     [ [ 1 ]; collect(11:89/4:100) ],
-    simulation2dataset.Ns;
+    simulation2dataset["Ns"];
     psiprior=0.5,
 )
 

@@ -246,8 +246,13 @@ function fitws(cases::Matrix, Ns::Vector, fittedvaluesset)
                 if t == 1 
                     ws1[t, g] = log(rho_matrix_vec[j][t, g]) + log(1)
                 else
-                    ws1[t, g] = log(rho_matrix_vec[j][t, g]) + 
-                        log(1 - sum(cases[1:(t - 1), g]) / (psi_vec[j] * Ns[g]))
+                    println("j=$j, t=$t, g=$g, rho_matrix_vec[j][t, g]=$(rho_matrix_vec[j][t, g])")
+                    println("sum(cases[1:(t - 1), g])=$(sum(cases[1:(t - 1), g])), (psi_vec[$j]=$(psi_vec[j]) Ns[$g]=$(Ns[g]))")
+                    ws1[t, g] =+(
+                        log(rho_matrix_vec[j][t, g]),
+                        log(1 - sum(cases[1:(t - 1), g]) / (psi_vec[j] * Ns[g]))  # this should already be constrained to be positive
+                    )  
+                        
                 end
             end
             w_vec[j] = deepcopy(ws1)
