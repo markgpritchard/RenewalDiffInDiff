@@ -22,37 +22,36 @@ parraleltrendsfig = let
     xs2cf = xs1 .+ 0.05
         
     fig = Figure(; size=( 400, 250 ))
-    axs = [ Axis(fig[1, i]) for i ∈ 1:2 ]
+    ax = Axis(fig[1, 1])
     
-    for ax ∈ axs 
-        lines!(ax, ts, xs1; color=:blue)
-        lines!(ax, ts, xs2; color=:black)
-        arrows!(ax, [ 50 ], xs2[50:50] .+ 0.075, [ 0 ], [ -0.05 ])
-        text!(
-            ax, 50, xs2[50] + 0.075; 
-            text="Group 1\nIntervention", align=( :center, :bottom ), fontsize=10
-        )
-    end
+    lines!(ax, ts, xs1; color=:blue)
+    lines!(ax, ts, xs2; color=:black)
+    lines!(ax, ts[50:100], xs2cf[50:100]; color=:red, linestyle=:dash)
+    band!(ax, ts[50:100], xs2cf[50:100], xs2[50:100]; color=( :red, 0.3 ))
+        
+    arrows!(ax, [ 50 ], xs2[50:50] .+ 0.075, [ 0 ], [ -0.05 ])
 
-    text!(axs[1], 105, xs1[100]; text="Group 0", align = ( :right, :bottom ), fontsize=10)
-    text!(axs[1], 105, xs2[90] - 0.01; text="Group 1", align = ( :right, :top ), fontsize=10)
-    formataxis!(axs[1]; hidex=true, hidey=true)
-
-    lines!(axs[2], ts[50:100], xs2cf[50:100]; color=:red, linestyle=:dash)
-    band!(axs[2], ts[50:100], xs2cf[50:100], xs2[50:100]; color=( :red, 0.3 ))
     text!(
-        axs[2], 110, xs2cf[100] + 0.03; 
-        text="Counterfactual", align = ( :right, :top ), fontsize=10
+        ax, 50, xs2[50] + 0.075; 
+        text="Group 1\nIntervention", align=( :center, :bottom ), fontsize=10
     )
     text!(
-        axs[2], 110, xs2[90] - 0.01; 
-        text="Observed", align = ( :right, :top ), fontsize=10
-    )      
-    formataxis!(axs[2]; hidex=true, hidey=true, hideyticks=true, hidespines=( :l, :t, :r )) 
+        ax, 103, xs1[100] - 0.01; 
+        text="Group 0\nobserved", align = ( :left, :center ), fontsize=10
+    )
+    text!(
+        ax, 103, xs2[100]; 
+        text="Group 1\nobserved", align = ( :left, :center ), fontsize=10
+    )
+    text!(
+        ax, 103, xs2cf[100] + 0.01; 
+        text="Group 1\ncounterfactual", align = ( :left, :center ), fontsize=10
+    )
+
+    formataxis!(ax; hidex=true, hidey=true, setpoint=( 120, xs2cf[100] + 0.02 ))    
     
-    linkaxes!(axs...)
     Label(fig[1, 0], "y"; fontsize=11.84, tellheight=false)
-    Label(fig[2, 1:2], "time"; fontsize=11.84, tellwidth=false)
+    Label(fig[2, 1], "time"; fontsize=11.84, tellwidth=false)
 
     colgap!(fig.layout, 1, 5)
     rowgap!(fig.layout, 1, 5)
@@ -68,7 +67,7 @@ function sirmodel!(du, u, p, t)
     du[3] = 0.2 * u[2]
 end
 
-sirparraleltrendsfig, R0_sirparraleltrendsfig = let 
+sirparraleltrendsfig = let 
     u0_1 = [ 989, 6, 5 ]
     u0_2 = [ 997, 2, 1 ]
 
@@ -90,72 +89,65 @@ sirparraleltrendsfig, R0_sirparraleltrendsfig = let
     sol1cfr0 = df2.value1[10:end] .* 2 ./ 1000 .+ sol1cfr0_constant25
 
     fig = Figure(; size=( 400, 350 ))
-    axs = [ Axis(fig[1, i]) for i ∈ 1:2 ]
-    axs2 = [ Axis(fig[2, i]) for i ∈ 1:2 ]
+    axs = [ Axis(fig[1, i]) for i ∈ [ 1, 3 ] ]
+    axs2 = [ Axis(fig[2, i]) for i ∈ [ 1, 3 ] ]
 
-    for ax ∈ axs 
-        lines!(ax, df1.timestamp, df1.value2; color=:black)
-        lines!(ax, df2.timestamp, df2.value2; color=:blue)
-        formataxis!(ax; hidex=true, hidey=true)
-    end
+    lines!(axs[1], df1.timestamp, df1.value2; color=:black)
+    lines!(axs[1], df2.timestamp, df2.value2; color=:blue)
+    lines!(axs[1], df1.timestamp[10:end], sol1cf; color=:red, linestyle=:dash)
+    band!(axs[1], df1.timestamp[10:end], df1.value2[10:end], sol1cf; color=( :red, 0.3 ))
+    arrows!(axs[1], df1.timestamp[10:10], df1.value2[10:10] .+ 40, [ 0 ], [ -20 ])
 
-    vlines!(axs[2], df1.timestamp[10]; color=:black, linestyle=:dot)
+    formataxis!(axs[1]; hidex=true, hidexticks=true, hidey=true, hidespines=( :b, :t, :r ))
 
-    lines!(axs[2], df1.timestamp[10:end], sol1cf; color=:red, linestyle=:dash)
-    band!(axs[2], df1.timestamp[10:end], df1.value2[10:end], sol1cf; color=( :red, 0.3 ))
+    lines!(axs2[1], df1.timestamp, log.(df1.value2); color=:black)
+    lines!(axs2[1], df2.timestamp, log.(df2.value2); color=:blue)
+    lines!(axs2[1], df1.timestamp[10:end], logsol1cf; color=:red, linestyle=:dash)
+    band!(
+        axs2[1], df1.timestamp[10:end], log.(df1.value2[10:end]), logsol1cf; 
+        color=( :red, 0.3 )
+    )
+    formataxis!(axs2[1]; hidex=true, hidey=true)
+    arrows!(axs2[1], df1.timestamp[10:10], log.(df1.value2[10:10]) .+ 1.5, [ 0 ], [ -0.75 ])
 
-    for ax ∈ axs2 
-        lines!(ax, df1.timestamp, log.(df1.value2); color=:black)
-        lines!(ax, df2.timestamp, log.(df2.value2); color=:blue)
-        formataxis!(ax; hidex=true, hidey=true)
-    end
-
-    vlines!(axs2[2], df1.timestamp[10]; color=:black, linestyle=:dot)
-
-    lines!(axs2[2], df1.timestamp[10:end], logsol1cf; color=:red, linestyle=:dash)
-    band!(axs2[2], df1.timestamp[10:end], log.(df1.value2[10:end]), logsol1cf; color=( :red, 0.3 ))
-
-    linkaxes!(axs...)
-    linkaxes!(axs2...)
-    Label(fig[1, 0], "Number infectious"; fontsize = 11.84, rotation=π/2, tellheight = false)
-    Label(fig[2, 0], "Log number infectious"; fontsize = 11.84, rotation=π/2, tellheight = false)
-    Label(fig[3, 1:2], "time"; fontsize = 11.84, tellwidth = false)
-
-    fig2 = Figure(; size=( 400, 350 ))
-    axs = [ Axis(fig2[1, i]) for i ∈ 1:2 ]
-    axs2 = [ Axis(fig2[2, i]) for i ∈ 1:2 ]
-
-    for ax ∈ axs 
-        lines!(ax, df1.timestamp, df1.value1 .* 2 ./ 1000; color=:black)
-        lines!(ax, df2.timestamp, df2.value1 .* 2 ./ 1000; color=:blue)
-        formataxis!(ax; hidex=true, hidey=true)
-    end
-
-    vlines!(axs[2], df1.timestamp[10]; color=:black, linestyle=:dot)
-
+    lines!(axs[2], df1.timestamp, df1.value1 .* 2 ./ 1000; color=:black)
+    lines!(axs[2], df2.timestamp, df2.value1 .* 2 ./ 1000; color=:blue)
     lines!(axs[2], df1.timestamp[10:end], sol1cfr0; color=:red, linestyle=:dash)
-    band!(axs[2], df1.timestamp[10:end], df1.value1[10:end] .* 2 ./ 1000, sol1cfr0; color=( :red, 0.3 ))
+    band!(
+        axs[2], df1.timestamp[10:end], df1.value1[10:end] .* 2 ./ 1000, sol1cfr0; 
+        color=( :red, 0.3 )
+    )
+    arrows!(
+        axs[2], df1.timestamp[10:10], df2.value1[10:10] .* 2 ./ 1000 .+ 0.3, [ 0 ], [ -0.2 ]
+    )
 
-    for ax ∈ axs2 
-        lines!(ax, df1.timestamp, ones(length(df2.timestamp)) .* 2; color=:black)
-        lines!(ax, df2.timestamp, ones(length(df2.timestamp)) .* 2; color=:blue)
-        formataxis!(ax; hidex=true, hidey=true)
-    end
+    formataxis!(axs[2]; hidex=true, hidexticks=true, hidey=true, hidespines=( :b, :t, :r ))
 
-    vlines!(axs2[2], df1.timestamp[10]; color=:black, linestyle=:dot)
+    lines!(axs2[2], df1.timestamp, ones(length(df2.timestamp)) .* 2; color=:black)
+    lines!(axs2[2], df2.timestamp, ones(length(df2.timestamp)) .* 2; color=:blue)
+    arrows!(axs2[2], df1.timestamp[10:10], [ 2.3 ], [ 0 ], [ -0.2 ])
 
-   # lines!(axs2[2], df1.timestamp[10:end], logsol1cf; color=:red, linestyle=:dash)
-   # band!(axs2[2], df1.timestamp[10:end], log.(df1.value2[10:end]), logsol1cf; color=( :red, 0.3 ))
+    formataxis!(axs2[2]; hidex=true, hidey=true)
 
-    linkaxes!(axs..., axs2...)
-    Label(fig2[1, 0], "Effective reproduction\nnumber"; fontsize = 11.84, rotation=π/2, tellheight = false)
-    Label(fig2[2, 0], "Basic reproduction\nnumber"; fontsize = 11.84, rotation=π/2, tellheight = false)
-    Label(fig2[3, 1:2], "time"; fontsize = 11.84, tellwidth = false)
+    linkxaxes!(axs..., axs2...)
+    linkyaxes!(axs[2], axs2[2])
+    Label(fig[1, 0], "Number infectious"; fontsize=11.84, rotation=π/2, tellheight=false)
+    Label(fig[2, 0], "Log number infectious"; fontsize=11.84, rotation=π/2, tellheight=false)
+    Label(
+        fig[1, 2], "Effective reproduction\nnumber"; 
+        fontsize=11.84, rotation=π/2, tellheight=false
+    )
+    Label(
+        fig[2, 2], "Basic reproduction\nnumber"; 
+        fontsize=11.84, rotation=π/2, tellheight=false
+    )
+    Label(fig[3, 1:3], "time"; fontsize=11.84, tellwidth=false)
 
+    for c ∈ [ 1, 3 ] colgap!(fig.layout, c, 5) end
+    rowgap!(fig.layout, 2, 5)
 
-    ( fig, fig2 )    
+    fig 
 end
 
 safesave(plotsdir("sirparraleltrendsfig.svg"), sirparraleltrendsfig)
-safesave(plotsdir("R0_sirparraleltrendsfig.svg"), R0_sirparraleltrendsfig)
 

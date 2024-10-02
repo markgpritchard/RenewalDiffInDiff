@@ -66,6 +66,26 @@ sim1fit3plot = plotrenewalequationsamples(
     infectiousduration=2.5,
 )
 
+sim1chain4 = loadanalysisdictsasdf("sim1model4", 8, maxrounds, 140)
+plotchains(sim1chain4)
+sim1fit4 = samplerenewalequation_2sets(
+    f_seirvector, sim1chain4, simulation1dataset["interventions"]; 
+    initialvalues=simulation1dataset["cases"][1:10, :], 
+    Ns=simulation1dataset["Ns"], 
+    #psi=0.8, 
+    timeknots=[ [ 1 ]; collect(11:189/4:200) ],
+)
+sim1fit4plot = plotrenewalequationsamples(
+    simulation1dataset, W_sim1, sim1fit4; 
+    betafunctions=betafunctions1, 
+    betafunctions_counterfactual=betafunctions1_counterfactual,
+    infectiousduration=2.5,
+    plotsize=( 400, 400 ),
+    rhoclip=2,
+)
+
+safesave(plotsdir("sim1fit4plot.svg"), sim1fit4plot)
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Simulation 2 

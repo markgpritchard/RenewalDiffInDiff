@@ -76,7 +76,7 @@ function plotrenewalequationsamples(
     cases::Matrix, cases_counterfactual, w, Ns::Vector, fittedvaluesset, fittedws;
     betafunctions=nothing, betafunctions_counterfactual=nothing,
     datacolour=COLOURVECTOR[1], simcolour=COLOURVECTOR[2], fittedcolour=( :gray, 0.75 ), 
-    infectiousduration=1, markersize=3, plotsize=( 800, 800 ),
+    infectiousduration=1, markersize=3, plotsize=( 800, 800 ), rhoclip=Inf,
 )
     duration = size(cases, 1)
     nlocations = size(cases, 2)
@@ -95,22 +95,21 @@ function plotrenewalequationsamples(
         yqs_cf = _modelquantiles(
             fittedvaluesset, :y_matrix_poisson_vec, :y_matrix_poisson_vec_counterfactual, i
         )
-        #logyqs_cf = _logmodelquantiles(fittedvaluesset, :y_matrix_poisson_vec, :y_matrix_poisson_vec_counterfactual, i)
         
         band!(axs1[i], xs, ws[:, 1], ws[:, 2]; color=fittedcolour)
-        #for j ∈ eachindex(fittedvaluesset.rho_matrix_vec)
-        #    lines!(axs1[i], log.(fittedvaluesset.rho_matrix_vec[j][:, i]); color=fittedcolour)
-        #end
         scatter!(
             axs1[i], [ RenewalDiffInDiff._skip(x) ? missing : x for x ∈ w[:, i] ];
             color=datacolour, markersize
         )
-    #end
-    #for i ∈ 1:nlocations
-        #for j ∈ eachindex(fittedvaluesset.rho_matrix_vec)
-        #    lines!(axs2[i], fittedvaluesset.rho_matrix_vec[j][:, i]; color=fittedcolour)
-        #end
-        band!(axs2[i], xs, (rhoqs[:, 1]), (rhoqs[:, 2]); color=fittedcolour)
+
+        inds = findall(x -> x <= rhoclip, rhoqs[:, 2])
+        band!(
+            axs2[i], 
+            xs[inds], 
+            rhoqs[:, 1][inds], 
+            rhoqs[:, 2][inds];
+            color=fittedcolour
+        )
 
         band!(
             axs3[i], xs, 100_000 .* yqs[:, 1] ./ Ns[i], 100_000 .* yqs[:, 2] ./ Ns[i]; 
@@ -133,51 +132,7 @@ function plotrenewalequationsamples(
             axs2[i], [ betafunctions[i](t) * infectiousduration for t ∈ 1:duration ]; 
             color=simcolour, markersize
         )
-    #end
-    #for i ∈ 1:nlocations
-        #for j ∈ eachindex(fittedvaluesset.y_matrix_poisson_vec) 
-        #    lines!(
-        #        axs3[i], 100_000 .* fittedvaluesset.y_matrix_poisson_vec[j][:, i] ./ Ns[i]; 
-                #axs3[i], 100_000 .* fittedvaluesset.y_matrix_det_vec[j][:, i] ./ Ns[i]; 
-        #        color=fittedcolour
-        #    )
-        #end
-
-    #end 
-    #=
-    axs3 = [ Axis(fig[3, i]) for i ∈ 1:nlocations ]
-    for i ∈ 1:nlocations
-        for j ∈ eachindex(fittedvaluesset.rho_matrix_vec) 
-            lines!(
-                axs3[i], 
-                fittedvaluesset.rho_matrix_vec[j][:, i] ./ 
-                    fittedvaluesset.rho_matrix_vec[j][:, i]; 
-                color=fittedcolour
-            )
-        end
-        isnothing(betafunctions) && continue
-        scatter!(
-            axs3[i], 
-            [ 
-                betafunctions[i](t) ./ betafunctions_counterfactual[i](t) 
-                for t ∈ 1:duration 
-            ]; 
-            color=simcolour, markersize
-        )
-    end =#
-    #for i ∈ 1:nlocations 
-    #    for j ∈ eachindex(fittedvaluesset.rho_matrix_vec) 
-    #        lines!(
-    #            axs4[i], 
-    #            100_000 .* 
-    #                (fittedvaluesset.y_matrix_poisson_vec[j][:, i] .- 
-    #                fittedvaluesset.y_matrix_poisson_vec_counterfactual[j][:, i]) ./     
-    #                #(fittedvaluesset.y_matrix_det_vec[j][:, i] .- 
-    #                #fittedvaluesset.y_matrix_det_vec_counterfactual[j][:, i]) ./ 
-    #                Ns[i]; 
-    #            color=fittedcolour
-    #        )
-    #    end
+    
         isnothing(cases_counterfactual) && continue
         scatter!(
             axs4[i], 
@@ -193,7 +148,7 @@ function plotrenewalequationsamples(
     linkyaxes!(axs4...)
 
     for col ∈ 1:nlocations
-        if col == 1 hidespines!(axs1[col], :l) 
+        if col == 1 
             formataxis!(axs1[col]; hidex=true, hidexticks=true, hidespines=( :b, :r, :t ))
             formataxis!(axs2[col]; hidex=true, hidexticks=true, hidespines=( :b, :r, :t ))
             formataxis!(axs3[col]; hidex=true, hidexticks=true, hidespines=( :b, :r, :t ))

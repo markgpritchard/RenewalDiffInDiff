@@ -191,6 +191,21 @@ sim1model3 = diffindiffparameters_discretetimes(
 s1c3config = @ntuple modelname="sim1model3" model=sim1model3 n_rounds n_chains=8 seed=130+id
 sim1chain3dict = produce_or_load(pol_fitparameter, s1c3config, datadir("sims"))
 
+## Analysis 4 
+# Use the spline-based model 
+
+sim1model4 = diffindiffparameters_splinetimes(
+    W_sim1, 
+    simulation1dataset["cases"],
+    simulation1dataset["interventions"], 
+    [ [ 1 ]; collect(11:189/4:200) ],
+    simulation1dataset["Ns"];
+    psiprior=0.8,
+)
+
+s1c4config = @ntuple modelname="sim1model4" model=sim1model4 n_rounds n_chains=8 seed=140+id
+sim1chain4dict = produce_or_load(pol_fitparameter, s1c4config, datadir("sims"))
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Simulation 2 
