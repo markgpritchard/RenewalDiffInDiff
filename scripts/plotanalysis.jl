@@ -282,6 +282,8 @@ sim4fit3plot = plotrenewalequationsamples(
     betafunctions=betafunctions4, 
     betafunctions_counterfactual=betafunctions4_counterfactual,
     infectiousduration=2.5,
+    plotsize=( 600, 400 ),
+    rhoclip=3,
 )
 
 safesave(plotsdir("sim4fit3plot.svg"), sim4fit3plot)
