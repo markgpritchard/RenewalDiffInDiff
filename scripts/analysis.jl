@@ -257,7 +257,9 @@ sim2chain3dict = produce_or_load(pol_fitparameter, s2c3config, datadir("sims"))
 ## Analysis 0 
 # No effect of interventions 
 
-W_sim3_0 = generatew_gt(f_seirvector, simulation3dataset["cases_counterfactual"], simulation3dataset["Ns"])
+W_sim3_0 = generatew_gt(
+    f_seirvector, simulation3dataset["cases_counterfactual"], simulation3dataset["Ns"]
+)
 
 sim3model0 = diffindiffparameters_splinetimes(
     W_sim3_0, 

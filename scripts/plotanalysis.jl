@@ -28,7 +28,10 @@ sim1fit1plot = plotrenewalequationsamples(
     betafunctions=betafunctions1, 
     betafunctions_counterfactual=betafunctions1_counterfactual,
     infectiousduration=2.5,
+    plotsize=( 400, 400 )
 )
+
+safesave(plotsdir("sim1fit1plot.svg"), sim1fit1plot)
 
 sim1chain2 = loadanalysisdictsasdf("sim1model2", 8, maxrounds, 120)
 plotchains(sim1chain2)
@@ -114,7 +117,10 @@ sim2fit3plot = plotrenewalequationsamples(
     betafunctions=betafunctions2, 
     betafunctions_counterfactual=betafunctions2_counterfactual,
     infectiousduration=2.5,
+    plotsize=( 400, 400 )
 )
+
+safesave(plotsdir("sim2fit3plot.svg"), sim2fit3plot)
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -199,7 +205,11 @@ sim3fit4plot = plotrenewalequationsamples(
     betafunctions=betafunctions3, 
     betafunctions_counterfactual=betafunctions3_counterfactual,
     infectiousduration=2.5,
+    plotsize=( 400, 400 )
 )
+
+safesave(plotsdir("sim2fit3plot.svg"), sim2fit3plot)
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Simulation 4 
@@ -254,6 +264,9 @@ sim4fit3plot = plotrenewalequationsamples(
     infectiousduration=2.5,
 )
 
+safesave(plotsdir("sim4fit3plot.svg"), sim4fit3plot)
+
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Covid data 
@@ -263,14 +276,55 @@ datachain1 = loadanalysisdictsasdf("datamodel1", 8, maxrounds, 510)
 plotchains(datachain1)
 datafit1 = samplerenewalequation_2sets(
     COVIDSERIALINTERVAL, datachain1, masstesting; 
-    initialvalues=allcovidcases[1:49, :], 
+    initialvalues=allcovidcases[1:100, :], 
     Ns=selectpops,
     #psi=0.4, timeknots=collect(1:303/10:304),
     timeknots=collect(1.0:28:216),
 )
 datafit1plot = plotrenewalequationsamples(
-    allcovidcases, W_allcoviddata, selectpops, datafit1
+    allcovidcases, W_allcoviddata, selectpops, datafit1;
+    plotsize=( 400, 400 )
 )
+
+safesave(plotsdir("datafit1plot.svg"), datafit1plot)
+
+
+greater = zeros(Int, size(datafit1.y_matrix_poisson_vec[1]))
+lesser = zeros(Int, size(datafit1.y_matrix_poisson_vec[1]))
+for i ∈ eachindex(datafit1.y_matrix_poisson_vec)
+    vs = cumsum(datafit1.y_matrix_poisson_vec[i]; dims=1)
+    cfvs = cumsum(datafit1.y_matrix_poisson_vec_counterfactual[i]; dims=1)
+    for t ∈ axes(greater, 1), g ∈ axes(greater, 2)
+        if vs[t, g] < cfvs[t, g]
+            lesser[t, g] += 1 
+        elseif vs[t, g] > cfvs[t, g]
+            greater[t, g] += 1 
+        end
+    end
+end
+
+axs =[ Axis(datafit1plot[5, i]) for i ∈ 1:6 ]
+for i ∈ 1:6 
+    band!(
+        axs[i],
+        axes(lesser, 1),
+        zeros(size(lesser, 1)),
+        greater[:, i] ./ length(datafit1.y_matrix_poisson_vec);
+        color=( :red, 0.5 ),
+    )
+    band!(
+        axs[i],
+        axes(lesser, 1),
+        -lesser[:, i] ./ length(datafit1.y_matrix_poisson_vec),
+        zeros(size(lesser, 1));
+        color=( :green, 0.5 ),
+    )
+end
+
+datafit1plot
+
+
+
 
 datachain1discrete = loadanalysisdictsasdf("datamodel1discrete", 8, maxrounds, 515)
 plotchains(datachain1discrete)
