@@ -1,3 +1,9 @@
+#
+
+using DrWatson, Pkg
+quickactivate(@__DIR__)
+Pkg.instantiate()
+
 
 using DrWatson
 @quickactivate :RenewalDiffInDiff
@@ -17,7 +23,7 @@ else
     if testrun 
         n_rounds = 4 
     else
-        n_rounds = 8
+        n_rounds = 5
     end
 end
 
@@ -144,12 +150,13 @@ W_sim2 = generatew_gt(f_seirvector, simulation2dataset["cases"], simulation2data
 # Changes over time modelled as discrete steps 
 
 sim2model1 = diffindiffparameters_splinetimes(
-    W_sim1, 
+    W_sim2, 
     simulation2dataset["cases"],
     simulation2dataset["interventions"], 
     [ [ 1 ]; collect(11:89/4:100) ],
     simulation2dataset["Ns"];
     psiprior=0.5,
+    secondaryinterventions=InterventionsMatrix([ nothing, nothing, 30 ], 100),
 )
 
 s2c1config = @ntuple modelname="sim2model1" model=sim2model1 n_rounds n_chains=8 seed=30+id
@@ -253,7 +260,7 @@ datamodel2 = diffindiffparameters_splinetimes(
 
 datac2config = @ntuple modelname="datamodel2" model=datamodel2 n_rounds n_chains=8 seed=520+id
 datachain2dict = produce_or_load(pol_fitparameter, datac2config, datadir("sims"))
-
+#=
 datamodel2discrete = diffindiffparameters_discretetimes(
     W_pil1coviddata, 
     pil1covidcases,
@@ -273,3 +280,60 @@ datac2configdiscrete = (
 datachain2dictdiscrete = produce_or_load(
     pol_fitparameter, datac2configdiscrete, datadir("sims")
 )
+=#
+
+
+## Simulation 3 -- make 3 January (universal testing) a competing event for Liverpool 
+
+# Limit to those local authorities near Liverpool that were in the same tiers for control in
+# 2020
+
+## Convert DataFrame to appropriate matrices 
+let 
+    # check that each location has the same number of rows 
+    for i ∈ 2:39 
+        @assert sum(coviddf2.location .== 1) == sum(coviddf2.location .== i) 
+    end
+    
+    # how many rows is it?
+    covidlength = sum(coviddf2.location .== 1)
+    #371
+
+    # limit analysis to those local authorities that were in the same tiers 
+    # (Halton, Knowsley, Liverpool, Sefton, St Helens, Wirral)
+    global allcovidcases2 = Matrix{Int}(undef, covidlength, 6)
+    global pil1covidcases2 = Matrix{Int}(undef, covidlength, 6)
+    #start date in Liverpool 7 November 2020 
+    stl = Dates.value(Date("2020-11-07") - Date("2020-05-31"))
+    stv = [ i == 3 ? stl : nothing for i ∈ 1:6 ]
+    # Liverpool stopped being unique 3 January
+    stu = Dates.value(Date("2021-01-03") - Date("2020-05-31"))
+    stv2 = [ i == 3 ? stu : nothing for i ∈ 1:6 ]
+    global masstesting2 = InterventionsMatrix(stv, covidlength)
+    global universaltesting = InterventionsMatrix(stv2, covidlength)
+    for i ∈ 1:6
+        k = [ 15, 17, 19,28, 31, 38 ][i]
+        _tdf = filter(:location => x -> x == k, coviddf2)
+        for j ∈ 1:covidlength
+            allcovidcases2[j, i] = _tdf.cases[j]
+            pil1covidcases2[j, i] = _tdf.pillar1cases[j]
+        end
+    end 
+end
+selectpops = [ populations[x] for x ∈ [ 15, 17, 19, 28, 31, 38 ] ]
+
+W_allcoviddata2 = generatew_gt(COVIDSERIALINTERVAL, allcovidcases2, selectpops)
+
+
+datamodel3 = diffindiffparameters_splinetimes(
+    W_allcoviddata2, 
+    allcovidcases2,
+    masstesting2, 
+    collect(1.0:28:371),
+    selectpops;
+    psiprior=0.4,
+    secondaryinterventions=universaltesting,
+)
+
+datac3config = @ntuple modelname="datamodel3" model=datamodel3 n_rounds n_chains=8 seed=530+id
+datachain3dict = produce_or_load(pol_fitparameter, datac3config, datadir("sims"))

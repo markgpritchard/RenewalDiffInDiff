@@ -248,5 +248,9 @@ end
 filter!(:date => x -> x < Date("2021-04-01"), coviddf)
 =#
 
+coviddf2 = deepcopy(coviddf)
+
 # universal testing was introduced in January 2021, so remove all rows after this 
 filter!(:date => x -> x < Date("2021-01-03"), coviddf)
+
+# for secondary analysis, keep longer data and set secondary intervention 3 January

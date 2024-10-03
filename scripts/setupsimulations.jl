@@ -142,9 +142,9 @@ else
 
         counterfactualcases = zeros(Int, 100, 3)
         for t ∈ 2:100 
-            cases[t, 1] = sim2a[t, 6] - sim2a[t-1, 6]
-            cases[t, 2] = sim2bcounterfactual[t, 6] - sim2bcounterfactual[t-1, 6]
-            cases[t, 3] = sim2ccounterfactual[t, 6] - sim2ccounterfactual[t-1, 6]
+            counterfactualcases[t, 1] = sim2a[t, 6] - sim2a[t-1, 6]
+            counterfactualcases[t, 2] = sim2bcounterfactual[t, 6] - sim2bcounterfactual[t-1, 6]
+            counterfactualcases[t, 3] = sim2ccounterfactual[t, 6] - sim2ccounterfactual[t-1, 6]
         end
 
         @ntuple cases cases_counterfactual=counterfactualcases interventions prevalence counterfactualprevalence Ns=[ 7_000_000, 6_000_000, 8_000_000 ]

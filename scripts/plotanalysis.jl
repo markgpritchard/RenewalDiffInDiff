@@ -36,8 +36,8 @@ sim1chain1 = loadanalysisdictsasdf("sim1model1", 8, maxrounds, 20)
 plotchains(sim1chain1)
 sim1fit1 = samplerenewalequation_2sets(
     f_seirvector, sim1chain1, simulation1dataset["interventions"]; 
-    initialvalues=simulation1dataset.cases[1:10, :], 
-    Ns=simulation1dataset.Ns, 
+    initialvalues=simulation1dataset["cases"][1:10, :], 
+    Ns=simulation1dataset["Ns"], 
     timeknots=[ [ 1 ]; collect(11:89/4:100) ],
 )
 sim1fit1kv = keyvalues(sim1chain1, sim1fit1)
@@ -60,10 +60,11 @@ safesave(plotsdir("sim1fit1plot.svg"), sim1fit1plot)
 sim2chain1 = loadanalysisdictsasdf("sim2model1", 8, maxrounds, 30)
 plotchains(sim2chain1)
 sim2fit1 = samplerenewalequation_2sets(
-    f_seirvector, sim2chain1, simulation2dataset.interventions; 
-    initialvalues=simulation2dataset.cases[1:10, :], 
-    Ns=simulation2dataset.Ns, 
+    f_seirvector, sim2chain1, simulation2dataset["interventions"]; 
+    initialvalues=simulation2dataset["cases"][1:20, :], 
+    Ns=simulation2dataset["Ns"], 
     timeknots=[ [ 1 ]; collect(11:89/4:100) ],
+    secondaryinterventions=InterventionsMatrix([ nothing, nothing, 30 ], 100),
 )
 sim2fit1plot = plotrenewalequationsamples(
     simulation2dataset, W_sim2, sim2fit1; 
@@ -71,7 +72,7 @@ sim2fit1plot = plotrenewalequationsamples(
     betafunctions_counterfactual=[ beta2a, beta2bcounterfactual, beta2ccounterfactual ],
     infectiousduration=2.5,
     plotsize=( 400, 400 ),
-    
+    rhoclip=2.5,
 )
 
 safesave(plotsdir("sim2fit1plot.svg"), sim2fit1plot)
@@ -92,7 +93,12 @@ datafit1 = samplerenewalequation_2sets(
 )
 datafit1plot = plotrenewalequationsamples(
     allcovidcases, W_allcoviddata, selectpops, datafit1;
-    plotsize=( 400, 400 )
+    plotsize=( 400, 400 ),
+    columntitles=[ "Halton", "Knowsley", "Liverpool", "Sefton", "St Helens", "Wirral" ],
+    columntitlefontsize=10,
+    xticklabelrotation=-π/4,
+    xticks=( [ 1, 93, 215 ], [ "June", "Sept.", "Jan." ] ),
+    xtitle="Date, 2020–2021",
 )
 
 safesave(plotsdir("datafit1plot.svg"), datafit1plot)
@@ -175,3 +181,25 @@ datafit2discrete = samplerenewalequation_2sets(
 datafit2discreteplot = plotrenewalequationsamples(
     pil1covidcases, W_pil1coviddata, selectpops, datafit2discrete
 )
+
+datachain3 = loadanalysisdictsasdf("datamodel3", 8, maxrounds, 530)
+plotchains(datachain3)
+datafit3 = samplerenewalequation_2sets(
+    COVIDSERIALINTERVAL, datachain3, masstesting2; 
+    initialvalues=allcovidcases2[1:100, :], 
+    Ns=selectpops,
+    #psi=0.4, timeknots=collect(1:303/10:304),
+    timeknots=collect(1.0:28:317),
+    secondaryinterventions=universaltesting,
+)
+datafit3plot = plotrenewalequationsamples(
+    allcovidcases2, W_allcoviddata2, selectpops, datafit3;
+    plotsize=( 400, 400 ),
+    columntitles=[ "Halton", "Knowsley", "Liverpool", "Sefton", "St Helens", "Wirral" ],
+    columntitlefontsize=10,
+    xticklabelrotation=-π/4,
+    xticks=( [ 1, 93, 215 ], [ "June", "Sept.", "Jan." ] ),
+    xtitle="Date, 2020–2021",
+)
+
+safesave(plotsdir("datafit1plot.svg"), datafit1plot)
