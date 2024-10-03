@@ -1,10 +1,4 @@
-#
-#=
-using DrWatson, Pkg
-quickactivate(@__DIR__)
-Pkg.instantiate()
 
-=#
 using DrWatson
 @quickactivate :RenewalDiffInDiff
 #include(srcdir("AnalysisFunctions.jl"))
@@ -23,7 +17,7 @@ else
     if testrun 
         n_rounds = 4 
     else
-        n_rounds = 10
+        n_rounds = 8
     end
 end
 
