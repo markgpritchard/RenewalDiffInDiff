@@ -82,7 +82,7 @@ safesave(plotsdir("sim2fit1plot.svg"), sim2fit1plot)
 # Covid data 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-datachain1 = loadanalysisdictsasdf("datamodel1", 8, maxrounds, 510)
+datachain1 = loadanalysisdictsasdf("datamodel1", 8, maxrounds, 1010)
 plotchains(datachain1)
 datafit1 = samplerenewalequation_2sets(
     COVIDSERIALINTERVAL, datachain1, masstesting; 
@@ -202,4 +202,29 @@ datafit3plot = plotrenewalequationsamples(
     xtitle="Date, 2020–2021",
 )
 
-safesave(plotsdir("datafit1plot.svg"), datafit1plot)
+safesave(plotsdir("datafit3plot.svg"), datafit3plot)
+
+datachain5 = loadanalysisdictsasdf("datamodel5", 8, maxrounds, 540)
+plotchains(datachain5)
+datafit5 = samplerenewalequation_2sets(
+    COVIDSERIALINTERVAL, datachain5, masstesting; 
+    initialvalues=allcovidcases[1:49, :], 
+    Ns=selectpops,
+    #psi=0.4, timeknots=collect(1:303/10:304),
+    timeknots=collect(1.0:28:216),
+    secondaryinterventions=[ 
+        InterventionsMatrix([ 217, 217, 146, 217, 217, 217], 261), 
+        InterventionsMatrix([ 217, 217, 174, 217, 217, 217], 261), 
+    ]
+)
+datafit5plot = plotrenewalequationsamples(
+    allcovidcases, W_allcoviddata2, selectpops, datafit5;
+    plotsize=( 400, 400 ),
+    columntitles=[ "Halton", "Knowsley", "Liverpool", "Sefton", "St Helens", "Wirral" ],
+    columntitlefontsize=10,
+    xticklabelrotation=-π/4,
+    xticks=( [ 1, 93, 215 ], [ "June", "Sept.", "Jan." ] ),
+    xtitle="Date, 2020–2021",
+)
+
+safesave(plotsdir("datafit5plot.svg"), datafit5plot)

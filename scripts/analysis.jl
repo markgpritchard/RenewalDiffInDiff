@@ -187,7 +187,9 @@ let
     global pil1covidcases = Matrix{Int}(undef, covidlength, 6)
     #start date in Liverpool 7 November 2020 
     stl = Dates.value(Date("2020-11-07") - Date("2020-05-31"))
-    stv = [ i == 3 ? stl : nothing for i ∈ 1:6 ]
+    # Liverpool stopped being unique 3 December 
+    str = Dates.value(Date("2020-12-03") - Date("2020-05-31"))
+    stv = [ i == 3 ? stl : str for i ∈ 1:6 ]
     global masstesting = InterventionsMatrix(stv, covidlength)
     for i ∈ 1:6
         k = [ 15, 17, 19,28, 31, 38 ][i]
@@ -215,7 +217,7 @@ datamodel1 = diffindiffparameters_splinetimes(
     psiprior=0.4,
 )
 
-datac1config = @ntuple modelname="datamodel1" model=datamodel1 n_rounds n_chains=8 seed=510+id
+datac1config = @ntuple modelname="datamodel1" model=datamodel1 n_rounds n_chains=8 seed=1010+id
 datachain1dict = produce_or_load(pol_fitparameter, datac1config, datadir("sims"))
 
 dtimes = let 
@@ -305,10 +307,9 @@ let
     global pil1covidcases2 = Matrix{Int}(undef, covidlength, 6)
     #start date in Liverpool 7 November 2020 
     stl = Dates.value(Date("2020-11-07") - Date("2020-05-31"))
-    stv = [ i == 3 ? stl : nothing for i ∈ 1:6 ]
-    # Liverpool stopped being unique 3 January
-    stu = Dates.value(Date("2021-01-03") - Date("2020-05-31"))
-    stv2 = [ i == 3 ? stu : nothing for i ∈ 1:6 ]
+    # Liverpool stopped being unique 3 December 
+    str = Dates.value(Date("2020-12-03") - Date("2020-05-31"))
+    stv = [ i == 3 ? stl : str for i ∈ 1:6 ]
     global masstesting2 = InterventionsMatrix(stv, covidlength)
     global universaltesting = InterventionsMatrix(stv2, covidlength)
     for i ∈ 1:6
@@ -337,3 +338,23 @@ datamodel3 = diffindiffparameters_splinetimes(
 
 datac3config = @ntuple modelname="datamodel3" model=datamodel3 n_rounds n_chains=8 seed=530+id
 datachain3dict = produce_or_load(pol_fitparameter, datac3config, datadir("sims"))
+
+## with lead and lag 
+
+
+datamodel5 = diffindiffparameters_splinetimes(
+    W_allcoviddata, 
+    allcovidcases,
+    masstesting, 
+    collect(1.0:28:216),
+    selectpops;
+    psiprior=0.4,
+    secondaryinterventions=[ 
+        InterventionsMatrix([ 217, 217, 146, 217, 217, 217], 261), 
+        InterventionsMatrix([ 217, 217, 174, 217, 217, 217], 261), 
+    ]
+)
+
+datac5config = @ntuple modelname="datamodel5" model=datamodel5 n_rounds n_chains=8 seed=540+id
+datachain1dict = produce_or_load(pol_fitparameter, datac5config, datadir("sims"))
+
