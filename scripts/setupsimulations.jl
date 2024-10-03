@@ -1,7 +1,7 @@
 
 using DrWatson 
 @quickactivate :RenewalDiffInDiff
-using Random, StochasticTransitionModels 
+using Random#, StochasticTransitionModels 
 
 function seirrates(u, t, p)
     s, e, i, i′, r = u  # i′ represents diagnosed infections. i + i′ is the total infectiouse prevalence

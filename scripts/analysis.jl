@@ -1,5 +1,10 @@
 #
+#=
+using DrWatson, Pkg
+quickactivate(@__DIR__)
+Pkg.instantiate()
 
+=#
 using DrWatson
 @quickactivate :RenewalDiffInDiff
 #include(srcdir("AnalysisFunctions.jl"))
@@ -120,7 +125,7 @@ sim1chain0dict = produce_or_load(pol_fitparameter, s1c0config, datadir("sims"))
 ## Analysis 1 
 # "Canonical" difference in differences: 2 discrete time periods 
 
-W_sim1 = generatew_gt(f_seirvector, simulation1dataset.cases, simulation1dataset.Ns)
+W_sim1 = generatew_gt(f_seirvector, simulation1dataset["cases"], simulation1dataset["Ns"])
 
 sim1model1 = diffindiffparameters_splinetimes(
     W_sim1, 
@@ -139,7 +144,7 @@ sim1chain1dict = produce_or_load(pol_fitparameter, s1c1config, datadir("sims"))
 # Simulation 2 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-W_sim2 = generatew_gt(f_seirvector, simulation2dataset.cases, simulation2dataset.Ns)
+W_sim2 = generatew_gt(f_seirvector, simulation2dataset["cases"], simulation2dataset["Ns"])
 
 ## Analysis 1 
 # Changes over time modelled as discrete steps 

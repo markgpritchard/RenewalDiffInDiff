@@ -16,9 +16,9 @@ maxrounds = 12
 sim1chain0 = loadanalysisdictsasdf("sim1model0", 8, maxrounds, 10)
 plotchains(sim1chain0)
 sim1fit0 = samplerenewalequation_2sets(
-    f_seirvector, sim1chain0, simulation1dataset.interventions; 
-    initialvalues=simulation1dataset.counterfactualcases[1:10, :], 
-    Ns=simulation1dataset.Ns, 
+    f_seirvector, sim1chain0, simulation1dataset["interventions"]; 
+    initialvalues=simulation1dataset["cases_counterfactual"][1:10, :], 
+    Ns=simulation1dataset["Ns"], 
     timeknots=[ [ 1 ]; collect(11:89/4:100) ],
 )
 sim1fit0kv = keyvalues(sim1chain0, sim1fit0)
@@ -35,7 +35,7 @@ safesave(plotsdir("sim1fit0plot.svg"), sim1fit0plot)
 sim1chain1 = loadanalysisdictsasdf("sim1model1", 8, maxrounds, 20)
 plotchains(sim1chain1)
 sim1fit1 = samplerenewalequation_2sets(
-    f_seirvector, sim1chain1, simulation1dataset.interventions; 
+    f_seirvector, sim1chain1, simulation1dataset["interventions"]; 
     initialvalues=simulation1dataset.cases[1:10, :], 
     Ns=simulation1dataset.Ns, 
     timeknots=[ [ 1 ]; collect(11:89/4:100) ],
