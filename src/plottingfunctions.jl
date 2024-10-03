@@ -86,7 +86,8 @@ function plotrenewalequationsamples(
     betafunctions=nothing, betafunctions_counterfactual=nothing,
     datacolour=COLOURVECTOR[1], simcolour=COLOURVECTOR[2], fittedcolour=( :gray, 0.75 ), 
     infectiousduration=1, markersize=3, plotsize=( 800, 800 ), rhoclip=Inf,
-    columntitles=nothing, columntitlefontsize=11.84, xticklabelrotation=0.0, xticks=Makie.automatic, xtitle="Time"
+    columntitles=nothing, columntitlefontsize=11.84, 
+    xticklabelrotation=0.0, xticks=Makie.automatic, xtitle="Time"
 )
     duration = size(cases, 1)
     nlocations = size(cases, 2)

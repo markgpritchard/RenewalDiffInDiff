@@ -82,7 +82,7 @@ safesave(plotsdir("sim2fit1plot.svg"), sim2fit1plot)
 # Covid data 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-datachain1 = loadanalysisdictsasdf("datamodel1", 8, maxrounds, 1010)
+datachain1 = loadanalysisdictsasdf("datamodel1", 8, maxrounds, 3010)
 plotchains(datachain1)
 datafit1 = samplerenewalequation_2sets(
     COVIDSERIALINTERVAL, datachain1, masstesting; 
@@ -93,8 +93,18 @@ datafit1 = samplerenewalequation_2sets(
 )
 datafit1plot = plotrenewalequationsamples(
     allcovidcases, W_allcoviddata, selectpops, datafit1;
-    plotsize=( 400, 400 ),
-    columntitles=[ "Halton", "Knowsley", "Liverpool", "Sefton", "St Helens", "Wirral" ],
+    plotsize=( 600, 400 ),
+    columntitles=[ 
+        "Halton", 
+        "Knowsley", 
+        "Liverpool", 
+        "Sefton", 
+        "St Helens", 
+        "Wigan", 
+        "W. Lancs", 
+        "Warrington", 
+        "Wirral" 
+    ],
     columntitlefontsize=10,
     xticklabelrotation=-π/4,
     xticks=( [ 1, 93, 215 ], [ "June", "Sept.", "Jan." ] ),
@@ -102,6 +112,42 @@ datafit1plot = plotrenewalequationsamples(
 )
 
 safesave(plotsdir("datafit1plot.svg"), datafit1plot)
+
+# force 28% reduction 
+
+reduceddatafit1 = deepcopy(datafit1)
+for g ∈ 1:9, t ∈ 1:216 
+    if masstesting[t, g] == 1 
+        for x ∈ eachindex(reduceddatafit1.y_matrix_poisson_vec)
+            reduceddatafit1.y_matrix_poisson_vec[x][t, g] = round(
+                Int, reduceddatafit1.y_matrix_poisson_vec[x][t, g] / 1.28
+            )
+        end
+    end 
+end
+
+datafit1plotreduced = plotrenewalequationsamples(
+    allcovidcases, W_allcoviddata, selectpops, reduceddatafit1;
+    plotsize=( 600, 400 ),
+    columntitles=[ 
+        "Halton", 
+        "Knowsley", 
+        "Liverpool", 
+        "Sefton", 
+        "St Helens", 
+        "Wigan", 
+        "W. Lancs", 
+        "Warrington", 
+        "Wirral" 
+    ],
+    columntitlefontsize=10,
+    xticklabelrotation=-π/4,
+    xticks=( [ 1, 93, 215 ], [ "June", "Sept.", "Jan." ] ),
+    xtitle="Date, 2020–2021",
+)
+
+
+
 
 
 greater = zeros(Int, size(datafit1.y_matrix_poisson_vec[1]))
