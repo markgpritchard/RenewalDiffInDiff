@@ -100,9 +100,9 @@ datafit1plot = plotrenewalequationsamples(
         "Liverpool", 
         "Sefton", 
         "St Helens", 
-        "Wigan", 
-        "W. Lancs", 
         "Warrington", 
+        "W. Lancs", 
+        "Wigan", 
         "Wirral" 
     ],
     columntitlefontsize=10,
@@ -135,9 +135,9 @@ datafit1plotreduced = plotrenewalequationsamples(
         "Liverpool", 
         "Sefton", 
         "St Helens", 
-        "Wigan", 
-        "W. Lancs", 
         "Warrington", 
+        "W. Lancs", 
+        "Wigan", 
         "Wirral" 
     ],
     columntitlefontsize=10,

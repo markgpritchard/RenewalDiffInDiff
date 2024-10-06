@@ -13,17 +13,19 @@ using CSV, DataFrames, Dates, Pigeons, Turing
 include("setupsimulations.jl")
 include("loaddata.jl")
 
-testrun = false 
+testrun = true 
+
+
 
 if length(ARGS) == 2 
     id = parse(Int, ARGS[1])
     n_rounds = parse(Int, ARGS[2])
 else
-    id = 1 
+    id = 1
     if testrun 
-        n_rounds = 4 
+        n_rounds = 1 
     else
-        n_rounds = 5
+        n_rounds = 6
     end
 end
 
@@ -77,7 +79,7 @@ function pol_fitparameter1(config)
         "chain" => fitted_chains, 
         "pt" => fitted_pt, 
         "modelname" => modelname, 
-        "n_rounds" => n_rounds, 
+        "n_rounds" => 1, 
         "n_chains" => n_chains,
     )
 end
@@ -98,6 +100,7 @@ function pol_fitparameterelement(config)
         "n_chains" => n_chains,
     )
 end
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Simulation 1 
@@ -225,7 +228,7 @@ datamodel1 = diffindiffparameters_splinetimes(
 
 datac1config = @ntuple modelname="datamodel1" model=datamodel1 n_rounds n_chains=8 seed=3010+id
 datachain1dict = produce_or_load(pol_fitparameter, datac1config, datadir("sims"))
-
+#=
 dtimes = let 
     timeperiods = ones(Int, 216)
     for i ∈ 1:216 
@@ -290,7 +293,7 @@ datachain2dictdiscrete = produce_or_load(
 )
 =#
 
-
+#=
 ## Simulation 3 -- make 3 January (universal testing) a competing event for Liverpool 
 
 # Limit to those local authorities near Liverpool that were in the same tiers for control in
@@ -344,10 +347,10 @@ datamodel3 = diffindiffparameters_splinetimes(
 
 datac3config = @ntuple modelname="datamodel3" model=datamodel3 n_rounds n_chains=8 seed=530+id
 datachain3dict = produce_or_load(pol_fitparameter, datac3config, datadir("sims"))
-
+=#
 ## with lead and lag 
 
-
+=#
 datamodel5 = diffindiffparameters_splinetimes(
     W_allcoviddata, 
     allcovidcases,
@@ -356,11 +359,10 @@ datamodel5 = diffindiffparameters_splinetimes(
     selectpops;
     psiprior=0.4,
     secondaryinterventions=[ 
-        InterventionsMatrix([ 217, 217, 146, 217, 217, 217], 261), 
-        InterventionsMatrix([ 217, 217, 174, 217, 217, 217], 261), 
+        InterventionsMatrix([ 172, 172, 146, 172, 172, 217, 217, 217, 172 ], 261), 
+        InterventionsMatrix([ 200, 200, 174, 200, 200, 217, 217, 217, 200 ], 261), 
     ]
 )
 
 datac5config = @ntuple modelname="datamodel5" model=datamodel5 n_rounds n_chains=8 seed=540+id
-datachain1dict = produce_or_load(pol_fitparameter, datac5config, datadir("sims"))
-
+datachain5dict = produce_or_load(pol_fitparameter, datac5config, datadir("sims"))
