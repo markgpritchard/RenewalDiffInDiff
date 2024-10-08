@@ -79,6 +79,54 @@ safesave(plotsdir("sim2fit1plot.svg"), sim2fit1plot)
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Simulation 3 
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+sim3chain1 = loadanalysisdictsasdf("sim3model1", 8, maxrounds, 40)
+plotchains(sim3chain1)
+sim3fit1 = samplerenewalequation_2sets(
+    f_seirvector, sim3chain1, simulation3dataset["interventions"]; 
+    initialvalues=simulation3dataset["cases"][1:20, :], 
+    Ns=simulation3dataset["Ns"], 
+    timeknots=[ [ 1 ]; collect(11:89/4:100) ],
+)
+sim3fit1plot = plotrenewalequationsamples(
+    simulation3dataset, W_sim3, sim3fit1; 
+    betafunctions=[ beta3a, beta3b ], 
+    betafunctions_counterfactual=[ beta3a, beta3bcounterfactual ],
+    infectiousduration=2.5,
+    plotsize=( 400, 400 ),
+    rhoclip=2.5,
+)
+
+safesave(plotsdir("sim3fit1plot.svg"), sim3fit1plot)
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Simulation 4 
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+sim4chain1 = loadanalysisdictsasdf("sim4model1", 8, maxrounds, 50)
+plotchains(sim4chain1)
+sim4fit1 = samplerenewalequation_2sets(
+    f_seirvector, sim4chain1, simulation4dataset["interventions"]; 
+    initialvalues=simulation4dataset["cases"][1:20, :], 
+    Ns=simulation4dataset["Ns"], 
+    timeknots=[ [ 1 ]; collect(11:89/4:100) ],
+)
+sim4fit1plot = plotrenewalequationsamples(
+    simulation4dataset, W_sim4, sim4fit1; 
+    betafunctions=[ beta4a, beta4b ], 
+    betafunctions_counterfactual=[ beta4a, beta4bcounterfactual ],
+    infectiousduration=2.5,
+    plotsize=( 400, 400 ),
+    rhoclip=2.5,
+)
+
+safesave(plotsdir("sim4fit1plot.svg"), sim4fit1plot)
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Covid data 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

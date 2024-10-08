@@ -1,31 +1,21 @@
-#
-
-using DrWatson, Pkg
-quickactivate(@__DIR__)
-Pkg.instantiate()
-
 
 using DrWatson
 @quickactivate :RenewalDiffInDiff
-#include(srcdir("AnalysisFunctions.jl"))
-#using .AnalysisFunctions
 using CSV, DataFrames, Dates, Pigeons, Turing
 include("setupsimulations.jl")
 include("loaddata.jl")
 
 testrun = true 
 
-
-
 if length(ARGS) == 2 
     id = parse(Int, ARGS[1])
     n_rounds = parse(Int, ARGS[2])
 else
-    id = 1
+    id = 1 
     if testrun 
         n_rounds = 4 
     else
-        n_rounds = 8
+        n_rounds = 10
     end
 end
 
@@ -164,6 +154,50 @@ sim2model1 = diffindiffparameters_splinetimes(
 
 s2c1config = @ntuple modelname="sim2model1" model=sim2model1 n_rounds n_chains=8 seed=30+id
 sim2chain1dict = produce_or_load(pol_fitparameter, s2c1config, datadir("sims"))
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Simulation 3 
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+W_sim3 = generatew_gt(f_seirvector, simulation3dataset["cases"], simulation3dataset["Ns"])
+
+## Analysis 1 
+# Changes over time modelled as discrete steps 
+
+sim3model1 = diffindiffparameters_splinetimes(
+    W_sim3, 
+    simulation3dataset["cases"],
+    simulation3dataset["interventions"], 
+    [ [ 1 ]; collect(11:89/4:100) ],
+    simulation3dataset["Ns"];
+    psiprior=0.3,
+)
+
+s3c1config = @ntuple modelname="sim3model1" model=sim3model1 n_rounds n_chains=8 seed=40+id
+sim3chain1dict = produce_or_load(pol_fitparameter, s3c1config, datadir("sims"))
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Simulation 4 
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+W_sim4 = generatew_gt(f_seirvector, simulation4dataset["cases"], simulation4dataset["Ns"])
+
+## Analysis 1 
+# Changes over time modelled as discrete steps 
+
+sim4model1 = diffindiffparameters_splinetimes(
+    W_sim4, 
+    simulation4dataset["cases"],
+    simulation4dataset["interventions"], 
+    [ [ 1 ]; collect(11:89/4:100) ],
+    simulation4dataset["Ns"];
+    psiprior=0.3,
+)
+
+s4c1config = @ntuple modelname="sim4model1" model=sim4model1 n_rounds n_chains=8 seed=50+id
+sim4chain1dict = produce_or_load(pol_fitparameter, s4c1config, datadir("sims"))
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

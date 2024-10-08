@@ -3,13 +3,25 @@ using DrWatson
 @quickactivate :RenewalDiffInDiff
 using Random, StochasticTransitionModels 
 
-function seirrates(u, t, p)
+function seirrates(u, t, p::SEIRParameters{<:Function, <:Real, <:Real})
     s, e, i, i′, r = u  # i′ represents diagnosed infections. i + i′ is the total infectiouse prevalence
     n = sum(@view u[1:5])  # 6th compartment is cumulative diagnosed infecitons
     return [
         p.β(t) * s * (i + i′) / n,  # infection rate
         p.μ * e,  # end of latent period 
         p.θ * p.γ * i / (1 - p.θ),  # diagnosis 
+        p.γ * i,  # recovery (undiagnosed)
+        p.γ * i′  # recovery (diagnosed)
+    ]
+end
+
+function seirrates(u, t, p::SEIRParameters{<:Function, <:Real, <:Function})
+    s, e, i, i′, r = u  # i′ represents diagnosed infections. i + i′ is the total infectiouse prevalence
+    n = sum(@view u[1:5])  # 6th compartment is cumulative diagnosed infecitons
+    return [
+        p.β(t) * s * (i + i′) / n,  # infection rate
+        p.μ * e,  # end of latent period 
+        p.θ(t) * p.γ * i / (1 - p.θ(t)),  # diagnosis 
         p.γ * i,  # recovery (undiagnosed)
         p.γ * i′  # recovery (diagnosed)
     ]
@@ -42,10 +54,21 @@ beta2b(t) = t <= 50 ? beta2bcounterfactual(t) : 0.8 * beta2bcounterfactual(t)
 beta2ccounterfactual(t) = t <= 30 ? 0.9 * beta2a(t) : 0.9 * 1.15 * beta2a(t)
 beta2c(t) = t <= 70 ? beta2ccounterfactual(t) : 0.8 * beta2ccounterfactual(t)
 
+sim3parameters(beta) = simparameters(beta, 0.3)
+beta3a(t) = 0.5 + 0.15 * cos(2π * (t - 80) / 365)
+beta3bcounterfactual(t) = beta3a(t) * (0.9 + 0.02 * t)
+beta3b(t) = t <= 50 ? beta3bcounterfactual(t) : 0.8 * beta3bcounterfactual(t)
+
+sim4parameters(beta, theta) = simparameters(beta, theta)
+beta4a(t) = beta2a(t)
+beta4bcounterfactual(t) = beta2bcounterfactual(t)
+beta4b(t) = beta2b(t)
+theta4a(t) = 0.3
+theta4b(t) = t <= 50 ? 0.3 : 1.2 * 0.3
+
 if isfile(datadir("sims", "simulation1dataset.jld2"))
     simulation1dataset = load(datadir("sims", "simulation1dataset.jld2"))
 else 
-
     simulation1dataset = let  
         interventions = InterventionsMatrix([ nothing, 50 ], 100)
         
@@ -97,15 +120,13 @@ end
 
 # Three locations, continuously changing transmission parameters, and a competing intervention  
 
-
 if isfile(datadir("sims", "simulation2dataset.jld2"))
     simulation2dataset = load(datadir("sims", "simulation2dataset.jld2"))
 else 
-
     simulation2dataset = let  
         interventions = InterventionsMatrix([ nothing, 50, 70 ], 100)
         
-        u02a = [ 7_000_000 - 1000, 1000, 0, 0, 0, 0  ]
+        u02a = [ 7_000_000 - 1000, 1000, 0, 0, 0, 0 ]
         p2a = sim2parameters(beta2a)
         sim2a = stochasticmodel(seirrates, u02a, 1:100, p2a, seirtransitionmatrix)
 
@@ -167,4 +188,112 @@ else
     end
 
     safesave(datadir("sims", "simulation2dataset.jld2"), simulation2dataset)
+end
+
+# Two locations, transmission parameters violate common trends  
+
+if isfile(datadir("sims", "simulation3dataset.jld2"))
+    simulation3dataset = load(datadir("sims", "simulation3dataset.jld2"))
+else 
+    simulation3dataset = let  
+        interventions = InterventionsMatrix([ nothing, 50 ], 100)
+        
+        u03a = [ 5_000_000 - 2000, 2000, 0, 0, 0, 0 ]
+        p3a = sim3parameters(beta3a)
+        sim3a = stochasticmodel(seirrates, u03a, 1:100, p3a, seirtransitionmatrix)
+
+        u03b = [ 11_000_000 - 5000, 5000, 0, 0, 0, 0 ]
+        p3bcounterfactual = sim3parameters(beta3bcounterfactual)
+        sim3bcounterfactual = stochasticmodel(
+            seirrates, u03b, 1:100, p3bcounterfactual, seirtransitionmatrix
+        )
+
+        p3b = sim3parameters(beta3b)
+        sim3b = vcat(
+            sim3bcounterfactual[1:49, :],
+            stochasticmodel(
+                seirrates, sim3bcounterfactual[50, :], 50:100, p3b, seirtransitionmatrix
+            )
+        )
+
+        prevalence = hcat(sim3a[:, 4], sim3b[:, 4])
+        counterfactualprevalence = hcat(sim3a[:, 4], sim3bcounterfactual[:, 4])
+
+        cases = zeros(Int, 100, 2)
+        for t ∈ 2:100 
+            cases[t, 1] = sim3a[t, 6] - sim3a[t-1, 6]
+            cases[t, 2] = sim3b[t, 6] - sim3b[t-1, 6]
+        end
+
+        counterfactualcases = zeros(Int, 100, 2)
+        for t ∈ 2:100 
+            counterfactualcases[t, 1] = sim3a[t, 6] - sim3a[t-1, 6]
+            counterfactualcases[t, 2] = sim3bcounterfactual[t, 6] - sim3bcounterfactual[t-1, 6]
+        end
+
+        Dict(
+            "cases" => cases, 
+            "cases_counterfactual" => counterfactualcases,
+            "interventions" => interventions, 
+            "prevalence" => prevalence, 
+            "counterfactualprevalence" => counterfactualprevalence, 
+            "Ns" => [ 5_000_000, 11_000_000 ],
+        )
+    end
+
+    safesave(datadir("sims", "simulation3dataset.jld2"), simulation3dataset)
+end
+
+# Two locations, proportion detected changes at time of intervention
+
+if isfile(datadir("sims", "simulation4dataset.jld2"))
+    simulation4dataset = load(datadir("sims", "simulation4dataset.jld2"))
+else 
+    simulation4dataset = let  
+        interventions = InterventionsMatrix([ nothing, 50 ], 100)
+        
+        u04a = [ 7_000_000 - 1000, 1000, 0, 0, 0, 0 ]
+        p4a = sim4parameters(beta4a, theta4a)
+        sim4a = stochasticmodel(seirrates, u04a, 1:100, p4a, seirtransitionmatrix)
+
+        u04b = [ 3_000_000 - 1000, 1000, 0, 0, 0, 0 ]
+        p4bcounterfactual = sim4parameters(beta4bcounterfactual, theta4b)
+        sim4bcounterfactual = stochasticmodel(
+            seirrates, u04b, 1:100, p4bcounterfactual, seirtransitionmatrix
+        )
+
+        p4b = sim4parameters(beta4b, theta4b)
+        sim4b = vcat(
+            sim4bcounterfactual[1:49, :],
+            stochasticmodel(
+                seirrates, sim4bcounterfactual[50, :], 50:100, p4b, seirtransitionmatrix
+            )
+        )
+
+        prevalence = hcat(sim4a[:, 4], sim4b[:, 4])
+        counterfactualprevalence = hcat(sim4a[:, 4], sim4bcounterfactual[:, 4])
+
+        cases = zeros(Int, 100, 2)
+        for t ∈ 2:100 
+            cases[t, 1] = sim4a[t, 6] - sim4a[t-1, 6]
+            cases[t, 2] = sim4b[t, 6] - sim4b[t-1, 6]
+        end
+
+        counterfactualcases = zeros(Int, 100, 2)
+        for t ∈ 2:100 
+            counterfactualcases[t, 1] = sim4a[t, 6] - sim4a[t-1, 6]
+            counterfactualcases[t, 2] = sim4bcounterfactual[t, 6] - sim4bcounterfactual[t-1, 6]
+        end
+
+        Dict(
+            "cases" => cases, 
+            "cases_counterfactual" => counterfactualcases,
+            "interventions" => interventions, 
+            "prevalence" => prevalence, 
+            "counterfactualprevalence" => counterfactualprevalence, 
+            "Ns" => [ 7_000_000, 3_000_000 ],
+        )
+    end
+
+    safesave(datadir("sims", "simulation4dataset.jld2"), simulation4dataset)
 end

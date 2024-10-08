@@ -45,13 +45,13 @@ end
 
 InterventionsVector(args...) = InterventionsVector(Int, args...)
 
-abstract type AbstractModelParameters{S, T} end 
+abstract type AbstractModelParameters{S, T, U} end 
 
-struct SEIRParameters{S, T} <: AbstractModelParameters{S, T} 
+struct SEIRParameters{S, T, U} <: AbstractModelParameters{S, T, U} 
     β           :: S 
     μ           :: T 
     γ           :: T 
-    θ           :: T
+    θ           :: U
 end
 
 SEIRParameters(; beta, gamma, nu, psi) = SEIRParameters(beta, gamma, nu, psi)
