@@ -23,9 +23,9 @@ if length(ARGS) == 2
 else
     id = 1
     if testrun 
-        n_rounds = 1 
+        n_rounds = 4 
     else
-        n_rounds = 6
+        n_rounds = 8
     end
 end
 

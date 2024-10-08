@@ -1,7 +1,7 @@
 
 using DrWatson 
 @quickactivate :RenewalDiffInDiff
-using Random#, StochasticTransitionModels 
+using Random, StochasticTransitionModels 
 
 function seirrates(u, t, p)
     s, e, i, i′, r = u  # i′ represents diagnosed infections. i + i′ is the total infectiouse prevalence
@@ -9,7 +9,7 @@ function seirrates(u, t, p)
     return [
         p.β(t) * s * (i + i′) / n,  # infection rate
         p.μ * e,  # end of latent period 
-        p.θ * i,  # diagnosis 
+        p.θ * p.γ * i / (1 - p.θ),  # diagnosis 
         p.γ * i,  # recovery (undiagnosed)
         p.γ * i′  # recovery (diagnosed)
     ]
@@ -28,12 +28,14 @@ Random.seed!(1729)
 
 # Two locations and two discrete transmission parameters 
 
-sim1parameters(beta) = SEIRParameters(beta, 0.5, 0.4, 0.8)
+simparameters(beta, theta) = SEIRParameters(beta, 0.5, 0.4, theta)
+
+sim1parameters(beta) = simparameters(beta, 0.8)
 beta1a(t) = t <= 50 ? 0.6 : 0.66
 beta1bcounterfactual(t) = 1.15 * beta1a(t)
 beta1b(t) = t <= 50 ? beta1bcounterfactual(t) : 0.8 * beta1bcounterfactual(t)
 
-sim2parameters(beta) = SEIRParameters(beta, 0.5, 0.4, 0.5)
+sim2parameters(beta) = simparameters(beta, 0.5)
 beta2a(t) = 0.5 + 0.15 * cos(2π * (t - 80) / 365)
 beta2bcounterfactual(t) = 1.15 * beta2a(t)
 beta2b(t) = t <= 50 ? beta2bcounterfactual(t) : 0.8 * beta2bcounterfactual(t)
@@ -80,10 +82,17 @@ else
             counterfactualcases[t, 2] = sim1bcounterfactual[t, 6] - sim1bcounterfactual[t-1, 6]
         end
 
-        @ntuple cases cases_counterfactual=counterfactualcases interventions prevalence counterfactualprevalence Ns=[ 8_000_000, 5_000_000 ]
+        Dict(
+            "cases" => cases, 
+            "cases_counterfactual" => counterfactualcases,
+            "interventions" => interventions, 
+            "prevalence" => prevalence, 
+            "counterfactualprevalence" => counterfactualprevalence, 
+            "Ns" => [ 8_000_000, 5_000_000 ],
+        )
     end
 
-    safesave(datadir("sims", "simulation1dataset.jld2"), ntuple2dict(simulation1dataset))
+    safesave(datadir("sims", "simulation1dataset.jld2"), simulation1dataset)
 end
 
 # Three locations, continuously changing transmission parameters, and a competing intervention  
@@ -147,8 +156,15 @@ else
             counterfactualcases[t, 3] = sim2ccounterfactual[t, 6] - sim2ccounterfactual[t-1, 6]
         end
 
-        @ntuple cases cases_counterfactual=counterfactualcases interventions prevalence counterfactualprevalence Ns=[ 7_000_000, 6_000_000, 8_000_000 ]
+        Dict(
+            "cases" => cases, 
+            "cases_counterfactual" => counterfactualcases,
+            "interventions" => interventions, 
+            "prevalence" => prevalence, 
+            "counterfactualprevalence" => counterfactualprevalence, 
+            "Ns" => [ 7_000_000, 6_000_000, 8_000_000 ],
+        )
     end
 
-    safesave(datadir("sims", "simulation2dataset.jld2"), ntuple2dict(simulation2dataset))
+    safesave(datadir("sims", "simulation2dataset.jld2"), simulation2dataset)
 end

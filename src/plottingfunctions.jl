@@ -1,5 +1,5 @@
 
-using DataFrames, Pigeons, Turing
+using CairoMakie, DataFrames, Pigeons, Turing
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Constants  
