@@ -2,19 +2,64 @@
 using DrWatson
 @quickactivate :RenewalDiffInDiff
 
-using CairoMakie 
+using CairoMakie, StatsBase
 include("analysis.jl")
 include(srcdir("plottingfunctions.jl"))
 
 maxrounds = 12
 
 
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Plot of generation interval
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+generationintervalplot = let
+    fig = Figure(; size=( 500, 250 ))
+    ax = Axis(fig[1, 1])
+    scatter!(ax, 0:20, [ fseir(t) for t ∈ 0:20 ]; color=:black)
+    formataxis!(ax)
+
+    Label(fig[1, 0], "generation interval, f(τ)"; fontsize=11.84, rotation=π/2, tellheight=false)
+    Label(fig[2, 1], "time, τ"; fontsize=11.84, tellwidth=false)
+
+    colgap!(fig.layout, 1, 5)
+    rowgap!(fig.layout, 1, 5)
+    fig
+end
+
+safesave(plotsdir("generationintervalplot.pdf"), generationintervalplot)
+
+
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Simulation 1
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+
+
 sim1chain0 = loadanalysisdictsasdf("sim1model0", 8, maxrounds, 100)
-plotchains(sim1chain0)
+plotchains(
+    sim1chain0; 
+    size=( 500, 800 ),
+    ylabels = [
+        "log density",
+        "ln ζ mean",
+        "σ ζ",
+        "ln ζ₁",
+        "ln ζ₂",
+        "ln η mean",
+        "σ η",
+        "ln η₁",
+        "ln η₃",
+        "ln η₄",
+        "ln η₅",
+        "ln η₆",
+        "ln δ",
+        "σ²",
+        "θ",
+    ],
+    )
 sim1fit0 = samplerenewalequation_2sets(
     fseir, sim1chain0, simulation1dataset["interventions"]; 
     initialvalues=simulation1dataset["cases_counterfactual"][1:10, :], 
@@ -22,20 +67,8 @@ sim1fit0 = samplerenewalequation_2sets(
     timeknots=[ [ 1 ]; collect(11:89/4:100) ],
 )
 sim1fit0kv = keyvalues(sim1chain0, sim1fit0)
-sim1fit0plot = plotrenewalequationsamples(
-    simulation1dataset["cases_counterfactual"],
-    simulation1dataset["cases_counterfactual"], 
-    W_sim1_0, 
-    simulation1dataset["Ns"], 
-    sim1fit0,
-    fitws(simulation1dataset["cases_counterfactual"], simulation1dataset["Ns"], sim1fit0); 
-    betafunctions=[ beta1a, beta1bcounterfactual ], 
-    betafunctions_counterfactual=[ beta1a, beta1bcounterfactual ],
-    infectiousduration=2.5,
-    plotsize=( 400, 400 ),
-)
 
-safesave(plotsdir("sim1fit0plot.svg"), sim1fit0plot)
+println("mean=$(exp(mean(sim1chain0.logdelta))); CrI=$(exp.(quantile(sim1chain0.logdelta, [ 0.05, 0.95 ]))))")
 
 sim1chain1 = loadanalysisdictsasdf("sim1model1", 8, maxrounds, 110)
 plotchains(sim1chain1)
@@ -46,16 +79,8 @@ sim1fit1 = samplerenewalequation_2sets(
     timeknots=[ [ 1 ]; collect(11:89/4:100) ],
 )
 sim1fit1kv = keyvalues(sim1chain1, sim1fit1)
-sim1fit1plot = plotrenewalequationsamples(
-    simulation1dataset, W_sim1, sim1fit1; 
-    betafunctions=[ beta1a, beta1b ], 
-    betafunctions_counterfactual=[ beta1a, beta1bcounterfactual ],
-    infectiousduration=2.5,
-    plotsize=( 400, 400 ),
-    rhoclip = 2,
-)
 
-safesave(plotsdir("sim1fit1plot.svg"), sim1fit1plot)
+println("mean=$(exp(mean(sim1chain1.logdelta))); CrI=$(exp.(quantile(sim1chain1.logdelta, [ 0.05, 0.95 ]))))")
 
 sim1chain2 = loadanalysisdictsasdf("sim1model2", 8, maxrounds, 120)
 plotchains(sim1chain2)
@@ -83,7 +108,52 @@ sim1fit1plot = plotrenewalequationsamples(
    # ],
 )
 
-safesave(plotsdir("sim1fit1plot.svg"), sim1fit1plot)
+sim1plot = let
+    fig = Figure(; size=( 500, 350 ))
+
+    ga = GridLayout(fig[1, 1])
+    gb = GridLayout(fig[1, 2])
+
+    plotrenewalequationsamples!(
+        ga,
+        simulation1dataset["cases_counterfactual"],
+        simulation1dataset["cases_counterfactual"], 
+        W_sim1_0, 
+        simulation1dataset["Ns"], 
+        sim1fit0,
+        fitws(simulation1dataset["cases_counterfactual"], simulation1dataset["Ns"], sim1fit0); 
+        betafunctions=[ beta1a, beta1bcounterfactual ], 
+        betafunctions_counterfactual=[ beta1a, beta1bcounterfactual ],
+        infectiousduration=2.5,
+        rhoclip = 2.5,
+        columntitles=[ 
+            "Group 1", 
+            "Group 2" 
+        ],
+        columntitlefontsize=10,
+        xtitle="Time (days)",
+    )
+
+    plotrenewalequationsamples!(
+        gb, simulation1dataset, W_sim1, sim1fit1; 
+        betafunctions=[ beta1a, beta1b ], 
+        betafunctions_counterfactual=[ beta1a, beta1bcounterfactual ],
+        infectiousduration=2.5,
+        rhoclip = 2.5,
+        columntitles=[ 
+            "Group 1", 
+            "Group 2" 
+        ],
+        columntitlefontsize=10,
+        xtitle="Time (days)",
+    )
+
+    labelplots!([ "A", "B" ], [ ga, gb ])
+
+    fig
+end
+
+safesave(plotsdir("sim1plot.pdf"), sim1plot)
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -91,15 +161,15 @@ safesave(plotsdir("sim1fit1plot.svg"), sim1fit1plot)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 sim2chain0 = loadanalysisdictsasdf("sim2model0", 8, maxrounds, 200)
-plotchains(sim2chain1)
-sim2fit1 = samplerenewalequation_2sets(
-    fseir, sim2chain1, simulation2dataset["interventions"]; 
+plotchains(sim2chain0)
+sim2fit0 = samplerenewalequation_2sets(
+    fseir, sim2chain0, simulation2dataset["interventions"]; 
     initialvalues=simulation2dataset["cases"][1:20, :], 
     Ns=simulation2dataset["Ns"], 
     timeknots=[ [ 1 ]; collect(11:89/4:100) ],
 )
 sim2fit0plot = plotrenewalequationsamples(
-    simulation2dataset, W_sim2, sim2fit1; 
+    simulation2dataset, W_sim2, sim2fit0; 
     betafunctions=[ beta2a, beta2b, beta2c ], 
     betafunctions_counterfactual=[ beta2a, beta2bcounterfactual, beta2ccounterfactual ],
     infectiousduration=2.5,
@@ -218,7 +288,6 @@ sim3fit1plot = plotrenewalequationsamples(
 
 safesave(plotsdir("sim3fit1plot.svg"), sim3fit1plot)
 
-
 sim3chain2 = loadanalysisdictsasdf("sim3model2", 8, maxrounds, 320)
 plotchains(sim3chain2)
 sim3fit2 = samplerenewalequation_2sets(
@@ -239,7 +308,6 @@ sim3fit2plot = plotrenewalequationsamples(
     plotsize=( 400, 400 ),
     rhoclip=2.5,
 )
-
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -267,7 +335,6 @@ sim4fit0plot = plotrenewalequationsamples(
     plotsize=( 400, 400 ),
     rhoclip=2.5,
 )
-
 
 sim4chain1 = loadanalysisdictsasdf("sim4model1", 8, maxrounds, 410)
 plotchains(sim4chain1)

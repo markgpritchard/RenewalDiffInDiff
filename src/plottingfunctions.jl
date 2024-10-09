@@ -23,18 +23,40 @@ const _NOPLOTNAMES = [
 
 plotchains(data::Chains; kwargs...) = plotchains(DataFrame(data); kwargs...)
 
-function plotchains(data::DataFrame; size=( 400, 5000 ), kwargs...)
+function plotchains(data::DataFrame; size=( 400, 5000 ), ylabels=RenewalDiffInDiff.automatic, kwargs...)
     @unpack colnames, plotnames_ind = _processplotchains(data; kwargs...)
         
     fig = Figure(; size)
     ax = [ Axis(fig[i, 1]) for i ∈ eachindex(plotnames_ind) ]
+    n_ax = length(ax)
     for (j, chainid) ∈ enumerate(unique(data.chain))
         inds = findall(x -> x == chainid, data.chain)
         for (i, k) ∈ enumerate(plotnames_ind) 
             lines!(ax[i], getproperty(data, colnames[k])[inds]; color=COLOURVECTOR[j])
-            Label(fig.layout[i, 0], "$(colnames[k])"; rotation=π/2, tellheight=false)
+            if j == 1 
+                if ylabels == RenewalDiffInDiff.automatic
+                    Label(fig.layout[i, 0], "$(colnames[k])"; rotation=π/2, tellheight=false)
+                else 
+                    Label(fig.layout[i, 0], ylabels[i]; tellheight=false)
+                end
+            end
         end
     end
+
+    for (i, a) ∈ enumerate(ax)
+        if i == n_ax 
+            formataxis!(a)
+        else 
+            formataxis!(a; hidex=true, hidexticks=true, hidespines=( :b, :t, :r))
+        end
+    end
+
+    Label(fig[n_ax+1, 1], "sample"; fontsize=11.84, tellwidth=false)
+
+    colgap!(fig.layout, 1, 5)
+    rowgap!(fig.layout, n_ax, 5)
+
+    #Label(fig[1, 0], "generation interval, f(τ)"; fontsize=11.84, rotation=π/2, tellheight=false)
     
     return fig
 end
@@ -48,56 +70,76 @@ function _processplotchains(data; logdensity="log_density")
     return @ntuple colnames plotnames_ind
 end
 
-function plotrenewalequationsamples(dataset::Dict, w, fittedvaluesset; kwargs...)
-    @unpack cases, cases_counterfactual, Ns = dataset 
-    fittedws = fitws(cases, Ns, fittedvaluesset)
-    return plotrenewalequationsamples(
-        cases, cases_counterfactual, w, Ns, fittedvaluesset, fittedws; 
-        kwargs...
-    )
+function plotrenewalequationsamples(args...; plotsize=( 800, 800 ), kwargs...)
+    fig = Figure(; size=plotsize)
+    plotrenewalequationsamples!(fig, args...; kwargs...)
+    return fig
 end
 
-function plotrenewalequationsamples(dataset::NamedTuple, w, fittedvaluesset; kwargs...) 
-    @unpack cases, counterfactualcases, Ns = dataset 
-    fittedws = fitws(cases, Ns, fittedvaluesset)
-    return plotrenewalequationsamples(
-        cases, counterfactualcases, w, Ns, fittedvaluesset, fittedws; 
-        kwargs...
-    )
+function plotrenewalequationsamples!(fig::Figure, args...; kwargs...)
+    gl = GridLayout(fig[1, 1])
+    plotrenewalequationsamples!(gl, args...; kwargs...)
 end
 
-function plotrenewalequationsamples(cases::Matrix, w, Ns::Vector, fittedvaluesset; kwargs...)
-    fittedws = fitws(cases, Ns, fittedvaluesset)
-    return plotrenewalequationsamples(cases, w, Ns, fittedvaluesset, fittedws; kwargs...)
-end
-
-function plotrenewalequationsamples(
-    cases::Matrix, w, Ns::Vector, fittedvaluesset, fittedws; 
+function plotrenewalequationsamples!(
+    gl::GridLayout, dataset::Dict, w, fittedvaluesset; 
     kwargs...
 )
-    return plotrenewalequationsamples(
-        cases, nothing, w, Ns, fittedvaluesset, fittedws; 
+    @unpack cases, cases_counterfactual, Ns = dataset 
+    fittedws = fitws(cases, Ns, fittedvaluesset)
+    plotrenewalequationsamples!(
+        gl, cases, cases_counterfactual, w, Ns, fittedvaluesset, fittedws; 
         kwargs...
     )
 end
 
-function plotrenewalequationsamples(
+function plotrenewalequationsamples!(
+    gl::GridLayout, dataset::NamedTuple, w, fittedvaluesset; 
+    kwargs...
+) 
+    @unpack cases, counterfactualcases, Ns = dataset 
+    fittedws = fitws(cases, Ns, fittedvaluesset)
+    plotrenewalequationsamples!(
+        gl, cases, counterfactualcases, w, Ns, fittedvaluesset, fittedws; 
+        kwargs...
+    )
+end
+
+function plotrenewalequationsamples!(
+    gl::GridLayout, cases::Matrix, w, Ns::Vector, fittedvaluesset; 
+    kwargs...
+)
+    fittedws = fitws(cases, Ns, fittedvaluesset)
+    plotrenewalequationsamples!(gl, cases, w, Ns, fittedvaluesset, fittedws; kwargs...)
+end
+
+function plotrenewalequationsamples!(
+    gl::GridLayout, cases::Matrix, w, Ns::Vector, fittedvaluesset, fittedws; 
+    kwargs...
+)
+    plotrenewalequationsamples!(
+        gl, cases, nothing, w, Ns, fittedvaluesset, fittedws; 
+        kwargs...
+    )
+end
+
+function plotrenewalequationsamples!(
+    gl::GridLayout, 
     cases::Matrix, cases_counterfactual, w, Ns::Vector, fittedvaluesset, fittedws;
     betafunctions=nothing, betafunctions_counterfactual=nothing,
     datacolour=COLOURVECTOR[1], simcolour=COLOURVECTOR[2], fittedcolour=( :gray, 0.75 ), 
-    infectiousduration=1, markersize=3, plotsize=( 800, 800 ), rhoclip=Inf,
+    infectiousduration=1, markersize=3, rhoclip=Inf,
     columntitles=nothing, columntitlefontsize=11.84, 
     xticklabelrotation=0.0, xticks=Makie.automatic, xtitle="Time"
 )
     duration = size(cases, 1)
     nlocations = size(cases, 2)
     xs = eachindex(fittedvaluesset.rho_matrix_vec[1][:, 1])
-    fig = Figure(; size=plotsize)
-    axs1 = [ Axis(fig[1, i]; xticklabelrotation, xticks) for i ∈ 1:nlocations ]
-    axs2 = [ Axis(fig[2, i]; xticklabelrotation, xticks) for i ∈ 1:nlocations ]
-    axs3 = [ Axis(fig[3, i]; xticklabelrotation, xticks) for i ∈ 1:nlocations ]
-    axs4 = [ Axis(fig[4, i]; xticklabelrotation, xticks) for i ∈ 1:nlocations ]
-    #axs5 = [ Axis(fig[5, i]; xticks) for i ∈ 1:nlocations ]
+
+    axs1 = [ Axis(gl[1, i]; xticklabelrotation, xticks) for i ∈ 1:nlocations ]
+    axs2 = [ Axis(gl[2, i]; xticklabelrotation, xticks) for i ∈ 1:nlocations ]
+    axs3 = [ Axis(gl[3, i]; xticklabelrotation, xticks) for i ∈ 1:nlocations ]
+    axs4 = [ Axis(gl[4, i]; xticklabelrotation, xticks) for i ∈ 1:nlocations ]
 
     for i ∈ 1:nlocations
         ws = _modelquantiles(fittedws, i)
@@ -108,7 +150,7 @@ function plotrenewalequationsamples(
         )
 
         if !isnothing(columntitles)
-            Label(fig[0, i], columntitles[i]; fontsize=columntitlefontsize, tellwidth=false)
+            Label(gl[0, i], columntitles[i]; fontsize=columntitlefontsize, tellwidth=false)
         end
         
         band!(axs1[i], xs, ws[:, 1], ws[:, 2]; color=fittedcolour)
@@ -118,13 +160,7 @@ function plotrenewalequationsamples(
         )
 
         inds = findall(x -> x <= rhoclip, rhoqs[:, 2])
-        band!(
-            axs2[i], 
-            xs[inds], 
-            rhoqs[:, 1][inds], 
-            rhoqs[:, 2][inds];
-            color=fittedcolour
-        )
+        band!(axs2[i], xs[inds], rhoqs[:, 1][inds], rhoqs[:, 2][inds]; color=fittedcolour)
 
         band!(
             axs3[i], xs, 100_000 .* yqs[:, 1] ./ Ns[i], 100_000 .* yqs[:, 2] ./ Ns[i]; 
@@ -140,8 +176,6 @@ function plotrenewalequationsamples(
             color=fittedcolour
         )
         
-        #band!(axs5[i], xs, logyqs_cf[:, 1], logyqs_cf[:, 2]; color=fittedcolour)
-
         isnothing(betafunctions) && continue
         scatter!(
             axs2[i], [ betafunctions[i](t) * infectiousduration for t ∈ 1:duration ]; 
@@ -150,10 +184,7 @@ function plotrenewalequationsamples(
     
         isnothing(cases_counterfactual) && continue
         scatter!(
-            axs4[i], 
-            100_000 .* 
-                (cases[:, i] .- cases_counterfactual[:, i]) ./ 
-                Ns[i]; 
+            axs4[i], 100_000 .* (cases[:, i] .- cases_counterfactual[:, i]) ./ Ns[i]; 
             color=simcolour, markersize
         )
     end
@@ -181,32 +212,31 @@ function plotrenewalequationsamples(
             )
             formataxis!(
                 axs3[col]; 
-                hidex=true, hidexticks=true, hidey=true, hideyticks=true, hidespines=( :b, :r, :t, :l )
+                hidex=true, hidexticks=true, hidey=true, hideyticks=true, 
+                hidespines=( :b, :r, :t, :l )
             )
             formataxis!(axs4[col]; hidey=true, hideyticks=true, hidespines=( :r, :t, :l ))
         end
     end
 
-    Label(fig[1, 0], "w(gt)"; fontsize=11.84, rotation=π/2, tellheight=false)
+    Label(gl[1, 0], "w(gt)"; fontsize=11.84, rotation=π/2, tellheight=false)
     Label(
-        fig[2, 0], "Basic reproduction\nnumber"; 
+        gl[2, 0], "R₀"; 
         fontsize=11.84, rotation=π/2, tellheight=false
     )
-    Label(fig[3, 0], "Diagnoses"; fontsize=11.84, rotation=π/2, tellheight=false)
+    Label(gl[3, 0], "Diagnoses"; fontsize=11.84, rotation=π/2, tellheight=false)
     Label(
-        fig[4, 0], "Effect of\nintervention"; 
+        gl[4, 0], "Difference"; 
         fontsize=11.84, rotation=π/2, tellheight=false
     )
-    Label(fig[5, 1:nlocations], xtitle; fontsize=11.84, tellwidth=false)
+    Label(gl[5, 1:nlocations], xtitle; fontsize=11.84, tellwidth=false)
 
-    colgap!(fig.layout, 1, 5)
+    colgap!(gl, 1, 5)
     if isnothing(columntitles)
-        rowgap!(fig.layout, 4, 5)
+        rowgap!(gl, 4, 5)
     else
-        for r ∈ [ 1, 5 ] rowgap!(fig.layout, r, 5) end 
+        for r ∈ [ 1, 5 ] rowgap!(gl, r, 5) end 
     end
-
-    return fig
 end
 
 function _modelquantiles(vec, col; quantiles=[ 0.05, 0.95 ])
@@ -273,8 +303,6 @@ function fitws(cases::Matrix, Ns::Vector, fittedvaluesset)
                 if t == 1 
                     ws1[t, g] = log(rho_matrix_vec[j][t, g]) + log(1)
                 else
-                    #println("j=$j, t=$t, g=$g, rho_matrix_vec[j][t, g]=$(rho_matrix_vec[j][t, g])")
-                    #println("sum(cases[1:(t - 1), g])=$(sum(cases[1:(t - 1), g])), (psi_vec[$j]=$(psi_vec[j]) Ns[$g]=$(Ns[g]))")
                     ws1[t, g] =+(
                         log(rho_matrix_vec[j][t, g]),
                         log(1 - sum(cases[1:(t - 1), g]) / (psi_vec[j] * Ns[g]))  # this should already be constrained to be positive
@@ -443,39 +471,45 @@ Applies labels to plots within a larger figure.
 * `padding = ( 0, 5, 5, 0 )`: label padding, provided as a `Tuple` in the order left, 
     right, bottom, top
 """
-function labelplots!(labels, layouts; cols = 0, rows = 0, kwargs...)
+function labelplots!(labels, layouts; cols=0, rows=0, kwargs...)
     return _labelplots!(labels, layouts, rows, cols; kwargs...)
 end 
 
 function _labelplots!(labels::Vector{String}, layouts, rows::Int, cols; kwargs...)
-    rowvector = zeros(Int, length(labels)) .+ rows 
+    rowvector=(zeros(Int, length(labels)) .+ rows) 
     return _labelplots!(labels, layouts, rowvector, cols; kwargs...)
 end 
 
-function _labelplots!(labels::Vector{String}, layouts, rows::Vector{<:Int}, cols::Int; kwargs...)
+function _labelplots!(
+    labels::Vector{String}, layouts, rows::Vector{<:Int}, cols::Int; 
+    kwargs...
+)
     colvector = zeros(Int, length(labels)) .+ cols 
     return _labelplots!(labels, layouts, rows, colvector; kwargs...)
 end 
 
-function _labelplots!(labels::Vector{String}, layouts::Vector, rows::Vector{<:Int}, cols::Vector{<:Int};
-        kwargs...
-    )
+function _labelplots!(
+    labels::Vector{String}, layouts::Vector, rows::Vector{<:Int}, cols::Vector{<:Int};
+    kwargs...
+)
     @assert length(labels) == length(layouts)
     for (row, col, label, layout) ∈ zip(rows, cols, labels, layouts)
         _labelplots!(label, layout, row, col; kwargs...)
     end 
 end
 
-function _labelplots!(labels::Vector{String}, layout, rows::Vector{<:Int}, cols::Vector{<:Int};
-        kwargs...
-    )
+function _labelplots!(
+    labels::Vector{String}, layout, rows::Vector{<:Int}, cols::Vector{<:Int};
+    kwargs...
+)
     for (row, col, label) ∈ zip(rows, cols, labels)
         _labelplots!(label, layout, row, col; kwargs...)
     end 
 end
 
-function _labelplots!(label::String, layout, row::Int, col::Int;
-        font = "TeX Gyre Heros Bold", fontsize = 14, halign = :left, padding = ( 0, 5, 5, 0 )
-    )
+function _labelplots!(
+    label::String, layout, row::Int, col::Int;
+    font="TeX Gyre Heros Bold", fontsize=14, halign=:left, padding=( 0, 5, 5, 0 )
+)
     Label(layout[row, col, TopLeft()], label; font, fontsize, halign, padding)
 end 
