@@ -174,7 +174,7 @@ sim2model0 = diffindiffparameters_splinetimes(
     psiprior=0.3,
 )
 
-s2c0config = @ntuple modelname="sim2model1" model=sim2model1 n_rounds n_chains=8 seed=200+id
+s2c0config = @ntuple modelname="sim2model1" model=sim2model0 n_rounds n_chains=8 seed=200+id
 sim2chain0dict = produce_or_load(pol_fitparameter, s2c0config, datadir("sims"))
 
 
@@ -233,7 +233,7 @@ sim2model3 = diffindiffparameters_splinetimes(
     ],
 )
 
-s2c3config = @ntuple modelname="sim2model2" model=sim2model3 n_rounds n_chains=8 seed=230+id
+s2c3config = @ntuple modelname="sim2model3" model=sim2model3 n_rounds n_chains=8 seed=230+id
 sim2chain3dict = produce_or_load(pol_fitparameter, s2c3config, datadir("sims"))
 
 
