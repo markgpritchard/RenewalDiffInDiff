@@ -112,11 +112,11 @@ sim1model0 = diffindiffparameters_splinetimes(
     psiprior=0.8
 )
 
-s1c0config = @ntuple modelname="sim1model0" model=sim1model0 n_rounds n_chains=8 seed=10+id
+s1c0config = @ntuple modelname="sim1model0" model=sim1model0 n_rounds n_chains=8 seed=100+id
 sim1chain0dict = produce_or_load(pol_fitparameter, s1c0config, datadir("sims"))
 
 ## Analysis 1 
-# "Canonical" difference in differences: 2 discrete time periods 
+# "Canonical" difference in differences
 
 W_sim1 = generatew_gt(f_seirvector, simulation1dataset["cases"], simulation1dataset["Ns"])
 
@@ -129,7 +129,7 @@ sim1model1 = diffindiffparameters_splinetimes(
     psiprior=0.8,
 )
 
-s1c1config = @ntuple modelname="sim1model1" model=sim1model1 n_rounds n_chains=8 seed=20+id
+s1c1config = @ntuple modelname="sim1model1" model=sim1model1 n_rounds n_chains=8 seed=110+id
 sim1chain1dict = produce_or_load(pol_fitparameter, s1c1config, datadir("sims"))
 
 
@@ -140,7 +140,6 @@ sim1chain1dict = produce_or_load(pol_fitparameter, s1c1config, datadir("sims"))
 W_sim2 = generatew_gt(f_seirvector, simulation2dataset["cases"], simulation2dataset["Ns"])
 
 ## Analysis 1 
-# Changes over time modelled as discrete steps 
 
 sim2model1 = diffindiffparameters_splinetimes(
     W_sim2, 
@@ -152,7 +151,7 @@ sim2model1 = diffindiffparameters_splinetimes(
     secondaryinterventions=InterventionsMatrix([ nothing, nothing, 30 ], 100),
 )
 
-s2c1config = @ntuple modelname="sim2model1" model=sim2model1 n_rounds n_chains=8 seed=30+id
+s2c1config = @ntuple modelname="sim2model1" model=sim2model1 n_rounds n_chains=8 seed=210+id
 sim2chain1dict = produce_or_load(pol_fitparameter, s2c1config, datadir("sims"))
 
 
@@ -160,10 +159,30 @@ sim2chain1dict = produce_or_load(pol_fitparameter, s2c1config, datadir("sims"))
 # Simulation 3 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+W_sim3_0 = generatew_gt(
+    f_seirvector, simulation3dataset["cases_counterfactual"], simulation3dataset["Ns"]
+)
+
 W_sim3 = generatew_gt(f_seirvector, simulation3dataset["cases"], simulation3dataset["Ns"])
 
+
+## Analysis 0 
+# No effect of interventions 
+
+sim3model0 = diffindiffparameters_splinetimes(
+    W_sim3_0, 
+    simulation3dataset["cases_counterfactual"],
+    simulation3dataset["interventions"], 
+    [ [ 1 ]; collect(11:89/4:100) ],
+    simulation3dataset["Ns"];
+    psiprior=0.3
+)
+
+s3c0config = @ntuple modelname="sim3model0" model=sim3model0 n_rounds n_chains=8 seed=300+id
+sim3chain0dict = produce_or_load(pol_fitparameter, s3c0config, datadir("sims"))
+
+
 ## Analysis 1 
-# Changes over time modelled as discrete steps 
 
 sim3model1 = diffindiffparameters_splinetimes(
     W_sim3, 
@@ -174,15 +193,56 @@ sim3model1 = diffindiffparameters_splinetimes(
     psiprior=0.3,
 )
 
-s3c1config = @ntuple modelname="sim3model1" model=sim3model1 n_rounds n_chains=8 seed=40+id
+s3c1config = @ntuple modelname="sim3model1" model=sim3model1 n_rounds n_chains=8 seed=310+id
 sim3chain1dict = produce_or_load(pol_fitparameter, s3c1config, datadir("sims"))
+
+
+## Analysis 2
+
+# Add lag and lead times to explore non-parallel trends 
+
+sim3model2 = diffindiffparameters_splinetimes(
+    W_sim3, 
+    simulation3dataset["cases"],
+    simulation3dataset["interventions"], 
+    [ [ 1 ]; collect(11:89/4:100) ],
+    simulation3dataset["Ns"];
+    psiprior=0.3,
+    secondaryinterventions=[
+        InterventionsMatrix([ nothing, 36 ], 100),
+        InterventionsMatrix([ nothing, 64 ], 100)
+    ],
+
+)
+
+s3c2config = @ntuple modelname="sim3model2" model=sim3model2 n_rounds n_chains=8 seed=320+id
+sim3chain2dict = produce_or_load(pol_fitparameter, s3c2config, datadir("sims"))
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Simulation 4 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+W_sim4_0 = generatew_gt(
+    f_seirvector, simulation4dataset["cases_counterfactual"], simulation4dataset["Ns"]
+)
+
 W_sim4 = generatew_gt(f_seirvector, simulation4dataset["cases"], simulation4dataset["Ns"])
+
+## Analysis 0 
+# No effect of interventions 
+
+sim4model0 = diffindiffparameters_splinetimes(
+    W_sim4_0, 
+    simulation4dataset["cases_counterfactual"],
+    simulation4dataset["interventions"], 
+    [ [ 1 ]; collect(11:89/4:100) ],
+    simulation4dataset["Ns"];
+    psiprior=0.3
+)
+
+s4c0config = @ntuple modelname="sim4model0" model=sim4model0 n_rounds n_chains=8 seed=400+id
+sim4chain0dict = produce_or_load(pol_fitparameter, s4c0config, datadir("sims"))
 
 ## Analysis 1 
 # Changes over time modelled as discrete steps 
@@ -198,6 +258,28 @@ sim4model1 = diffindiffparameters_splinetimes(
 
 s4c1config = @ntuple modelname="sim4model1" model=sim4model1 n_rounds n_chains=8 seed=50+id
 sim4chain1dict = produce_or_load(pol_fitparameter, s4c1config, datadir("sims"))
+
+
+## Analysis 2
+
+# Add lag and lead times to explore non-parallel trends 
+
+sim4model2 = diffindiffparameters_splinetimes(
+    W_sim4, 
+    simulation4dataset["cases"],
+    simulation4dataset["interventions"], 
+    [ [ 1 ]; collect(11:89/4:100) ],
+    simulation4dataset["Ns"];
+    psiprior=0.3,
+    secondaryinterventions=[
+        InterventionsMatrix([ nothing, 36 ], 100),
+        InterventionsMatrix([ nothing, 64 ], 100)
+    ],
+
+)
+
+s4c2config = @ntuple modelname="sim4model2" model=sim4model2 n_rounds n_chains=8 seed=420+id
+sim4chain2dict = produce_or_load(pol_fitparameter, s4c2config, datadir("sims"))
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
