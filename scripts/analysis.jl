@@ -148,7 +148,6 @@ sim1model2 = diffindiffparameters_splinetimes(
         InterventionsMatrix([ nothing, 36 ], 100),
         InterventionsMatrix([ nothing, 64 ], 100)
     ],
-
 )
 
 s1c2config = @ntuple modelname="sim1model2" model=sim1model2 n_rounds n_chains=8 seed=120+id
@@ -174,7 +173,7 @@ sim2model0 = diffindiffparameters_splinetimes(
     psiprior=0.3,
 )
 
-s2c0config = @ntuple modelname="sim2model1" model=sim2model0 n_rounds n_chains=8 seed=200+id
+s2c0config = @ntuple modelname="sim2model0" model=sim2model0 n_rounds n_chains=8 seed=200+id
 sim2chain0dict = produce_or_load(pol_fitparameter, s2c0config, datadir("sims"))
 
 
@@ -206,8 +205,10 @@ sim2model2 = diffindiffparameters_splinetimes(
     simulation2dataset["Ns"];
     psiprior=0.3,
     secondaryinterventions=[
-        InterventionsMatrix([ nothing, 36, 56 ], 100),
-        InterventionsMatrix([ nothing, 64, 84 ], 100)
+        InterventionsMatrix([ nothing, 36, nothing ], 100),
+        InterventionsMatrix([ nothing, nothing, 56 ], 100),
+        InterventionsMatrix([ nothing, 64, nothing ], 100),
+        InterventionsMatrix([ nothing, nothing, 84 ], 100),
     ],
 )
 
@@ -338,7 +339,7 @@ sim4model1 = diffindiffparameters_splinetimes(
     psiprior=0.3,
 )
 
-s4c1config = @ntuple modelname="sim4model1" model=sim4model1 n_rounds n_chains=8 seed=50+id
+s4c1config = @ntuple modelname="sim4model1" model=sim4model1 n_rounds n_chains=8 seed=410+id
 sim4chain1dict = produce_or_load(pol_fitparameter, s4c1config, datadir("sims"))
 
 
@@ -357,7 +358,6 @@ sim4model2 = diffindiffparameters_splinetimes(
         InterventionsMatrix([ nothing, 36 ], 100),
         InterventionsMatrix([ nothing, 64 ], 100)
     ],
-
 )
 
 s4c2config = @ntuple modelname="sim4model2" model=sim4model2 n_rounds n_chains=8 seed=420+id
@@ -456,10 +456,42 @@ datamodel3 = diffindiffparameters_splinetimes(
     selectpops;
     psiprior=0.4,
     secondaryinterventions=[ 
-        InterventionsMatrix([ 172, 172, 146, 172, 172, 217, 217, 217, 172 ], 261), 
-        InterventionsMatrix([ 200, 200, 174, 200, 200, 217, 217, 217, 200 ], 261), 
-    ]
+        InterventionsMatrix([ 172, 172, 146, 172, 172, 217, 217, 217, 172 ], 216), 
+        InterventionsMatrix([ 200, 200, 174, 200, 200, 217, 217, 217, 200 ], 216), 
+    ],
 )
 
 datac3config = @ntuple modelname="datamodel3" model=datamodel3 n_rounds n_chains=8 seed=1030+id
 datachain3dict = produce_or_load(pol_fitparameter, datac3config, datadir("sims"))
+
+#=
+## Analysis 4
+
+# with separate lead and lag for each area
+
+datamodel4 = diffindiffparameters_splinetimes(
+    W_allcoviddata, 
+    allcovidcases,
+    masstesting, 
+    collect(1.0:28:216),
+    selectpops;
+    psiprior=0.4,
+    secondaryinterventions=[ 
+        InterventionsMatrix([ 172, 217, 217, 217, 217, 217, 217, 217, 217 ], 216), 
+        InterventionsMatrix([ 200, 217, 217, 217, 217, 217, 217, 217, 217 ], 216), 
+        InterventionsMatrix([ 217, 172, 217, 217, 217, 217, 217, 217, 217 ], 216), 
+        InterventionsMatrix([ 217, 200, 217, 217, 217, 217, 217, 217, 217 ], 216),
+        InterventionsMatrix([ 217, 217, 146, 217, 217, 217, 217, 217, 217 ], 216), 
+        InterventionsMatrix([ 217, 217, 174, 217, 217, 217, 217, 217, 217 ], 216),        
+        InterventionsMatrix([ 217, 217, 217, 172, 217, 217, 217, 217, 217 ], 216), 
+        InterventionsMatrix([ 217, 217, 217, 200, 172, 217, 217, 217, 217 ], 216),    
+        InterventionsMatrix([ 217, 217, 217, 217, 200, 217, 217, 217, 217 ], 216), 
+        InterventionsMatrix([ 217, 217, 217, 217, 217, 217, 217, 217, 217 ], 216),    
+        InterventionsMatrix([ 217, 217, 217, 217, 217, 217, 217, 217, 172 ], 216), 
+        InterventionsMatrix([ 217, 217, 217, 217, 217, 217, 217, 217, 200 ], 216),        
+    ],
+)
+
+datac4config = @ntuple modelname="datamodel4" model=datamodel4 n_rounds n_chains=8 seed=1040+id
+datachain4dict = produce_or_load(pol_fitparameter, datac4config, datadir("sims"))
+=#
