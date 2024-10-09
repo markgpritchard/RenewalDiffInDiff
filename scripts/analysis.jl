@@ -19,16 +19,9 @@ else
     end
 end
 
-f_seirvector = let 
-    u0 = [ 0.0, 1.0, 0.0, 0.0 ]
-    p = SEIRParameters(0, 0.5, 0.4, 1.0)
-    seirresult = seir_deterministic(u0, p, 1:1000)
-    prevalence = seirresult[:, 3]
-    prevalence[1:50] ./ sum(prevalence)
+function fseir(t, mu=0.5, gamma=0.4)
+    return mu * gamma * (exp(-gamma * t) - exp(-mu * t)) / (mu - gamma) 
 end
-
-#offsettimes = [ -42, -21, -7, 7, 21, 42 ]
-#offsettimes = 28 .* collect(-6:1:6)
 
 function pol_fitparameter(config)
     @unpack model, modelname, n_rounds, n_chains, seed = config
@@ -100,7 +93,7 @@ end
 # No effect of interventions 
 
 W_sim1_0 = generatew_gt(
-    f_seirvector, simulation1dataset["cases_counterfactual"], simulation1dataset["Ns"]
+    fseir, simulation1dataset["cases_counterfactual"], simulation1dataset["Ns"]
 )
 
 sim1model0 = diffindiffparameters_splinetimes(
@@ -118,7 +111,7 @@ sim1chain0dict = produce_or_load(pol_fitparameter, s1c0config, datadir("sims"))
 ## Analysis 1 
 # "Canonical" difference in differences
 
-W_sim1 = generatew_gt(f_seirvector, simulation1dataset["cases"], simulation1dataset["Ns"])
+W_sim1 = generatew_gt(fseir, simulation1dataset["cases"], simulation1dataset["Ns"])
 
 sim1model1 = diffindiffparameters_splinetimes(
     W_sim1, 
@@ -158,7 +151,7 @@ sim1chain2dict = produce_or_load(pol_fitparameter, s1c2config, datadir("sims"))
 # Simulation 2 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-W_sim2 = generatew_gt(f_seirvector, simulation2dataset["cases"], simulation2dataset["Ns"])
+W_sim2 = generatew_gt(fseir, simulation2dataset["cases"], simulation2dataset["Ns"])
 
 ## Analysis 0
 
@@ -243,10 +236,10 @@ sim2chain3dict = produce_or_load(pol_fitparameter, s2c3config, datadir("sims"))
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 W_sim3_0 = generatew_gt(
-    f_seirvector, simulation3dataset["cases_counterfactual"], simulation3dataset["Ns"]
+    fseir, simulation3dataset["cases_counterfactual"], simulation3dataset["Ns"]
 )
 
-W_sim3 = generatew_gt(f_seirvector, simulation3dataset["cases"], simulation3dataset["Ns"])
+W_sim3 = generatew_gt(fseir, simulation3dataset["cases"], simulation3dataset["Ns"])
 
 
 ## Analysis 0 
@@ -307,10 +300,10 @@ sim3chain2dict = produce_or_load(pol_fitparameter, s3c2config, datadir("sims"))
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 W_sim4_0 = generatew_gt(
-    f_seirvector, simulation4dataset["cases_counterfactual"], simulation4dataset["Ns"]
+    fseir, simulation4dataset["cases_counterfactual"], simulation4dataset["Ns"]
 )
 
-W_sim4 = generatew_gt(f_seirvector, simulation4dataset["cases"], simulation4dataset["Ns"])
+W_sim4 = generatew_gt(fseir, simulation4dataset["cases"], simulation4dataset["Ns"])
 
 ## Analysis 0 
 # No effect of interventions 
