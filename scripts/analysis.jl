@@ -133,6 +133,28 @@ s1c1config = @ntuple modelname="sim1model1" model=sim1model1 n_rounds n_chains=8
 sim1chain1dict = produce_or_load(pol_fitparameter, s1c1config, datadir("sims"))
 
 
+## Analysis 2
+
+# Add lag and lead times to explore non-parallel trends 
+
+sim1model2 = diffindiffparameters_splinetimes(
+    W_sim1, 
+    simulation1dataset["cases"],
+    simulation1dataset["interventions"], 
+    [ [ 1 ]; collect(11:89/4:100) ],
+    simulation1dataset["Ns"];
+    psiprior=0.3,
+    secondaryinterventions=[
+        InterventionsMatrix([ nothing, 36 ], 100),
+        InterventionsMatrix([ nothing, 64 ], 100)
+    ],
+
+)
+
+s1c2config = @ntuple modelname="sim1model2" model=sim1model2 n_rounds n_chains=8 seed=120+id
+sim1chain2dict = produce_or_load(pol_fitparameter, s1c2config, datadir("sims"))
+
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Simulation 2 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -153,6 +175,28 @@ sim2model1 = diffindiffparameters_splinetimes(
 
 s2c1config = @ntuple modelname="sim2model1" model=sim2model1 n_rounds n_chains=8 seed=210+id
 sim2chain1dict = produce_or_load(pol_fitparameter, s2c1config, datadir("sims"))
+
+
+## Analysis 2
+
+# Add lag and lead times to explore non-parallel trends 
+
+sim2model2 = diffindiffparameters_splinetimes(
+    W_sim2, 
+    simulation2dataset["cases"],
+    simulation2dataset["interventions"], 
+    [ [ 1 ]; collect(11:89/4:100) ],
+    simulation2dataset["Ns"];
+    psiprior=0.3,
+    secondaryinterventions=[
+        InterventionsMatrix([ nothing, 36, 56 ], 100),
+        InterventionsMatrix([ nothing, 64, 84 ], 100)
+    ],
+
+)
+
+s2c2config = @ntuple modelname="sim2model2" model=sim2model2 n_rounds n_chains=8 seed=220+id
+sim2chain2dict = produce_or_load(pol_fitparameter, s2c2config, datadir("sims"))
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
