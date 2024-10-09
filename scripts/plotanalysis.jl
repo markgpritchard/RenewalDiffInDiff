@@ -13,7 +13,7 @@ maxrounds = 12
 # Simulation 1
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-sim1chain0 = loadanalysisdictsasdf("sim1model0", 8, maxrounds, 10)
+sim1chain0 = loadanalysisdictsasdf("sim1model0", 8, maxrounds, 100)
 plotchains(sim1chain0)
 sim1fit0 = samplerenewalequation_2sets(
     f_seirvector, sim1chain0, simulation1dataset["interventions"]; 
@@ -32,7 +32,7 @@ sim1fit0plot = plotrenewalequationsamples(
 
 safesave(plotsdir("sim1fit0plot.svg"), sim1fit0plot)
 
-sim1chain1 = loadanalysisdictsasdf("sim1model1", 8, maxrounds, 20)
+sim1chain1 = loadanalysisdictsasdf("sim1model1", 8, maxrounds, 110)
 plotchains(sim1chain1)
 sim1fit1 = samplerenewalequation_2sets(
     f_seirvector, sim1chain1, simulation1dataset["interventions"]; 
@@ -47,7 +47,31 @@ sim1fit1plot = plotrenewalequationsamples(
     betafunctions_counterfactual=[ beta1a, beta1bcounterfactual ],
     infectiousduration=2.5,
     plotsize=( 400, 400 ),
-    rhoclip = 2
+    rhoclip = 2,
+)
+
+safesave(plotsdir("sim1fit1plot.svg"), sim1fit1plot)
+
+sim1chain2 = loadanalysisdictsasdf("sim1model2", 8, maxrounds, 120)
+plotchains(sim1chain2)
+sim1fit2 = samplerenewalequation_2sets(
+    f_seirvector, sim1chain2, simulation1dataset["interventions"]; 
+    initialvalues=simulation1dataset["cases"][1:10, :], 
+    Ns=simulation1dataset["Ns"], 
+    timeknots=[ [ 1 ]; collect(11:89/4:100) ],
+)
+sim1fit2kv = keyvalues(sim1chain2, sim1fit1)
+sim1fit1plot = plotrenewalequationsamples(
+    simulation1dataset, W_sim1, sim1fit2; 
+    betafunctions=[ beta1a, beta1b ], 
+    betafunctions_counterfactual=[ beta1a, beta1bcounterfactual ],
+    infectiousduration=2.5,
+    plotsize=( 400, 400 ),
+    #rhoclip = 2,
+    secondaryinterventions=[
+        InterventionsMatrix([ nothing, 36 ], 100),
+        InterventionsMatrix([ nothing, 64 ], 100)
+    ],
 )
 
 safesave(plotsdir("sim1fit1plot.svg"), sim1fit1plot)
