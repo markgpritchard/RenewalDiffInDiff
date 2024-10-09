@@ -161,6 +161,23 @@ sim1chain2dict = produce_or_load(pol_fitparameter, s1c2config, datadir("sims"))
 
 W_sim2 = generatew_gt(f_seirvector, simulation2dataset["cases"], simulation2dataset["Ns"])
 
+## Analysis 0
+
+# Do not account for known confounder
+
+sim2model0 = diffindiffparameters_splinetimes(
+    W_sim2, 
+    simulation2dataset["cases"],
+    simulation2dataset["interventions"], 
+    [ [ 1 ]; collect(11:89/4:100) ],
+    simulation2dataset["Ns"];
+    psiprior=0.3,
+)
+
+s2c0config = @ntuple modelname="sim2model1" model=sim2model1 n_rounds n_chains=8 seed=200+id
+sim2chain0dict = produce_or_load(pol_fitparameter, s2c0config, datadir("sims"))
+
+
 ## Analysis 1 
 
 sim2model1 = diffindiffparameters_splinetimes(
@@ -179,7 +196,7 @@ sim2chain1dict = produce_or_load(pol_fitparameter, s2c1config, datadir("sims"))
 
 ## Analysis 2
 
-# Add lag and lead times to explore non-parallel trends 
+# Add lag and lead times to explore non-parallel trends but do not account for known confounder
 
 sim2model2 = diffindiffparameters_splinetimes(
     W_sim2, 
@@ -192,11 +209,32 @@ sim2model2 = diffindiffparameters_splinetimes(
         InterventionsMatrix([ nothing, 36, 56 ], 100),
         InterventionsMatrix([ nothing, 64, 84 ], 100)
     ],
-
 )
 
 s2c2config = @ntuple modelname="sim2model2" model=sim2model2 n_rounds n_chains=8 seed=220+id
 sim2chain2dict = produce_or_load(pol_fitparameter, s2c2config, datadir("sims"))
+
+
+## Analysis 3
+
+# Add lag and lead times to explore non-parallel trends plus the known confounder
+
+sim2model3 = diffindiffparameters_splinetimes(
+    W_sim2, 
+    simulation2dataset["cases"],
+    simulation2dataset["interventions"], 
+    [ [ 1 ]; collect(11:89/4:100) ],
+    simulation2dataset["Ns"];
+    psiprior=0.3,
+    secondaryinterventions=[
+        InterventionsMatrix([ nothing, nothing, 30 ], 100),
+        InterventionsMatrix([ nothing, 36, 56 ], 100),
+        InterventionsMatrix([ nothing, 64, 84 ], 100)
+    ],
+)
+
+s2c3config = @ntuple modelname="sim2model2" model=sim2model3 n_rounds n_chains=8 seed=230+id
+sim2chain3dict = produce_or_load(pol_fitparameter, s2c3config, datadir("sims"))
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
