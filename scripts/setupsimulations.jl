@@ -56,7 +56,7 @@ beta2c(t) = t <= 70 ? beta2ccounterfactual(t) : 0.8 * beta2ccounterfactual(t)
 
 sim3parameters(beta) = simparameters(beta, 0.3)
 beta3a(t) = 0.5 + 0.15 * cos(2π * (t - 80) / 365)
-beta3bcounterfactual(t) = beta3a(t) * (0.9 + 0.02 * t)
+beta3bcounterfactual(t) = beta3a(t) * (0.9 + 0.005 * t)
 beta3b(t) = t <= 50 ? beta3bcounterfactual(t) : 0.8 * beta3bcounterfactual(t)
 
 sim4parameters(beta, theta) = simparameters(beta, theta)
