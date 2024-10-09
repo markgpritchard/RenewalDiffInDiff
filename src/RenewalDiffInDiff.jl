@@ -3,15 +3,19 @@ module RenewalDiffInDiff
 
 using DrWatson
 using CubicSplines, DataFrames, Distributions, ForwardDiff, NaNMath, Random, Turing
-import Base: getindex, length, size
+import Base: getindex, length, size, sum
 
 include("types.jl")
+include("consts.jl")
 include("renewalequation.jl")
 include("parameterfitting.jl")
 include("extras.jl")
 
-## types.jl
-export InterventionsMatrix, InterventionsVector
+export 
+    ## types.jl
+    InterventionsMatrix, InterventionsVector, SEIRParameters,
+    ## consts.jl/
+    COVIDSERIALINTERVAL
 
 ## renewalequation.jl
 #export calculatesumfi, expectedinfections, poissoninfections, runrenewalequation, 
@@ -30,6 +34,6 @@ export diffindiffparameters, diffindiffparameters_discretetimes,
     generatew_gtrow, generatez_gtminus1, keyvalues, loadanalysisdictsasdf
 
 ## extras.jl
-export getindex, interventionsoffset, length, size
+export getindex, interventionsoffset, length, seir_deterministic, size
     
 end  # module RenewalDiffInDiff

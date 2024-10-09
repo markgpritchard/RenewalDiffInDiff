@@ -1,5 +1,5 @@
 
-using DataFrames, Pigeons, Turing
+using CairoMakie, DataFrames, Pigeons, Turing
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Constants  
@@ -57,6 +57,15 @@ function plotrenewalequationsamples(dataset::Dict, w, fittedvaluesset; kwargs...
     )
 end
 
+function plotrenewalequationsamples(dataset::NamedTuple, w, fittedvaluesset; kwargs...) 
+    @unpack cases, counterfactualcases, Ns = dataset 
+    fittedws = fitws(cases, Ns, fittedvaluesset)
+    return plotrenewalequationsamples(
+        cases, counterfactualcases, w, Ns, fittedvaluesset, fittedws; 
+        kwargs...
+    )
+end
+
 function plotrenewalequationsamples(cases::Matrix, w, Ns::Vector, fittedvaluesset; kwargs...)
     fittedws = fitws(cases, Ns, fittedvaluesset)
     return plotrenewalequationsamples(cases, w, Ns, fittedvaluesset, fittedws; kwargs...)
@@ -77,16 +86,18 @@ function plotrenewalequationsamples(
     betafunctions=nothing, betafunctions_counterfactual=nothing,
     datacolour=COLOURVECTOR[1], simcolour=COLOURVECTOR[2], fittedcolour=( :gray, 0.75 ), 
     infectiousduration=1, markersize=3, plotsize=( 800, 800 ), rhoclip=Inf,
+    columntitles=nothing, columntitlefontsize=11.84, 
+    xticklabelrotation=0.0, xticks=Makie.automatic, xtitle="Time"
 )
     duration = size(cases, 1)
     nlocations = size(cases, 2)
     xs = eachindex(fittedvaluesset.rho_matrix_vec[1][:, 1])
     fig = Figure(; size=plotsize)
-    axs1 = [ Axis(fig[1, i]) for i ∈ 1:nlocations ]
-    axs2 = [ Axis(fig[2, i]) for i ∈ 1:nlocations ]
-    axs3 = [ Axis(fig[3, i]) for i ∈ 1:nlocations ]
-    axs4 = [ Axis(fig[4, i]) for i ∈ 1:nlocations ]
-    #axs5 = [ Axis(fig[5, i]) for i ∈ 1:nlocations ]
+    axs1 = [ Axis(fig[1, i]; xticklabelrotation, xticks) for i ∈ 1:nlocations ]
+    axs2 = [ Axis(fig[2, i]; xticklabelrotation, xticks) for i ∈ 1:nlocations ]
+    axs3 = [ Axis(fig[3, i]; xticklabelrotation, xticks) for i ∈ 1:nlocations ]
+    axs4 = [ Axis(fig[4, i]; xticklabelrotation, xticks) for i ∈ 1:nlocations ]
+    #axs5 = [ Axis(fig[5, i]; xticks) for i ∈ 1:nlocations ]
 
     for i ∈ 1:nlocations
         ws = _modelquantiles(fittedws, i)
@@ -95,6 +106,10 @@ function plotrenewalequationsamples(
         yqs_cf = _modelquantiles(
             fittedvaluesset, :y_matrix_poisson_vec, :y_matrix_poisson_vec_counterfactual, i
         )
+
+        if !isnothing(columntitles)
+            Label(fig[0, i], columntitles[i]; fontsize=columntitlefontsize, tellwidth=false)
+        end
         
         band!(axs1[i], xs, ws[:, 1], ws[:, 2]; color=fittedcolour)
         scatter!(
@@ -154,21 +169,42 @@ function plotrenewalequationsamples(
             formataxis!(axs3[col]; hidex=true, hidexticks=true, hidespines=( :b, :r, :t ))
             formataxis!(axs4[col]; hidespines=( :r, :t ))
         else
-            formataxis!(axs1[col]; hidex=true, hidexticks=true, hidey=true, hideyticks=true, hidespines=( :b, :r, :t, :l ))
-            formataxis!(axs2[col]; hidex=true, hidexticks=true, hidey=true, hideyticks=true, hidespines=( :b, :r, :t, :l ))
-            formataxis!(axs3[col]; hidex=true, hidexticks=true, hidey=true, hideyticks=true, hidespines=( :b, :r, :t, :l ))
+            formataxis!(
+                axs1[col]; 
+                hidex=true, hidexticks=true, hidey=true, hideyticks=true, 
+                hidespines=( :b, :r, :t, :l )
+            )
+            formataxis!(
+                axs2[col]; 
+                hidex=true, hidexticks=true, hidey=true, hideyticks=true, 
+                hidespines=( :b, :r, :t, :l )
+            )
+            formataxis!(
+                axs3[col]; 
+                hidex=true, hidexticks=true, hidey=true, hideyticks=true, hidespines=( :b, :r, :t, :l )
+            )
             formataxis!(axs4[col]; hidey=true, hideyticks=true, hidespines=( :r, :t, :l ))
         end
     end
 
-    Label(fig[1, 0], "w(gt)"; fontsize = 11.84, rotation=π/2, tellheight = false)
-    Label(fig[2, 0], "Basic reproduction\nnumber"; fontsize = 11.84, rotation=π/2, tellheight = false)
-    Label(fig[3, 0], "Infections"; fontsize = 11.84, rotation=π/2, tellheight = false)
-    Label(fig[4, 0], "Effect of\nintervention"; fontsize = 11.84, rotation=π/2, tellheight = false)
-    Label(fig[5, 1:nlocations], "Time"; fontsize = 11.84, tellwidth = false)
+    Label(fig[1, 0], "w(gt)"; fontsize=11.84, rotation=π/2, tellheight=false)
+    Label(
+        fig[2, 0], "Basic reproduction\nnumber"; 
+        fontsize=11.84, rotation=π/2, tellheight=false
+    )
+    Label(fig[3, 0], "Diagnoses"; fontsize=11.84, rotation=π/2, tellheight=false)
+    Label(
+        fig[4, 0], "Effect of\nintervention"; 
+        fontsize=11.84, rotation=π/2, tellheight=false
+    )
+    Label(fig[5, 1:nlocations], xtitle; fontsize=11.84, tellwidth=false)
 
     colgap!(fig.layout, 1, 5)
-    rowgap!(fig.layout, 4, 5)
+    if isnothing(columntitles)
+        rowgap!(fig.layout, 4, 5)
+    else
+        for r ∈ [ 1, 5 ] rowgap!(fig.layout, r, 5) end 
+    end
 
     return fig
 end
@@ -237,8 +273,13 @@ function fitws(cases::Matrix, Ns::Vector, fittedvaluesset)
                 if t == 1 
                     ws1[t, g] = log(rho_matrix_vec[j][t, g]) + log(1)
                 else
-                    ws1[t, g] = log(rho_matrix_vec[j][t, g]) + 
-                        log(1 - sum(cases[1:(t - 1), g]) / (psi_vec[j] * Ns[g]))
+                    #println("j=$j, t=$t, g=$g, rho_matrix_vec[j][t, g]=$(rho_matrix_vec[j][t, g])")
+                    #println("sum(cases[1:(t - 1), g])=$(sum(cases[1:(t - 1), g])), (psi_vec[$j]=$(psi_vec[j]) Ns[$g]=$(Ns[g]))")
+                    ws1[t, g] =+(
+                        log(rho_matrix_vec[j][t, g]),
+                        log(1 - sum(cases[1:(t - 1), g]) / (psi_vec[j] * Ns[g]))  # this should already be constrained to be positive
+                    )  
+                        
                 end
             end
             w_vec[j] = deepcopy(ws1)

@@ -6,7 +6,7 @@ include(srcdir("plottingfunctions.jl"))
 using CairoMakie, DifferentialEquations 
 
 
-parraleltrendsfig = let 
+paralleltrendsfig = let 
     ts = 1.0:1.0:100.0
 
     xs1 = [ 
@@ -21,7 +21,7 @@ parraleltrendsfig = let
     ]
     xs2cf = xs1 .+ 0.05
         
-    fig = Figure(; size=( 400, 250 ))
+    fig = Figure(; size=( 500, 300 ))
     ax = Axis(fig[1, 1])
     
     lines!(ax, ts, xs1; color=:blue)
@@ -59,7 +59,7 @@ parraleltrendsfig = let
     fig    
 end
 
-safesave(plotsdir("parraleltrendsfig.svg"), parraleltrendsfig)
+safesave(plotsdir("paralleltrendsfig.pdf"), paralleltrendsfig)
 
 function sirmodel!(du, u, p, t)
     du[1] = -0.4 * u[1] * u[2] / sum(u)
@@ -88,7 +88,7 @@ sirparraleltrendsfig = let
     sol1cfr0_constant25 = df1.value1[10] .* 2 ./ 1000 - df2.value1[10] .* 2 ./ 1000
     sol1cfr0 = df2.value1[10:end] .* 2 ./ 1000 .+ sol1cfr0_constant25
 
-    fig = Figure(; size=( 400, 350 ))
+    fig = Figure(; size=( 500, 350 ))
     axs = [ Axis(fig[1, i]) for i ∈ [ 1, 3 ] ]
     axs2 = [ Axis(fig[2, i]) for i ∈ [ 1, 3 ] ]
 
@@ -98,7 +98,7 @@ sirparraleltrendsfig = let
     band!(axs[1], df1.timestamp[10:end], df1.value2[10:end], sol1cf; color=( :red, 0.3 ))
     arrows!(axs[1], df1.timestamp[10:10], df1.value2[10:10] .+ 40, [ 0 ], [ -20 ])
 
-    formataxis!(axs[1]; hidex=true, hidexticks=true, hidey=true, hidespines=( :b, :t, :r ))
+    formataxis!(axs[1]; hidex=true, hidexticks=true, hidespines=( :b, :t, :r ))
 
     lines!(axs2[1], df1.timestamp, log.(df1.value2); color=:black)
     lines!(axs2[1], df2.timestamp, log.(df2.value2); color=:blue)
@@ -107,7 +107,7 @@ sirparraleltrendsfig = let
         axs2[1], df1.timestamp[10:end], log.(df1.value2[10:end]), logsol1cf; 
         color=( :red, 0.3 )
     )
-    formataxis!(axs2[1]; hidex=true, hidey=true)
+    formataxis!(axs2[1])
     arrows!(axs2[1], df1.timestamp[10:10], log.(df1.value2[10:10]) .+ 1.5, [ 0 ], [ -0.75 ])
 
     lines!(axs[2], df1.timestamp, df1.value1 .* 2 ./ 1000; color=:black)
@@ -121,13 +121,13 @@ sirparraleltrendsfig = let
         axs[2], df1.timestamp[10:10], df2.value1[10:10] .* 2 ./ 1000 .+ 0.3, [ 0 ], [ -0.2 ]
     )
 
-    formataxis!(axs[2]; hidex=true, hidexticks=true, hidey=true, hidespines=( :b, :t, :r ))
+    formataxis!(axs[2]; hidex=true, hidexticks=true, hidespines=( :b, :t, :r ))
 
     lines!(axs2[2], df1.timestamp, ones(length(df2.timestamp)) .* 2; color=:black)
     lines!(axs2[2], df2.timestamp, ones(length(df2.timestamp)) .* 2; color=:blue)
     arrows!(axs2[2], df1.timestamp[10:10], [ 2.3 ], [ 0 ], [ -0.2 ])
 
-    formataxis!(axs2[2]; hidex=true, hidey=true)
+    formataxis!(axs2[2]; )
 
     linkxaxes!(axs..., axs2...)
     linkyaxes!(axs[2], axs2[2])
@@ -149,5 +149,5 @@ sirparraleltrendsfig = let
     fig 
 end
 
-safesave(plotsdir("sirparraleltrendsfig.svg"), sirparraleltrendsfig)
+safesave(plotsdir("sirparraleltrendsfig.pdf"), sirparraleltrendsfig)
 
