@@ -147,6 +147,22 @@ s1c2config = @ntuple modelname="sim1model2" model=sim1model2 n_rounds n_chains=8
 sim1chain2dict = produce_or_load(pol_fitparameter, s1c2config, datadir("sims"))
 
 
+## Analysis a1 
+# "fit to curve"
+
+sim1modela1 = diffindiffparameters_fittocurve_splinetimes(
+    W_sim1, 
+    simulation1dataset["cases"],
+    simulation1dataset["interventions"], 
+    [ [ 1 ]; collect(11:89/4:100) ],
+    simulation1dataset["Ns"];
+    psiprior=0.8,
+)
+
+s1ca1config = @ntuple modelname="sim1modela1" model=sim1modela1 n_rounds n_chains=8 seed=10110+id
+sim1chaina1dict = produce_or_load(pol_fitparameter, s1ca1config, datadir("sims"))
+
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Simulation 2 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

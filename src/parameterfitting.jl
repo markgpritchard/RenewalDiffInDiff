@@ -508,6 +508,153 @@ end
 end
 =#
 
+@model function diffindiffparameters_fittocurve_splinetimes(
+    w, y, interventions, timeknots, Ns;
+    etavarianceprior=Exponential(1),
+    logdeltaprior=Normal(0, 1),
+    logmeanetaprior=Normal(0, 1),
+    logmeanzetaprior=Normal(0, 1),
+    peakperiod=2,
+    psiprior=0.5,
+    secondaryinterventions=nothing,
+    sigmasquareprior=Exponential(1),
+    zetavarianceprior=Exponential(1),
+    extrapl=zeros(1), extrapr=zeros(1), 
+)
+    ntimeknots = length(timeknots)
+    nlocations = size(y, 2)
+
+    logzeta_mean ~ logmeanzetaprior
+    zeta_sigma2 ~ zetavarianceprior
+    logzeta_g_vec = Vector{typeof(logzeta_mean)}(undef, nlocations) 
+    for i ∈ 1:nlocations
+        @submodel prefix="logzeta_g$i" logzeta = _estimatelogzeta_g(
+            logzeta_mean, zeta_sigma2
+        )
+        logzeta_g_vec[i] = logzeta
+    end
+
+    logeta_mean ~ logmeanetaprior
+    eta_sigma2 ~ etavarianceprior
+    logeta_t_vec = Vector{typeof(logeta_mean)}(undef, ntimeknots) 
+    for i ∈ 1:ntimeknots
+        if i == peakperiod
+            logeta = zero(typeof(logeta_mean))
+        else
+            @submodel prefix="eta_t$i" logeta = _estimatelogeta_t(logeta_mean, eta_sigma2)
+        end
+        logeta_t_vec[i] = logeta
+    end
+    timespline = CubicSpline(timeknots, ForwardDiff.value.(logeta_t_vec); extrapl, extrapr)
+
+    logdelta ~ logdeltaprior
+    σ2 ~ sigmasquareprior 
+
+    psiminimum = maximum([ sum(y[:, g]) / Ns[g] for g ∈ axes(y, 2) ])
+
+    if isa(psiprior, Distribution)
+        psi ~ truncated(psiprior, psiminimum, 1) 
+    else
+        @assert 0 < psiprior <= 1
+        a = 10 * psiprior 
+        b = 10 - a 
+        psi ~ truncated(Beta(a, b), psiminimum, 1) 
+    end
+
+    if isnothing(secondaryinterventions)
+        modeloutput1 = logzeta_g_vec[1] + timespline[1] + logdelta * interventions[1, 1] 
+        modeloutput = Matrix{typeof(modeloutput1)}(undef, size(y))
+        for t ∈ axes(y, 1), g ∈ axes(y, 2) 
+            if t == 1 
+                s = zero(log(1 / (Ns[g] * psi))) 
+            else 
+                s = log(1 - sum(y[1:(t - 1), g]) / (Ns[g] * psi))
+            end
+            modeloutput[t, g] = +(
+                logzeta_g_vec[g], 
+                timespline[t],
+                logdelta * interventions[t, g],
+                s
+            ) 
+        end
+    elseif isa(secondaryinterventions, AbstractMatrix)
+        logsecondarydelta ~ logdeltaprior
+        modeloutput1 = +(
+            logzeta_g_vec[1], 
+            timespline[1],
+            logdelta * interventions[1, 1],
+            logsecondarydelta * secondaryinterventions[1, 1]
+        ) 
+        modeloutput = Matrix{typeof(modeloutput1)}(undef, size(y))
+        for t ∈ axes(y, 1), g ∈ axes(y, 2) 
+            if t == 1 
+                s = zero(log(1 / (Ns[g] * psi))) 
+            else 
+                s = log(1 - sum(y[1:(t - 1), g]) / (Ns[g] * psi))
+            end
+            modeloutput[t, g] = +(
+                logzeta_g_vec[g],
+                timespline[t],
+                logdelta * interventions[t, g],
+                s,
+                logsecondarydelta * secondaryinterventions[t, g] 
+            )
+        end
+    else
+        logsecondarydelta_vec = Vector{typeof(logdelta)}(
+            undef, length(secondaryinterventions)
+        ) 
+        for i ∈ eachindex(secondaryinterventions)
+            @submodel prefix="logsecondarydelta$i" logsecondarydelta = _estimatelogsecondarydelta(
+                logdeltaprior
+            )
+            logsecondarydelta_vec[i] = logsecondarydelta
+        end
+
+        modeloutput1 = +(
+            logzeta_g_vec[1], 
+            timespline[1],
+            logdelta * interventions[1, 1],
+            sum(
+                [ 
+                    logsecondarydelta_vec[i] * secondaryinterventions[i][1, 1] 
+                    for i ∈ eachindex(secondaryinterventions) 
+                ]
+            )
+        ) 
+        modeloutput = Matrix{typeof(modeloutput1)}(undef, size(y))
+        for t ∈ axes(y, 1), g ∈ axes(y, 2) 
+            if t == 1 
+                s = zero(log(1 / (Ns[g] * psi))) 
+                modeloutput[t, g] = zy[t, g]
+            elseif t <= 20 
+                s = log(1 - sum(modeloutput[1:(t - 1), g]) / (Ns[g] * psi))
+                modeloutput[t, g] = zy[t, g]
+            else 
+                s = log(1 - sum(modeloutput[1:(t - 1), g]) / (Ns[g] * psi))
+            
+                modeloutput[t, g] = *(
+                    exp(logzeta_g_vec[g]),
+                    exp(timespline[t]),
+                    exp(logdelta)^interventions[t, g],
+                    s,
+                    sum(
+                        [ 
+                            logsecondarydelta_vec[i] * secondaryinterventions[i][t, g] 
+                            for i ∈ eachindex(secondaryinterventions) 
+                        ]
+                    )
+                ) 
+            end
+        end
+    end
+
+    for i ∈ eachindex(w)
+        #_skip(w[i]) && continue 
+        y[i] ~ Normal(modeloutput[i], σ2)
+    end 
+end
+
 function diffindiffparameters_polytimes(; w, y, interventions, timeknots, Ns, kwargs...)
     return diffindiffparameters_polytimes(w, y, interventions, timeknots, Ns; kwargs...)
 end

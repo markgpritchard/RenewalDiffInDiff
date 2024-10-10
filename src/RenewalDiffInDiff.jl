@@ -30,8 +30,9 @@ export renewalequation_expectedcases, renewalequation_expectedcases!,
 
 ## parameterfitting.jl
 export diffindiffparameters, diffindiffparameters_discretetimes, 
-    diffindiffparameters_polytimes, diffindiffparameters_splinetimes, generatew_gt, 
-    generatew_gtrow, generatez_gtminus1, keyvalues, loadanalysisdictsasdf
+    diffindiffparameters_fittocurve_splinetimes, diffindiffparameters_polytimes, 
+    diffindiffparameters_splinetimes, generatew_gt, generatew_gtrow, generatez_gtminus1, 
+    keyvalues, loadanalysisdictsasdf
 
 ## extras.jl
 export getindex, interventionsoffset, length, seir_deterministic, size

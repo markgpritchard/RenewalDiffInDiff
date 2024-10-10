@@ -36,12 +36,10 @@ safesave(plotsdir("generationintervalplot.pdf"), generationintervalplot)
 # Simulation 1
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-
-
 sim1chain0 = loadanalysisdictsasdf("sim1model0", 8, maxrounds, 100)
-plotchains(
+chainsplot1_0 = plotchains(
     sim1chain0; 
-    size=( 500, 800 ),
+    size=( 500, 700 ),
     ylabels = [
         "log density",
         "ln ζ mean",
@@ -59,7 +57,9 @@ plotchains(
         "σ²",
         "θ",
     ],
-    )
+)
+safesave(plotsdir("chainsplot1_0.pdf"), chainsplot1_0)
+
 sim1fit0 = samplerenewalequation_2sets(
     fseir, sim1chain0, simulation1dataset["interventions"]; 
     initialvalues=simulation1dataset["cases_counterfactual"][1:10, :], 
@@ -94,9 +94,31 @@ sim1fit2 = samplerenewalequation_2sets(
         InterventionsMatrix([ nothing, 64 ], 100)
     ],
 )
-sim1fit2kv = keyvalues(sim1chain2, sim1fit1)
+sim1fit2kv = keyvalues(sim1chain2, sim1fit2)
 sim1fit1plot = plotrenewalequationsamples(
     simulation1dataset, W_sim1, sim1fit2; 
+    betafunctions=[ beta1a, beta1b ], 
+    betafunctions_counterfactual=[ beta1a, beta1bcounterfactual ],
+    infectiousduration=2.5,
+    plotsize=( 400, 400 ),
+    #rhoclip = 2,
+   # secondaryinterventions=[
+   #     InterventionsMatrix([ nothing, 36 ], 100),
+   #     InterventionsMatrix([ nothing, 64 ], 100)
+   # ],
+)
+
+sim1chaina1 = loadanalysisdictsasdf("sim1modela1", 8, maxrounds, 10110)
+plotchains(sim1chaina1)
+sim1fita1 = samplerenewalequation_2sets(
+    fseir, sim1chaina1, simulation1dataset["interventions"]; 
+    initialvalues=simulation1dataset["cases"][1:10, :], 
+    Ns=simulation1dataset["Ns"], 
+    timeknots=[ [ 1 ]; collect(11:89/4:100) ],
+)
+sim1fita1kv = keyvalues(sim1chaina1, sim1fita1)
+sim1fit1plot = plotrenewalequationsamples(
+    simulation1dataset, W_sim1, sim1fita1; 
     betafunctions=[ beta1a, beta1b ], 
     betafunctions_counterfactual=[ beta1a, beta1bcounterfactual ],
     infectiousduration=2.5,
@@ -392,7 +414,7 @@ datafit1 = samplerenewalequation_2sets(
 )
 datafit1plot = plotrenewalequationsamples(
     allcovidcases, W_allcoviddata, selectpops, datafit1;
-    plotsize=( 600, 400 ),
+    plotsize=( 500, 350 ),
     columntitles=[ 
         "Halton", 
         "Knowsley", 
@@ -410,7 +432,7 @@ datafit1plot = plotrenewalequationsamples(
     xtitle="Date, 2020–2021",
 )
 
-safesave(plotsdir("datafit1plot.svg"), datafit1plot)
+safesave(plotsdir("datafit1plot.pdf"), datafit1plot)
 
 # force 28% reduction 
 
