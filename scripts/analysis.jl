@@ -103,7 +103,7 @@ timeperiods2 = let
     timeperiods
 end
 
-sim1model0discrete = diffindiffparameters_discretetimes(
+sim1model0discrete = diffindiffparameters_twodiscretetimes(
     W_sim1_0, 
     simulation1dataset["cases_counterfactual"],
     simulation1dataset["interventions"], 
@@ -121,7 +121,7 @@ s1c0configdiscrete = (
 )  
 sim1chain0dictdiscrete = produce_or_load(pol_fitparameter, s1c0configdiscrete, datadir("sims"))
 
-sim1model1discrete = diffindiffparameters_discretetimes(
+sim1model1discrete = diffindiffparameters_twodiscretetimes(
     W_sim1, 
     simulation1dataset["cases"],
     simulation1dataset["interventions"], 
@@ -246,28 +246,6 @@ sim1amodel2 = diffindiffparameters_splinetimes(
 
 s1ac2config = @ntuple modelname="sim1amodel2" model=sim1amodel2 n_rounds n_chains=8 seed=170+id
 sim1achain2dict = produce_or_load(pol_fitparameter, s1ac2config, datadir("sims"))
-
-
-## Analysis 3
-
-# Add lag and lead times to explore non-parallel trends plus the known confounder
-
-sim2model3 = diffindiffparameters_splinetimes(
-    W_sim2, 
-    simulation2dataset["cases"],
-    simulation2dataset["interventions"], 
-    [ [ 1 ]; collect(11:89/4:100) ],
-    simulation2dataset["Ns"];
-    psiprior=0.6,
-    secondaryinterventions=[
-        InterventionsMatrix([ nothing, nothing, 30 ], 100),
-        InterventionsMatrix([ nothing, 36, 56 ], 100),
-        InterventionsMatrix([ nothing, 64, 84 ], 100)
-    ],
-)
-
-s2c3config = @ntuple modelname="sim2model3" model=sim2model3 n_rounds n_chains=8 seed=230+id
-sim2chain3dict = produce_or_load(pol_fitparameter, s2c3config, datadir("sims"))
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -610,4 +588,151 @@ datamodel4 = diffindiffparameters_splinetimes(
 
 datac4config = @ntuple modelname="datamodel4" model=datamodel4 n_rounds n_chains=8 seed=1040+id
 datachain4dict = produce_or_load(pol_fitparameter, datac4config, datadir("sims"))
+=#
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Masking data 
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+## Convert DataFrame to appropriate matrices 
+let 
+    # check that each location has the same number of rows 
+    @assert sum(maskcoviddf.RegionId .== 1) == sum(maskcoviddf.RegionId .== 2) 
+    @assert sum(maskcoviddf.RegionId .== 1) == sum(maskcoviddf.RegionId .== 3) 
+    @assert sum(maskcoviddf.RegionId .== 1) == sum(maskcoviddf.RegionId .== 4)
+    # how many rows is it?
+    covidlength = sum(maskcoviddf.RegionId .== 1)
+
+    # function that is only used here
+    function _findfirstendofrestriction(stayathomevec, lowvalue=0)
+        calcvec = Vector{Int}(undef, length(stayathomevec))
+        for i ∈ eachindex(stayathomevec)
+            if i == 1 
+                calcvec[i] = 0 
+            elseif stayathomevec[i] == lowvalue && stayathomevec[i-1] > lowvalue 
+                calcvec[i] = 1
+            else 
+                calcvec[i] = 0
+            end
+        end
+        return findfirst(x -> x == 1, calcvec)
+        # there is a subsequent increase in stay-at-home guidance in England but this
+        # applied only to Leicester so is not included as a further intervention here
+    end
+
+    global maskcovidcases = Matrix{Int}(undef, covidlength, 4)
+    global facialcoveringsrecommended = Matrix{Int}(undef, covidlength, 4)
+    global facialcoveringsrequired = Matrix{Int}(undef, covidlength, 4)
+    endstayathometimesvec = Vector{Union{Int, Nothing}}(undef, 4)
+    somebusinessreopenvec = Vector{Union{Int, Nothing}}(undef, 4)
+    global gri_nofc = Matrix{Float64}(undef, covidlength, 4)
+    for i ∈ 1:4 
+        _tdf = filter(:RegionId => x -> x == i, maskcoviddf)
+        for j ∈ 1:covidlength
+            if ismissing( _tdf.ConfirmedCases[j])
+                maskcovidcases[j, i] = 0
+            elseif j == 1 || ismissing( _tdf.ConfirmedCases[j-1])
+                maskcovidcases[j, i] = _tdf.ConfirmedCases[j]
+            else
+                maskcovidcases[j, i] = _tdf.ConfirmedCases[j] - _tdf.ConfirmedCases[j-1]
+            end
+        end        
+        facialcoveringsrecommended[:, i] .= _tdf.FacialCoveringRecommended
+        facialcoveringsrequired[:, i] .= _tdf.FacialCoveringRequired
+        endstayathometimesvec[i] = _findfirstendofrestriction(_tdf.C6E_Stayathome)
+        somebusinessreopenvec[i] = _findfirstendofrestriction(_tdf.C2E_Workplaceclosing, 2)
+        gri_nofc[:, i] .= _tdf.Gri_nofc
+    end 
+    global endstayathometimes = InterventionsMatrix(Int, endstayathometimesvec, covidlength)
+    global somebusinessreopen = InterventionsMatrix(Int, somebusinessreopenvec, covidlength)
+end
+
+W_maskcoviddata = generatew_gt(COVIDSERIALINTERVAL, maskcovidcases, POPULATION2020)
+#z_gtminus1_coviddata = generatez_gtminus1(covidcases)
+
+## Analysis 1 
+# Effect of mask recommendations. No other considerations of confounding 
+
+# everywhere has a recommendation by day 134 so limit analysis to first 133 days 
+
+maskingdatamodel1 = diffindiffparameters_splinetimes(
+    W_maskcoviddata[1:133, :], 
+    maskcovidcases[1:133, :],
+    facialcoveringsrecommended[1:133, :], 
+    collect(1.0:28:133),
+    POPULATION2020;
+    psiprior=0.4,
+)
+
+maskdatac1config = @ntuple modelname="maskingdatamodel1" model=maskingdatamodel1 n_rounds n_chains=8 seed=1110+id
+maskingdatamodel1 = produce_or_load(pol_fitparameter, maskdatac1config, datadir("sims"))
+
+## Analysis 2 
+# Effect of mask requirements. No other considerations of confounding 
+
+maskingdatamodel2 = diffindiffparameters_splinetimes(
+    W_maskcoviddata, 
+    maskcovidcases,
+    facialcoveringsrequired, 
+    collect(1.0:28:199),
+    POPULATION2020;
+    psiprior=0.4,
+)
+
+maskdatac2config = @ntuple modelname="maskingdatamodel2" model=maskingdatamodel2 n_rounds n_chains=8 seed=1120+id
+maskingdatamodel2 = produce_or_load(pol_fitparameter, maskdatac2config, datadir("sims"))
+
+## Analysis 3 
+# Effect of mask requirements with secondary interventions of end of stay-at-home and some
+# businesses reopening
+
+maskingdatamodel3 = diffindiffparameters_splinetimes(
+    W_maskcoviddata, 
+    maskcovidcases,
+    facialcoveringsrequired, 
+    collect(1.0:28:199),
+    POPULATION2020;
+    psiprior=0.4,
+    secondaryinterventions=[ endstayathometimes, somebusinessreopen ],
+)
+
+maskdatac3config = @ntuple modelname="maskingdatamodel3" model=maskingdatamodel3 n_rounds n_chains=8 seed=1130+id
+maskingdatamodel3 = produce_or_load(pol_fitparameter, maskdatac3config, datadir("sims"))
+#=
+## Analysis 4 
+# Add lead and lag times that groups can diverge 
+
+secondaryinterventions_data = [ 
+    interventionsoffset(facialcoveringsrequired, offsettimes[i]) 
+    for i ∈ 1:6
+]
+
+datamodel5 = diffindiffparameters_splinetimes(
+    W_coviddata, 
+    z_gtminus1_coviddata, 
+    facialcoveringsrequired, 
+    POPULATION2020, 
+    collect(11.0:188/4:199.0);
+    secondaryinterventions=[ 
+        [ endstayathometimes, somebusinessreopen ]; secondaryinterventions_data 
+    ],
+)
+
+datac5config = @ntuple modelname="datamodel5" model=datamodel5 n_rounds n_chains=8 seed=550+id
+datachain5dict = produce_or_load(pol_fitparameter, datac5config, datadir("sims"))
+
+datamodel6 = diffindiffparameters_splinetimes(
+    W_coviddata, 
+    z_gtminus1_coviddata, 
+    facialcoveringsrequired, 
+    POPULATION2020, 
+    collect(11.0:188/4:199.0);
+    secondaryinterventions=[ 
+        [ gri_nofc ]; secondaryinterventions_data 
+    ],
+)
+
+datac6config = @ntuple modelname="datamodel6" model=datamodel6 n_rounds n_chains=8 seed=560+id
+datachain6dict = produce_or_load(pol_fitparameter, datac6config, datadir("sims"))
 =#

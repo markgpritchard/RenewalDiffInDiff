@@ -32,6 +32,7 @@ end
 
 @model _estimatelogzeta_g(μ, σ2) = logzeta ~ Normal(μ, sqrt(σ2))
 @model _estimatelogeta_t(μ, σ2) = logeta ~ Normal(μ, sqrt(σ2))
+@model _estimatelogeta_t(etaprior) = logeta ~ etaprior
 @model _estimatelogsecondarydelta(deltaprior) = logsecondarydelta ~ deltaprior
 
 function diffindiffparameters_discretetimes(; w, y, interventions, timeperiods, Ns, kwargs...)
@@ -71,6 +72,148 @@ end
             logeta = zero(typeof(logeta_mean))
         else
             @submodel prefix="eta_t$i" logeta = _estimatelogeta_t(logeta_mean, eta_sigma2)
+        end
+        logeta_t_vec[i] = logeta
+    end
+
+    logdelta ~ logdeltaprior
+    σ2 ~ sigmasquareprior 
+
+    psiminimum = maximum([ sum(y[:, g]) / Ns[g] for g ∈ axes(y, 2) ])
+
+    if isa(psiprior, Distribution)
+        psi ~ truncated(psiprior, psiminimum, 1) 
+    else
+        @assert 0 < psiprior <= 1
+        a = 10 * psiprior 
+        b = 10 - a 
+        psi ~ truncated(Beta(a, b), psiminimum, 1) 
+    end
+
+    if isnothing(secondaryinterventions)
+        modeloutput1 = logzeta_g_vec[1] + logeta_t_vec[1] + logdelta * interventions[1, 1] 
+        modeloutput = Matrix{typeof(modeloutput1)}(undef, size(w))
+        for t ∈ axes(w, 1), g ∈ axes(w, 2) 
+            if t == 1 
+                s = zero(log(1 / (Ns[g] * psi))) 
+            else 
+                s = log(1 - sum(y[1:(t - 1), g]) / (Ns[g] * psi))
+            end
+            modeloutput[t, g] = +(
+                logzeta_g_vec[g], 
+                logeta_t_vec[timeperiods[t]], 
+                logdelta * interventions[t, g], 
+                s
+            ) 
+        end
+    elseif isa(secondaryinterventions, AbstractMatrix)
+        logsecondarydelta ~ logdeltaprior
+        modeloutput1 = +(
+            logzeta_g_vec[1],
+            logeta_t_vec[1], 
+            logdelta * interventions[1, 1], 
+            logsecondarydelta * secondaryinterventions[1, 1]
+        ) 
+        modeloutput = Matrix{typeof(modeloutput1)}(undef, size(w))
+        for t ∈ axes(w, 1), g ∈ axes(w, 2) 
+            if t == 1 
+                s = zero(log(1 / (Ns[g] * psi))) 
+            else 
+                s = log(1 - sum(y[1:(t - 1), g]) / (Ns[g] * psi))
+            end
+            modeloutput[t, g] = +(
+                logzeta_g_vec[g],
+                logeta_t_vec[timeperiods[t]],
+                logdelta * interventions[t, g],
+                s,
+                logsecondarydelta * secondaryinterventions[t, g] 
+            ) 
+        end
+    else
+        logsecondarydelta_vec = Vector{typeof(logdelta)}(
+            undef, length(secondaryinterventions)
+        ) 
+        for i ∈ eachindex(secondaryinterventions)
+            @submodel prefix="logsecondarydelta$i" logsecondarydelta = _estimatelogsecondarydelta(
+                logdeltaprior
+            )
+            logsecondarydelta_vec[i] = logsecondarydelta
+        end
+
+        modeloutput1 = +(
+            logzeta_g_vec[1],
+            logeta_t_vec[1], 
+            logdelta * interventions[1, 1],
+            sum(
+                [ 
+                    logsecondarydelta_vec[i] * secondaryinterventions[i][1, 1] 
+                    for i ∈ eachindex(secondaryinterventions) 
+                ]
+            )
+        ) 
+        modeloutput = Matrix{typeof(modeloutput1)}(undef, size(w))
+        for t ∈ axes(w, 1), g ∈ axes(w, 2) 
+            if t == 1 
+                s = zero(log(1 / (Ns[g] * psi))) 
+            else 
+                s = log(1 - sum(y[1:(t - 1), g]) / (Ns[g] * psi))
+            end
+            modeloutput[t, g] = +(
+                logzeta_g_vec[g], 
+                logeta_t_vec[timeperiods[t]],
+                logdelta * interventions[t, g],
+                s,
+                sum(
+                    [ 
+                        logsecondarydelta_vec[i] * secondaryinterventions[i][t, g] 
+                        for i ∈ eachindex(secondaryinterventions) 
+                    ]
+                )
+            )  
+        end
+    end
+
+    for i ∈ eachindex(w)
+        _skip(w[i]) && continue 
+        w[i] ~ Normal(modeloutput[i], σ2)
+    end 
+end
+
+function diffindiffparameters_twodiscretetimes(; w, y, interventions, timeperiods, Ns, kwargs...)
+    return diffindiffparameters_twodiscretetimes(w, y, interventions, timeperiods, Ns; kwargs...)
+end
+
+@model function diffindiffparameters_twodiscretetimes(
+    w, y, interventions, timeperiods, Ns;
+    logdeltaprior=Normal(0, 1),
+    logeta2eprior=Normal(0, 1),
+    logmeanzetaprior=Normal(0, 1),
+    peakperiod=1,
+    psiprior=0.5,
+    secondaryinterventions=nothing,
+    sigmasquareprior=Exponential(1),
+    zetavarianceprior=Exponential(1),
+)
+    ntimeperiods = _nunique(timeperiods)
+    @assert ntimeperiods == 2
+    nlocations = size(w, 2)
+
+    logzeta_mean ~ logmeanzetaprior
+    zeta_sigma2 ~ zetavarianceprior
+    logzeta_g_vec = Vector{typeof(logzeta_mean)}(undef, nlocations) 
+    for i ∈ 1:nlocations
+        @submodel prefix="logzeta_g$i" logzeta = _estimatelogzeta_g(
+            logzeta_mean, zeta_sigma2
+        )
+        logzeta_g_vec[i] = logzeta
+    end
+
+    logeta_t_vec = Vector{typeof(logeta_mean)}(undef, ntimeperiods) 
+    for i ∈ 1:ntimeperiods
+        if i == peakperiod
+            logeta = zero(typeof(logeta_mean))
+        else
+            @submodel prefix="eta_t$i" logeta = _estimatelogeta_t(logeta2eprior)
         end
         logeta_t_vec[i] = logeta
     end

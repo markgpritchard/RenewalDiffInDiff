@@ -9,7 +9,6 @@ include(srcdir("plottingfunctions.jl"))
 maxrounds = 12
 
 
-
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Plot of generation interval
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -35,6 +34,85 @@ safesave(plotsdir("generationintervalplot.pdf"), generationintervalplot)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Simulation 1
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+## Discrete-time analyses
+
+sim1chain0discrete = loadanalysisdictsasdf("sim1model0discrete", 8, maxrounds, 100)
+plotchains(sim1chain0discrete)
+sim1fit0discrete = samplerenewalequation_2sets(
+    fseir, sim1chain0discrete, simulation1dataset["interventions"]; 
+    initialvalues=simulation1dataset["cases_counterfactual"][1:10, :], 
+    Ns=simulation1dataset["Ns"], 
+    timeperiods=timeperiods2,
+)
+sim1fit0kvdiscrete = keyvalues(sim1chain0discrete, sim1fit0discrete)
+println(sim1fit0kvdiscrete)
+
+sim1fit1discreteplot = plotrenewalequationsamples(
+    simulation1dataset["cases_counterfactual"],
+    simulation1dataset["cases_counterfactual"], 
+    W_sim1_0, 
+    simulation1dataset["Ns"], 
+    sim1fit0discrete,
+    fitws(simulation1dataset["cases_counterfactual"], simulation1dataset["Ns"], sim1fit0discrete); 
+    betafunctions=[ beta1a, beta1bcounterfactual ], 
+    betafunctions_counterfactual=[ beta1a, beta1bcounterfactual ],
+    infectiousduration=2.5,
+    plotsize=( 400, 400 ),
+    #rhoclip = 2,
+   # secondaryinterventions=[
+   #     InterventionsMatrix([ nothing, 36 ], 100),
+   #     InterventionsMatrix([ nothing, 64 ], 100)
+   # ],
+)
+
+sim1discreteplot = let
+    fig = Figure(; size=( 500, 350 ))
+
+    ga = GridLayout(fig[1, 1])
+    gb = GridLayout(fig[1, 2])
+
+    plotrenewalequationsamples!(
+        ga,
+        simulation1dataset["cases_counterfactual"],
+        simulation1dataset["cases_counterfactual"], 
+        W_sim1_0, 
+        simulation1dataset["Ns"], 
+        sim1fit0,
+        fitws(simulation1dataset["cases_counterfactual"], simulation1dataset["Ns"], sim1fit0); 
+        betafunctions=[ beta1a, beta1bcounterfactual ], 
+        betafunctions_counterfactual=[ beta1a, beta1bcounterfactual ],
+        infectiousduration=2.5,
+        rhoclip = 2.5,
+        columntitles=[ 
+            "Group 1", 
+            "Group 2" 
+        ],
+        columntitlefontsize=10,
+        xtitle="Time (days)",
+    )
+
+    plotrenewalequationsamples!(
+        gb, simulation1dataset, W_sim1, sim1fit1; 
+        betafunctions=[ beta1a, beta1b ], 
+        betafunctions_counterfactual=[ beta1a, beta1bcounterfactual ],
+        infectiousduration=2.5,
+        rhoclip = 2.5,
+        columntitles=[ 
+            "Group 1", 
+            "Group 2" 
+        ],
+        columntitlefontsize=10,
+        xtitle="Time (days)",
+    )
+
+    labelplots!([ "A", "B" ], [ ga, gb ])
+
+    fig
+end
+
+safesave(plotsdir("sim1discreteplot.pdf"), sim1discreteplot)
+
 
 sim1chain0 = loadanalysisdictsasdf("sim1model0", 8, maxrounds, 100)
 chainsplot1_0 = plotchains(
