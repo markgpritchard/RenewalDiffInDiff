@@ -47,6 +47,11 @@ beta1a(t) = t <= 50 ? 0.6 : 0.66
 beta1bcounterfactual(t) = 1.15 * beta1a(t)
 beta1b(t) = t <= 50 ? beta1bcounterfactual(t) : 0.8 * beta1bcounterfactual(t)
 
+sim1a_parameters(beta) = simparameters(beta, 0.6)
+beta1a_a(t) = 0.5 + 0.1 * cos(2π * (t - 20) / 365)
+beta1a_bcounterfactual(t) = 1.15 * beta1a_a(t)
+beta1a_b(t) = t <= 50 ? beta1a_bcounterfactual(t) : 0.8 * beta1a_bcounterfactual(t)
+
 sim2parameters(beta) = simparameters(beta, 0.5)
 beta2a(t) = 0.5 + 0.15 * cos(2π * (t - 80) / 365)
 beta2bcounterfactual(t) = 1.15 * beta2a(t)
@@ -72,11 +77,11 @@ else
     simulation1dataset = let  
         interventions = InterventionsMatrix([ nothing, 50 ], 100)
         
-        u01a = [ 8_000_000 - 750, 750, 0, 0, 0, 0  ]
+        u01a = [ 400_000 - 40, 40, 0, 0, 0, 0  ]
         p1a = sim1parameters(beta1a)
         sim1a = stochasticmodel(seirrates, u01a, 1:100, p1a, seirtransitionmatrix)
         
-        u01b = [ 5_000_000 - 200, 200, 0, 0, 0, 0 ]
+        u01b = [ 250_000 - 10, 10, 0, 0, 0, 0 ]
         p1bcounterfactual = sim1parameters(beta1bcounterfactual)
         sim1bcounterfactual = stochasticmodel(
             seirrates, u01b, 1:100, p1bcounterfactual, seirtransitionmatrix
@@ -111,12 +116,67 @@ else
             "interventions" => interventions, 
             "prevalence" => prevalence, 
             "counterfactualprevalence" => counterfactualprevalence, 
-            "Ns" => [ 8_000_000, 5_000_000 ],
+            "Ns" => [ 400_000, 250_000 ],
         )
     end
 
     safesave(datadir("sims", "simulation1dataset.jld2"), simulation1dataset)
 end
+
+# Two locations, continuously changing transmission parameters
+
+if isfile(datadir("sims", "simulation1a_dataset.jld2"))
+    simulation1a_dataset = load(datadir("sims", "simulation1a_dataset.jld2"))
+else 
+    simulation1a_dataset = let  
+        interventions = InterventionsMatrix([ nothing, 50, 70 ], 100)
+        
+        u01a_a = [ 300_000 - 50, 50, 0, 0, 0, 0 ]
+        p1a_a = sim1a_parameters(beta1a_a)
+        sim1a_a = stochasticmodel(seirrates, u01a_a, 1:100, p1a_a, seirtransitionmatrix)
+
+        u01a_b = [ 250_000 - 100, 100, 0, 0, 0, 0 ]
+        p1a_bcounterfactual = sim1a_parameters(beta1a_bcounterfactual)
+        sim1a_bcounterfactual = stochasticmodel(
+            seirrates, u01a_b, 1:100, p1a_bcounterfactual, seirtransitionmatrix
+        )
+
+        p1a_b = sim1a_parameters(beta1a_b)
+        sim1a_b = vcat(
+            sim1a_bcounterfactual[1:49, :],
+            stochasticmodel(
+                seirrates, sim1a_bcounterfactual[50, :], 50:100, p1a_b, seirtransitionmatrix
+            )
+        )
+
+        prevalence = hcat(sim1a_a[:, 4], sim1a_b[:, 4])
+        counterfactualprevalence = hcat(sim1a_a[:, 4], sim1a_bcounterfactual[:, 4])
+
+        cases = zeros(Int, 100, 2)
+        for t ∈ 2:100 
+            cases[t, 1] = sim1a_a[t, 6] - sim1a_a[t-1, 6]
+            cases[t, 2] = sim1a_b[t, 6] - sim1a_b[t-1, 6]
+        end
+
+        counterfactualcases = zeros(Int, 100, 2)
+        for t ∈ 2:100 
+            counterfactualcases[t, 1] = sim1a_a[t, 6] - sim1a_a[t-1, 6]
+            counterfactualcases[t, 2] = sim1a_bcounterfactual[t, 6] - sim1a_bcounterfactual[t-1, 6]
+        end
+
+        Dict(
+            "cases" => cases, 
+            "cases_counterfactual" => counterfactualcases,
+            "interventions" => interventions, 
+            "prevalence" => prevalence, 
+            "counterfactualprevalence" => counterfactualprevalence, 
+            "Ns" => [ 300_000, 250_000 ],
+        )
+    end
+
+    safesave(datadir("sims", "simulation1a_dataset.jld2"), simulation1a_dataset)
+end
+
 
 # Three locations, continuously changing transmission parameters, and a competing intervention  
 
@@ -126,11 +186,11 @@ else
     simulation2dataset = let  
         interventions = InterventionsMatrix([ nothing, 50, 70 ], 100)
         
-        u02a = [ 7_000_000 - 1000, 1000, 0, 0, 0, 0 ]
+        u02a = [ 350_000 - 50, 50, 0, 0, 0, 0 ]
         p2a = sim2parameters(beta2a)
         sim2a = stochasticmodel(seirrates, u02a, 1:100, p2a, seirtransitionmatrix)
 
-        u02b = [ 6_000_000 - 2000, 2000, 0, 0, 0, 0 ]
+        u02b = [ 300_000 - 100, 100, 0, 0, 0, 0 ]
         p2bcounterfactual = sim2parameters(beta2bcounterfactual)
         sim2bcounterfactual = stochasticmodel(
             seirrates, u02b, 1:100, p2bcounterfactual, seirtransitionmatrix
@@ -144,7 +204,7 @@ else
             )
         )
 
-        u02c = [ 8_000_000 - 2000, 2000, 0, 0, 0, 0 ]
+        u02c = [ 400_000 - 100, 100, 0, 0, 0, 0 ]
         p2ccounterfactual = sim2parameters(beta2ccounterfactual)
         sim2ccounterfactual = stochasticmodel(
             seirrates, u02c, 1:100, p2ccounterfactual, seirtransitionmatrix
@@ -183,7 +243,7 @@ else
             "interventions" => interventions, 
             "prevalence" => prevalence, 
             "counterfactualprevalence" => counterfactualprevalence, 
-            "Ns" => [ 7_000_000, 6_000_000, 8_000_000 ],
+            "Ns" => [ 350_000, 300_000, 400_000 ],
         )
     end
 
@@ -198,11 +258,11 @@ else
     simulation3dataset = let  
         interventions = InterventionsMatrix([ nothing, 50 ], 100)
         
-        u03a = [ 5_000_000 - 2000, 2000, 0, 0, 0, 0 ]
+        u03a = [ 250_000 - 100, 100, 0, 0, 0, 0 ]
         p3a = sim3parameters(beta3a)
         sim3a = stochasticmodel(seirrates, u03a, 1:100, p3a, seirtransitionmatrix)
 
-        u03b = [ 11_000_000 - 5000, 5000, 0, 0, 0, 0 ]
+        u03b = [ 250_000 - 100, 100, 0, 0, 0, 0 ]
         p3bcounterfactual = sim3parameters(beta3bcounterfactual)
         sim3bcounterfactual = stochasticmodel(
             seirrates, u03b, 1:100, p3bcounterfactual, seirtransitionmatrix
@@ -237,7 +297,7 @@ else
             "interventions" => interventions, 
             "prevalence" => prevalence, 
             "counterfactualprevalence" => counterfactualprevalence, 
-            "Ns" => [ 5_000_000, 11_000_000 ],
+            "Ns" => [ 250_000, 250_000 ],
         )
     end
 
@@ -252,11 +312,11 @@ else
     simulation4dataset = let  
         interventions = InterventionsMatrix([ nothing, 50 ], 100)
         
-        u04a = [ 7_000_000 - 1000, 1000, 0, 0, 0, 0 ]
+        u04a = [ 350_000 - 50, 50, 0, 0, 0, 0 ]
         p4a = sim4parameters(beta4a, theta4a)
         sim4a = stochasticmodel(seirrates, u04a, 1:100, p4a, seirtransitionmatrix)
 
-        u04b = [ 3_000_000 - 1000, 1000, 0, 0, 0, 0 ]
+        u04b = [ 150_000 - 50, 50, 0, 0, 0, 0 ]
         p4bcounterfactual = sim4parameters(beta4bcounterfactual, theta4b)
         sim4bcounterfactual = stochasticmodel(
             seirrates, u04b, 1:100, p4bcounterfactual, seirtransitionmatrix
@@ -291,7 +351,7 @@ else
             "interventions" => interventions, 
             "prevalence" => prevalence, 
             "counterfactualprevalence" => counterfactualprevalence, 
-            "Ns" => [ 7_000_000, 3_000_000 ],
+            "Ns" => [ 350_000, 150_000 ],
         )
     end
 

@@ -89,12 +89,58 @@ end
 # Simulation 1 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-## Analysis 0 
-# No effect of interventions 
-
 W_sim1_0 = generatew_gt(
     fseir, simulation1dataset["cases_counterfactual"], simulation1dataset["Ns"]
 )
+
+W_sim1 = generatew_gt(fseir, simulation1dataset["cases"], simulation1dataset["Ns"])
+
+## Discrete-time analyses
+
+timeperiods2 = let 
+    timeperiods = ones(Int, 100)
+    timeperiods[50:100] .= 2
+    timeperiods
+end
+
+sim1model0discrete = diffindiffparameters_discretetimes(
+    W_sim1_0, 
+    simulation1dataset["cases_counterfactual"],
+    simulation1dataset["interventions"], 
+    timeperiods2,
+    simulation1dataset["Ns"];
+    psiprior=0.8
+)
+
+s1c0configdiscrete = (
+    modelname="sim1model0discrete",
+    model=sim1model0discrete,
+    n_rounds=n_rounds,
+    n_chains=8,
+    seed=100+id,
+)  
+sim1chain0dictdiscrete = produce_or_load(pol_fitparameter, s1c0configdiscrete, datadir("sims"))
+
+sim1model1discrete = diffindiffparameters_discretetimes(
+    W_sim1, 
+    simulation1dataset["cases"],
+    simulation1dataset["interventions"], 
+    timeperiods2,
+    simulation1dataset["Ns"];
+    psiprior=0.8,
+)
+
+s1c1configdiscrete = (
+    modelname="sim1model1discrete",
+    model=sim1model1discrete, 
+    n_rounds=n_rounds, 
+    n_chains=8, 
+    seed=110+id,
+)  
+sim1chain1dictdiscrete = produce_or_load(pol_fitparameter, s1c1configdiscrete, datadir("sims"))
+
+## Analysis 0 
+# No effect of interventions 
 
 sim1model0 = diffindiffparameters_splinetimes(
     W_sim1_0, 
@@ -110,8 +156,6 @@ sim1chain0dict = produce_or_load(pol_fitparameter, s1c0config, datadir("sims"))
 
 ## Analysis 1 
 # "Canonical" difference in differences
-
-W_sim1 = generatew_gt(fseir, simulation1dataset["cases"], simulation1dataset["Ns"])
 
 sim1model1 = diffindiffparameters_splinetimes(
     W_sim1, 
@@ -162,6 +206,69 @@ sim1modela1 = diffindiffparameters_fittocurve_splinetimes(
 s1ca1config = @ntuple modelname="sim1modela1" model=sim1modela1 n_rounds n_chains=8 seed=10110+id
 sim1chaina1dict = produce_or_load(pol_fitparameter, s1ca1config, datadir("sims"))
 
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Simulation 1a 
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+W_sim1a = generatew_gt(fseir, simulation1a_dataset["cases"], simulation1a_dataset["Ns"])
+
+## Analysis 1 
+
+sim1amodel1 = diffindiffparameters_splinetimes(
+    W_sim1a, 
+    simulation1a_dataset["cases"],
+    simulation1a_dataset["interventions"], 
+    [ [ 1 ]; collect(11:89/4:100) ],
+    simulation1a_dataset["Ns"];
+    psiprior=0.6,
+)
+
+s1ac1config = @ntuple modelname="sim1amodel1" model=sim1amodel1 n_rounds n_chains=8 seed=160+id
+sim1achain1dict = produce_or_load(pol_fitparameter, s1ac1config, datadir("sims"))
+
+
+## Analysis 2
+
+# Add lag and lead times to explore non-parallel trends but do not account for known confounder
+
+sim1amodel2 = diffindiffparameters_splinetimes(
+    W_sim1a, 
+    simulation1a_dataset["cases"],
+    simulation1a_dataset["interventions"], 
+    [ [ 1 ]; collect(11:89/4:100) ],
+    simulation1a_dataset["Ns"];
+    psiprior=0.6,
+    secondaryinterventions=[
+        InterventionsMatrix([ nothing, 36 ], 100),
+        InterventionsMatrix([ nothing, 64 ], 100),
+    ],
+)
+
+s1ac2config = @ntuple modelname="sim1amodel2" model=sim1amodel2 n_rounds n_chains=8 seed=170+id
+sim1achain2dict = produce_or_load(pol_fitparameter, s1ac2config, datadir("sims"))
+
+
+## Analysis 3
+
+# Add lag and lead times to explore non-parallel trends plus the known confounder
+
+sim2model3 = diffindiffparameters_splinetimes(
+    W_sim2, 
+    simulation2dataset["cases"],
+    simulation2dataset["interventions"], 
+    [ [ 1 ]; collect(11:89/4:100) ],
+    simulation2dataset["Ns"];
+    psiprior=0.6,
+    secondaryinterventions=[
+        InterventionsMatrix([ nothing, nothing, 30 ], 100),
+        InterventionsMatrix([ nothing, 36, 56 ], 100),
+        InterventionsMatrix([ nothing, 64, 84 ], 100)
+    ],
+)
+
+s2c3config = @ntuple modelname="sim2model3" model=sim2model3 n_rounds n_chains=8 seed=230+id
+sim2chain3dict = produce_or_load(pol_fitparameter, s2c3config, datadir("sims"))
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Simulation 2 
@@ -179,7 +286,7 @@ sim2model0 = diffindiffparameters_splinetimes(
     simulation2dataset["interventions"], 
     [ [ 1 ]; collect(11:89/4:100) ],
     simulation2dataset["Ns"];
-    psiprior=0.3,
+    psiprior=0.5,
 )
 
 s2c0config = @ntuple modelname="sim2model0" model=sim2model0 n_rounds n_chains=8 seed=200+id
@@ -212,7 +319,7 @@ sim2model2 = diffindiffparameters_splinetimes(
     simulation2dataset["interventions"], 
     [ [ 1 ]; collect(11:89/4:100) ],
     simulation2dataset["Ns"];
-    psiprior=0.3,
+    psiprior=0.5,
     secondaryinterventions=[
         InterventionsMatrix([ nothing, 36, nothing ], 100),
         InterventionsMatrix([ nothing, nothing, 56 ], 100),
@@ -235,7 +342,7 @@ sim2model3 = diffindiffparameters_splinetimes(
     simulation2dataset["interventions"], 
     [ [ 1 ]; collect(11:89/4:100) ],
     simulation2dataset["Ns"];
-    psiprior=0.3,
+    psiprior=0.5,
     secondaryinterventions=[
         InterventionsMatrix([ nothing, nothing, 30 ], 100),
         InterventionsMatrix([ nothing, 36, 56 ], 100),
@@ -330,7 +437,7 @@ sim4model0 = diffindiffparameters_splinetimes(
     simulation4dataset["interventions"], 
     [ [ 1 ]; collect(11:89/4:100) ],
     simulation4dataset["Ns"];
-    psiprior=0.3
+    psiprior=0.5
 )
 
 s4c0config = @ntuple modelname="sim4model0" model=sim4model0 n_rounds n_chains=8 seed=400+id
@@ -345,7 +452,7 @@ sim4model1 = diffindiffparameters_splinetimes(
     simulation4dataset["interventions"], 
     [ [ 1 ]; collect(11:89/4:100) ],
     simulation4dataset["Ns"];
-    psiprior=0.3,
+    psiprior=0.5,
 )
 
 s4c1config = @ntuple modelname="sim4model1" model=sim4model1 n_rounds n_chains=8 seed=410+id
@@ -362,7 +469,7 @@ sim4model2 = diffindiffparameters_splinetimes(
     simulation4dataset["interventions"], 
     [ [ 1 ]; collect(11:89/4:100) ],
     simulation4dataset["Ns"];
-    psiprior=0.3,
+    psiprior=0.5,
     secondaryinterventions=[
         InterventionsMatrix([ nothing, 36 ], 100),
         InterventionsMatrix([ nothing, 64 ], 100)
