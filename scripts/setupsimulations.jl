@@ -129,7 +129,7 @@ if isfile(datadir("sims", "simulation1a_dataset.jld2"))
     simulation1a_dataset = load(datadir("sims", "simulation1a_dataset.jld2"))
 else 
     simulation1a_dataset = let  
-        interventions = InterventionsMatrix([ nothing, 50, 70 ], 100)
+        interventions = InterventionsMatrix([ nothing, 50 ], 100)
         
         u01a_a = [ 300_000 - 50, 50, 0, 0, 0, 0 ]
         p1a_a = sim1a_parameters(beta1a_a)

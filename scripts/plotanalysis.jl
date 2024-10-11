@@ -61,7 +61,7 @@ sim1fit1discretepriorsample = samplerenewalequation_2sets(
     timeperiods=timeperiods2,
 )
 sim1fit1kvdiscretepriorsample = keyvalues(sim1model1discretepriorsampledf, sim1fit1discretepriorsample)
-println(sim1fit1kvdiscretepriorsample)
+#println(sim1fit1kvdiscretepriorsample)
 
 sim1discretepriorsampleplot = let
     fig = Figure(; size=( 500, 350 ))
@@ -233,6 +233,7 @@ sim1fit0 = samplerenewalequation_2sets(
     timeknots=[ [ 1 ]; collect(11:89/4:100) ],
 )
 sim1fit0kv = keyvalues(sim1chain0, sim1fit0)
+println(sim1fit0kv)
 
 println("mean=$(exp(mean(sim1chain0.logdelta))); CrI=$(exp.(quantile(sim1chain0.logdelta, [ 0.05, 0.95 ]))))")
 
@@ -245,6 +246,7 @@ sim1fit1 = samplerenewalequation_2sets(
     timeknots=[ [ 1 ]; collect(11:89/4:100) ],
 )
 sim1fit1kv = keyvalues(sim1chain1, sim1fit1)
+println(sim1fit1kv)
 
 println("mean=$(exp(mean(sim1chain1.logdelta))); CrI=$(exp.(quantile(sim1chain1.logdelta, [ 0.05, 0.95 ]))))")
 
@@ -345,6 +347,38 @@ safesave(plotsdir("sim1plot.pdf"), sim1plot)
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Simulation 1a 
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+sim1achain1 = loadanalysisdictsasdf("sim1amodel1", 8, maxrounds, 160)
+plotchains(sim1achain1)
+sim1afit1 = samplerenewalequation_2sets(
+    fseir, sim1achain1, simulation1a_dataset["interventions"]; 
+    initialvalues=simulation1a_dataset["cases"][1:10, :], 
+    Ns=simulation1a_dataset["Ns"], 
+    timeknots=[ [ 1 ]; collect(11:89/4:100) ],
+)
+sim1afit1kv = keyvalues(sim1achain1, sim1afit1)
+println(sim1afit1kv)
+
+sim1afit1plot = plotrenewalequationsamples(
+    simulation1a_dataset, W_sim1a, sim1afit1; 
+    betafunctions=[ beta1a_a, beta1a_b ], 
+    betafunctions_counterfactual=[ beta1a_a, beta1a_bcounterfactual ],
+    infectiousduration=2.5,
+    plotsize=( 500, 350 ),
+    rhoclip = 2.5,
+   # secondaryinterventions=[
+   #     InterventionsMatrix([ nothing, 36 ], 100),
+   #     InterventionsMatrix([ nothing, 64 ], 100)
+   # ],
+)
+
+safesave(plotsdir("sim1afit1plot.pdf"), sim1afit1plot)
+
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Simulation 2 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -364,6 +398,8 @@ sim2fit0plot = plotrenewalequationsamples(
     plotsize=( 400, 400 ),
     rhoclip=2.5,
 )
+sim2fit0kv = keyvalues(sim2chain0, sim2fit0)
+println(sim2fit0kv)
 
 sim2chain1 = loadanalysisdictsasdf("sim2model1", 8, maxrounds, 210)
 plotchains(sim2chain1)
