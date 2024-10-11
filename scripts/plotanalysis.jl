@@ -408,7 +408,7 @@ sim2fit1 = samplerenewalequation_2sets(
     initialvalues=simulation2dataset["cases"][1:20, :], 
     Ns=simulation2dataset["Ns"], 
     timeknots=[ [ 1 ]; collect(11:89/4:100) ],
-    secondaryinterventions=InterventionsMatrix([ nothing, nothing, 30 ], 100),
+    secondaryinterventions=InterventionsMatrix([ nothing, nothing, 70 ], 100),
 )
 sim2fit1plot = plotrenewalequationsamples(
     simulation2dataset, W_sim2, sim2fit1; 
@@ -418,8 +418,51 @@ sim2fit1plot = plotrenewalequationsamples(
     plotsize=( 400, 400 ),
     rhoclip=2.5,
 )
+sim2fit1kv = keyvalues(sim2chain1, sim2fit1)
+println(sim2fit1kv)
 
-safesave(plotsdir("sim2fit1plot.svg"), sim2fit1plot)
+sim2plot = let
+    fig = Figure(; size=( 500, 350 ))
+
+    ga = GridLayout(fig[1, 1])
+    gb = GridLayout(fig[1, 2])
+
+    plotrenewalequationsamples!(
+        ga, simulation2dataset, W_sim2, sim2fit0; 
+        betafunctions=[ beta2a, beta2b, beta2c ], 
+        betafunctions_counterfactual=[ beta2a, beta2bcounterfactual, beta2ccounterfactual ],
+        infectiousduration=2.5,
+        rhoclip = 2.5,
+        columntitles=[ 
+            "Group 1", 
+            "Group 2",
+            "Group 3" 
+        ],
+        columntitlefontsize=10,
+        xtitle="Time (days)",
+    )
+
+    plotrenewalequationsamples!(
+        gb, simulation2dataset, W_sim2, sim2fit1; 
+        betafunctions=[ beta2a, beta2b, beta2c ], 
+        betafunctions_counterfactual=[ beta2a, beta2bcounterfactual, beta2ccounterfactual ],
+        infectiousduration=2.5,
+        rhoclip = 2.5,
+        columntitles=[ 
+            "Group 1", 
+            "Group 2",
+            "Group 3" 
+        ],
+        columntitlefontsize=10,
+        xtitle="Time (days)",
+    )
+
+    labelplots!([ "A", "B" ], [ ga, gb ])
+
+    fig
+end
+
+safesave(plotsdir("sim2plot.pdf"), sim2plot)
 
 sim2chain2 = loadanalysisdictsasdf("sim2model2", 8, maxrounds, 220)
 plotchains(sim2chain2)
