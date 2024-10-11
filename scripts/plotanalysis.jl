@@ -37,6 +37,79 @@ safesave(plotsdir("generationintervalplot.pdf"), generationintervalplot)
 
 ## Discrete-time analyses
 
+### Priors 
+
+sim1model0discretepriorsample = sample(sim1model0discrete, Prior(), 16384)
+sim1model0discretepriorsampledf = DataFrame(sim1model0discretepriorsample)
+plotchains(sim1model0discretepriorsampledf)
+sim1fit0discretepriorsample = samplerenewalequation_2sets(
+    fseir, sim1model0discretepriorsampledf, simulation1dataset["interventions"]; 
+    initialvalues=simulation1dataset["cases_counterfactual"][1:10, :], 
+    Ns=simulation1dataset["Ns"], 
+    timeperiods=timeperiods2,
+)
+sim1fit0kvdiscretepriorsample = keyvalues(sim1model0discretepriorsampledf, sim1fit0discretepriorsample)
+println(sim1fit0kvdiscretepriorsample)
+
+sim1model1discretepriorsample = sample(sim1model1discrete, Prior(), 16384)
+sim1model1discretepriorsampledf = DataFrame(sim1model1discretepriorsample)
+plotchains(sim1model1discretepriorsampledf)
+sim1fit1discretepriorsample = samplerenewalequation_2sets(
+    fseir, sim1model1discretepriorsampledf, simulation1dataset["interventions"]; 
+    initialvalues=simulation1dataset["cases"][1:10, :], 
+    Ns=simulation1dataset["Ns"], 
+    timeperiods=timeperiods2,
+)
+sim1fit1kvdiscretepriorsample = keyvalues(sim1model1discretepriorsampledf, sim1fit1discretepriorsample)
+println(sim1fit1kvdiscretepriorsample)
+
+sim1discretepriorsampleplot = let
+    fig = Figure(; size=( 500, 350 ))
+
+    ga = GridLayout(fig[1, 1])
+    gb = GridLayout(fig[1, 2])
+
+    plotrenewalequationsamples!(
+        ga,
+        simulation1dataset["cases_counterfactual"],
+        simulation1dataset["cases_counterfactual"], 
+        W_sim1_0, 
+        simulation1dataset["Ns"], 
+        sim1fit0discretepriorsample,
+        fitws(simulation1dataset["cases_counterfactual"], simulation1dataset["Ns"], sim1fit0discretepriorsample); 
+        betafunctions=[ beta1a, beta1bcounterfactual ], 
+        betafunctions_counterfactual=[ beta1a, beta1bcounterfactual ],
+        infectiousduration=2.5,
+        #rhoclip = 2.5,
+        columntitles=[ 
+            "Group 1", 
+            "Group 2" 
+        ],
+        columntitlefontsize=10,
+        xtitle="Time (days)",
+    )
+
+    plotrenewalequationsamples!(
+        gb, simulation1dataset, W_sim1, sim1fit1discretepriorsample; 
+        betafunctions=[ beta1a, beta1b ], 
+        betafunctions_counterfactual=[ beta1a, beta1bcounterfactual ],
+        infectiousduration=2.5,
+        #rhoclip = 2.5,
+        columntitles=[ 
+            "Group 1", 
+            "Group 2" 
+        ],
+        columntitlefontsize=10,
+        xtitle="Time (days)",
+    )
+
+    labelplots!([ "A", "B" ], [ ga, gb ])
+
+    fig
+end
+
+safesave(plotsdir("sim1discretepriorsampleplot.pdf"), sim1discretepriorsampleplot)
+
 sim1chain0discrete = loadanalysisdictsasdf("sim1model0discrete", 8, maxrounds, 100)
 plotchains(sim1chain0discrete)
 sim1fit0discrete = samplerenewalequation_2sets(
@@ -48,6 +121,21 @@ sim1fit0discrete = samplerenewalequation_2sets(
 sim1fit0kvdiscrete = keyvalues(sim1chain0discrete, sim1fit0discrete)
 println(sim1fit0kvdiscrete)
 
+sim1chain1discrete = loadanalysisdictsasdf("sim1model1discrete", 8, maxrounds, 110)
+plotchains(sim1chain1discrete)
+sim1fit1discrete = samplerenewalequation_2sets(
+    fseir, sim1chain1discrete, simulation1dataset["interventions"]; 
+    initialvalues=simulation1dataset["cases"][1:10, :], 
+    Ns=simulation1dataset["Ns"], 
+    timeperiods=timeperiods2,
+)
+sim1fit1kvdiscrete = keyvalues(sim1chain1discrete, sim1fit1discrete)
+println(sim1fit1kvdiscrete)
+
+
+
+
+#=
 sim1fit1discreteplot = plotrenewalequationsamples(
     simulation1dataset["cases_counterfactual"],
     simulation1dataset["cases_counterfactual"], 
@@ -65,7 +153,7 @@ sim1fit1discreteplot = plotrenewalequationsamples(
    #     InterventionsMatrix([ nothing, 64 ], 100)
    # ],
 )
-
+=#
 sim1discreteplot = let
     fig = Figure(; size=( 500, 350 ))
 
@@ -78,8 +166,8 @@ sim1discreteplot = let
         simulation1dataset["cases_counterfactual"], 
         W_sim1_0, 
         simulation1dataset["Ns"], 
-        sim1fit0,
-        fitws(simulation1dataset["cases_counterfactual"], simulation1dataset["Ns"], sim1fit0); 
+        sim1fit0discrete,
+        fitws(simulation1dataset["cases_counterfactual"], simulation1dataset["Ns"], sim1fit0discrete); 
         betafunctions=[ beta1a, beta1bcounterfactual ], 
         betafunctions_counterfactual=[ beta1a, beta1bcounterfactual ],
         infectiousduration=2.5,
@@ -93,7 +181,7 @@ sim1discreteplot = let
     )
 
     plotrenewalequationsamples!(
-        gb, simulation1dataset, W_sim1, sim1fit1; 
+        gb, simulation1dataset, W_sim1, sim1fit1discrete; 
         betafunctions=[ beta1a, beta1b ], 
         betafunctions_counterfactual=[ beta1a, beta1bcounterfactual ],
         infectiousduration=2.5,

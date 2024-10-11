@@ -208,10 +208,10 @@ end
         logzeta_g_vec[i] = logzeta
     end
 
-    logeta_t_vec = Vector{typeof(logeta_mean)}(undef, ntimeperiods) 
+    logeta_t_vec = Vector{typeof(logzeta_mean)}(undef, ntimeperiods) 
     for i ∈ 1:ntimeperiods
         if i == peakperiod
-            logeta = zero(typeof(logeta_mean))
+            logeta = zero(typeof(logzeta_mean))
         else
             @submodel prefix="eta_t$i" logeta = _estimatelogeta_t(logeta2eprior)
         end
@@ -1034,9 +1034,9 @@ function keyvalues(fitteddf, fittedvaluesset)
     return (
         deltamean=deltamean,
         deltap05_95=deltap05_95,
-        totalcases=totalcases,
-        peakcases=peakcases,
-        peakcasesdate=peakcasesdate,
+        #totalcases=totalcases,
+        #peakcases=peakcases,
+        #peakcasesdate=peakcasesdate,
         totalcasesmeaneffect=totalcasesmeaneffect,
         totalcasesp05_90=totalcasesp05_90,
         peakcasesmeaneffect=peakcasesmeaneffect,
