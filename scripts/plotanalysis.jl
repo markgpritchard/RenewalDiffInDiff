@@ -573,7 +573,7 @@ sim3fit2plot = plotrenewalequationsamples(
     betafunctions_counterfactual=[ beta3a, beta3bcounterfactual ],
     infectiousduration=2.5,
     plotsize=( 400, 400 ),
-    rhoclip=2.5,
+    rhoclip=5,
 )
 
 

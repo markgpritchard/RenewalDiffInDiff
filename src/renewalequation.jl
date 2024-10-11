@@ -2,18 +2,17 @@
 function renewalequation_expectedcases(ρ::Number, s::Number, f_output::Number; kwargs...)
     return *(ρ, s, f_output)
 end
-
+ 
 function renewalequation_expectedcases(
     f, y_vector::AbstractVector, ρ::Number, N::Number; 
-    psi=1, s0=1, kwargs...
+    s0=1, kwargs...
 )
-    @assert 0 < psi <= 1
     @assert 0 <= s0 <= 1
-    s = s0 - sum(y_vector) / (psi * N) 
+    s = s0 - sum(y_vector) / N
     f_output = _renewalfoutput(f, y_vector)
     return renewalequation_expectedcases(ρ, s, f_output; kwargs...)
 end
-
+#=
 function renewalequation_expectedcases(
     f, rho_matrix::AbstractMatrix{T}, initialvalues::AbstractMatrix, Ns::AbstractVector; 
     kwargs...
@@ -22,10 +21,10 @@ function renewalequation_expectedcases(
     renewalequation_expectedcases!(f, y_matrix, rho_matrix, initialvalues, Ns; kwargs...)
     return y_matrix
 end
-
+=#
 function renewalequation_expectedcases!(
     f, y_matrix::AbstractMatrix, rho_matrix::AbstractMatrix, 
-    initialvalues::AbstractMatrix, Ns::AbstractVector; 
+    initialvalues::AbstractMatrix, Ns::AbstractVector, psi; 
     kwargs...
 )
     for g ∈ axes(y_matrix, 2)
@@ -34,7 +33,7 @@ function renewalequation_expectedcases!(
                 y_matrix[t, g] = initialvalues[t, g]
             else
                 y_matrix[t, g] = renewalequation_expectedcases(
-                    f, y_matrix[1:(t-1), g], rho_matrix[t, g], Ns[g]; 
+                    f, y_matrix[1:(t-1), g], rho_matrix[t, g], Ns[g] * psi; 
                     kwargs...
                 )
             end
@@ -60,7 +59,7 @@ function renewalequation_poissoncases(
     pcases = renewalequation_poissoncases(ρ, s, f_output)
     return min(round(Int, s * (N * psi), RoundDown), pcases)
 end
-
+#=
 function renewalequation_poissoncases(
     f, rho_matrix::AbstractMatrix{T}, initialvalues::AbstractMatrix, Ns::AbstractVector; 
     kwargs...
@@ -69,10 +68,10 @@ function renewalequation_poissoncases(
     renewalequation_poissoncases!(f, y_matrix, rho_matrix, initialvalues, Ns; kwargs...)
     return y_matrix
 end
-
+=#
 function renewalequation_poissoncases!(
     f, y_matrix::AbstractMatrix, rho_matrix::AbstractMatrix, 
-    initialvalues::AbstractMatrix, Ns::AbstractVector; 
+    initialvalues::AbstractMatrix, Ns::AbstractVector, psi; 
     columnseeds=nothing, kwargs...
 )
     for g ∈ axes(y_matrix, 2)
@@ -82,7 +81,7 @@ function renewalequation_poissoncases!(
                 y_matrix[t, g] = initialvalues[t, g]
             else
                 pcases = renewalequation_poissoncases(
-                    f, y_matrix[1:(t-1), g], rho_matrix[t, g], Ns[g]; 
+                    f, y_matrix[1:(t-1), g], rho_matrix[t, g], Ns[g] * psi; 
                     kwargs...
                 )
                 y_matrix[t, g] = pcases
@@ -110,63 +109,26 @@ function _renewalfoutput(f::AbstractVector, i_vector)
     return sumfi
 end
 
-function samplerenewalequation(f, chaindf, interventions; nsamples=:all, kwargs...)
+function samplerenewalequation(f, chaindf, interventions; inds=axes(chaindf, 1), kwargs...)
+    # matrices that will be updated / overwritten for each set of parameter values on the chain
     rho_matrix = zeros(size(interventions))
     y_matrix_det = zeros(size(interventions))
     y_matrix_poisson = zeros(Int, size(interventions))
-    return samplerenewalequation(
-        f, chaindf, interventions, rho_matrix, y_matrix_det, y_matrix_poisson, nsamples; 
-        kwargs...
-    )
-end
 
-function samplerenewalequation(
-    f, chaindf, interventions, rho_matrix, y_matrix_det, y_matrix_poisson, nsamples::Symbol; 
-    kwargs...
-)
-    @assert nsamples == :all
-    inds = axes(chaindf, 1)
-    rho_matrix_vec = Vector{typeof(rho_matrix)}(undef, size(chaindf, 1))
-    y_matrix_det_vec = Vector{typeof(y_matrix_det)}(undef, size(chaindf, 1))
-    y_matrix_poisson_vec = Vector{typeof(y_matrix_poisson)}(undef, size(chaindf, 1))
+    # a vector of these matrices, stored to allow calculation of mean and credible intervals
+    rho_matrix_vec = Vector{Matrix{Float64}}(undef, size(chaindf, 1))
+    y_matrix_det_vec = Vector{Matrix{Float64}}(undef, size(chaindf, 1))
+    y_matrix_poisson_vec = Vector{Matrix{Int}}(undef, size(chaindf, 1))
+
+    psi_vec = [ _samplepsi(chaindf, i) for i ∈ inds ]
+
     samplerenewalequation!(
         f, 
         rho_matrix, y_matrix_det, y_matrix_poisson, 
         rho_matrix_vec, y_matrix_det_vec, y_matrix_poisson_vec, 
-        chaindf, interventions, inds; 
-        kwargs...
+        chaindf, interventions, psi_vec; 
+        inds, kwargs...
     )
-    psi_vec = [ _samplepsi(chaindf, i) for i ∈ inds ]
-    return (
-        psi_vec=psi_vec,
-        rho_matrix=rho_matrix,
-        rho_matrix_vec=rho_matrix_vec,
-        y_matrix_det=y_matrix_det,
-        y_matrix_det_vec=y_matrix_det_vec,
-        y_matrix_poisson=y_matrix_poisson,
-        y_matrix_poisson_vec=y_matrix_poisson_vec
-    )
-end
-
-function samplerenewalequation(
-    f, chaindf, interventions, rho_matrix, y_matrix_det, y_matrix_poisson, nsamples::Integer; 
-    kwargs...
-)
-    inds = [ sample(axes(chaindf, 1)) for _ ∈ nsamples ]
-    rho_matrix_vec = Vector{typeof(rho_matrix)}(undef, nsamples)
-    y_matrix_det_vec = Vector{typeof(y_matrix_det)}(undef, nsamples)
-    y_matrix_poisson_vec = Vector{typeof(y_matrix_poisson)}(undef, nsamples)   
-    rho_matrix_vec = Vector{typeof(rho_matrix)}(undef, nsamples)
-    y_matrix_det_vec = Vector{typeof(y_matrix_det)}(undef, nsamples)
-    y_matrix_poisson_vec = Vector{typeof(y_matrix_poisson)}(undef, nsamples)
-    samplerenewalequation!(
-        f, 
-        rho_matrix, y_matrix_det, y_matrix_poisson, 
-        rho_matrix_vec, y_matrix_det_vec, y_matrix_poisson_vec, 
-        chaindf, interventions, inds; 
-        kwargs...
-    )
-    psi_vec = [ _samplepsi(chaindf, i) for i ∈ inds ]
     return (
         psi_vec=psi_vec,
         rho_matrix=rho_matrix,
@@ -182,8 +144,9 @@ function samplerenewalequation!(
     f, 
     rho_matrix, y_matrix_det, y_matrix_poisson, 
     rho_matrix_vec, y_matrix_det_vec, y_matrix_poisson_vec, 
-    chaindf, interventions, inds; 
+    chaindf, interventions, psi_vec; 
     initialvalues, Ns, 
+    inds=axes(chaindf, 1), 
     secondaryinterventions=nothing, timeknots=nothing, timeperiods=nothing, 
     kwargs...
 )
@@ -195,11 +158,11 @@ function samplerenewalequation!(
             kwargs...
         )
         renewalequation_expectedcases!(
-            f, y_matrix_det, rho_matrix, initialvalues, Ns; 
+            f, y_matrix_det, rho_matrix, initialvalues, Ns, psi_vec[ind]; 
             kwargs...
         )
         renewalequation_poissoncases!(
-            f, y_matrix_poisson, rho_matrix, initialvalues, Ns; 
+            f, y_matrix_poisson, rho_matrix, initialvalues, Ns, psi_vec[ind]; 
             kwargs...
         )
         rho_matrix_vec[ind] = deepcopy(rho_matrix)
@@ -409,7 +372,7 @@ function samplerenewalequation_2sets(f, chaindf, interventions; columnseeds=1, k
 end
 
 ## Version to estimate R_t
-
+#=
 renewalequation_expectedcases_rt(ρ::Number, f_output::Number; kwargs...) = *(ρ, f_output)
 
 function renewalequation_expectedcases_rt(
@@ -492,3 +455,4 @@ function renewalequation_poissoncases_rt!(
         end
     end
 end
+=#
