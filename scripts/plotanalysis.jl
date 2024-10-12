@@ -785,7 +785,7 @@ datafit3plot = plotrenewalequationsamples(
 
 safesave(plotsdir("datafit3plot.svg"), datafit3plot)
 
-
+#=
 ## Analysis 4
 
 # with separate lead and lag for each area 
@@ -832,3 +832,47 @@ datafit4plot = plotrenewalequationsamples(
     xticks=( [ 1, 93, 215 ], [ "June", "Sept.", "Jan." ] ),
     xtitle="Date, 2020–2021",
 )
+=#
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Masking data 
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+## Analysis 1 
+# Effect of mask recommendations. No other considerations of confounding 
+
+maskingdatachain1 = loadanalysisdictsasdf("maskingdatamodel1", 8, maxrounds, 1110)
+plotchains(maskingdatachain1)
+maskingdatafit1 = samplerenewalequation_2sets(
+    COVIDSERIALINTERVAL, maskingdatachain1, facialcoveringsrecommended[1:133, :]; 
+    initialvalues=maskcovidcases[1:28, :], 
+    Ns=POPULATION2020,
+    #psi=0.4, timeknots=collect(1:303/10:304),
+    timeknots=collect(1.0:28:133),
+)
+maskingdatafit1plot = plotrenewalequationsamples(
+    maskcovidcases[1:133, :], W_maskcoviddata[1:133, :], POPULATION2020, maskingdatafit1;
+    #plotsize=( 600, 400 ),
+    #=columntitles=[ 
+        "Halton", 
+        "Knowsley", 
+        "Liverpool", 
+        "Sefton", 
+        "St Helens", 
+        "Warrington", 
+        "W. Lancs", 
+        "Wigan", 
+        "Wirral" 
+    ],
+    columntitlefontsize=10,
+    xticklabelrotation=-π/4,
+    xticks=( [ 1, 93, 215 ], [ "June", "Sept.", "Jan." ] ),
+    xtitle="Date, 2020–2021", =#
+)
+
+safesave(plotsdir("maskingdatafit1plot.pdf"), maskingdatafit1plot)
+
+
+
+
