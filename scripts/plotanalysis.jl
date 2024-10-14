@@ -484,7 +484,7 @@ sim2fit2plot = plotrenewalequationsamples(
     betafunctions_counterfactual=[ beta2a, beta2bcounterfactual, beta2ccounterfactual ],
     infectiousduration=2.5,
     plotsize=( 400, 400 ),
-    rhoclip=2.5,
+    rhoclip=4,
 )
 
 sim2chain3 = loadanalysisdictsasdf("sim2model3", 8, maxrounds, 230)
@@ -550,7 +550,7 @@ sim3fit1plot = plotrenewalequationsamples(
     betafunctions_counterfactual=[ beta3a, beta3bcounterfactual ],
     infectiousduration=2.5,
     plotsize=( 400, 400 ),
-    rhoclip=2.5,
+    rhoclip=5,
 )
 
 safesave(plotsdir("sim3fit1plot.svg"), sim3fit1plot)
