@@ -21,42 +21,51 @@ paralleltrendsfig = let
     ]
     xs2cf = xs1 .+ 0.05
         
-    fig = Figure(; size=( 500, 300 ))
-    ax = Axis(fig[1, 1])
-    
-    lines!(ax, ts, xs1; color=:blue)
-    lines!(ax, ts, xs2; color=:black)
-    lines!(ax, ts[50:100], xs2cf[50:100]; color=:red, linestyle=:dash)
-    band!(ax, ts[50:100], xs2cf[50:100], xs2[50:100]; color=( :red, 0.3 ))
+    fig = with_theme(theme_latexfonts()) do
+        fig = Figure(; size=( 500, 300 ))
+        ax = Axis(fig[1, 1])
+        ax2 = Axis(fig[1, 2])
         
-    arrows!(ax, [ 50 ], xs2[50:50] .+ 0.075, [ 0 ], [ -0.05 ])
-
-    text!(
-        ax, 50, xs2[50] + 0.075; 
-        text="Group 1\nIntervention", align=( :center, :bottom ), fontsize=10
-    )
-    text!(
-        ax, 103, xs1[100] - 0.01; 
-        text="Group 0\nobserved", align = ( :left, :center ), fontsize=10
-    )
-    text!(
-        ax, 103, xs2[100]; 
-        text="Group 1\nobserved", align = ( :left, :center ), fontsize=10
-    )
-    text!(
-        ax, 103, xs2cf[100] + 0.01; 
-        text="Group 1\ncounterfactual", align = ( :left, :center ), fontsize=10
-    )
-
-    formataxis!(ax; hidex=true, hidey=true, setpoint=( 120, xs2cf[100] + 0.02 ))    
+        lines!(ax, ts, xs1; color=:black)
+        lines!(ax, ts, xs2; color=COLOURVECTOR[1])
+        lines!(ax, ts[50:100], xs2cf[50:100]; color=:red, linestyle=:dash)
+        band!(ax, ts[50:100], xs2cf[50:100], xs2[50:100]; color=( :red, 0.3 ))
+            
+        arrows!(ax, [ 50 ], xs2[50:50] .+ 0.075, [ 0 ], [ -0.05 ])
     
-    Label(fig[1, 0], "y"; fontsize=11.84, tellheight=false)
-    Label(fig[2, 1], "time"; fontsize=11.84, tellwidth=false)
-
-    colgap!(fig.layout, 1, 5)
-    rowgap!(fig.layout, 1, 5)
+        text!(
+            ax, 50, xs2[50] + 0.075; 
+            text="Group 1\nIntervention", align=( :center, :bottom ), fontsize=10
+        )
+        text!(
+            ax2, 0, xs1[100]; 
+            text="Group 0\nobserved", align = ( :left, :top ), fontsize=10
+        )
+        text!(
+            ax2, 0, xs2[100]; 
+            text="Group 1\nobserved", align = ( :left, :center ), fontsize=10
+        )
+        text!(
+            ax2, 0, xs2cf[100] + 0.005; 
+            text="Group 1\ncounterfactual", align = ( :left, :top ), fontsize=10
+        )
     
-    fig    
+        formataxis!(ax; hidex=true, hidey=true)    
+        formataxis!(ax2; hidex=true, hidexticks=true, hidey=true, hideyticks=true)
+        hidespines!(ax2, :l, :r, :t, :b )    
+        
+        Label(fig[1, 0], "y"; fontsize=11.84, tellheight=false)
+        Label(fig[2, 1], "time"; fontsize=11.84, tellwidth=false)
+    
+        colgap!(fig.layout, 1, 5)
+        colgap!(fig.layout, 2, 0)
+        rowgap!(fig.layout, 1, 5)
+        colsize!(fig.layout, 2, Auto(0.2))
+        linkaxes!(ax, ax2)
+        
+        fig   
+    end
+    fig 
 end
 
 safesave(plotsdir("paralleltrendsfig.pdf"), paralleltrendsfig)

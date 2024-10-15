@@ -6,8 +6,14 @@ using CairoMakie, DataFrames, Pigeons, Turing
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # colour scheme
-const COLOURVECTOR = [ 
-    :blue, :seagreen4, :plum, :brown2, :darkgoldenrod1, :dodgerblue3, :skyblue2, :lightgray 
+const COLOURVECTOR = [
+    RGBf(33 / 255, 145 / 255, 140 / 255),
+    RGBf(68 / 255, 57 / 255, 131 / 255),
+    RGBf(253 / 255, 231 / 255, 37 / 255),
+    RGBf(53 / 255, 183 / 255, 121 / 255),
+    RGBf(49 / 255, 104 / 255, 142 / 255),
+    RGBf(68 / 255, 1 / 255, 84 / 255),
+    RGBf(144 / 255, 215 / 255, 67 / 255),
 ]
 
 # outputs from MCMC that are not plotted 
@@ -346,13 +352,14 @@ Most keyword arguments are only available when formatting an `Axis`
 The additional keyword argument `horizontal` is available when formatting a `Colorbar`
     or `Legend`, and sets whether that item should be oriented horizontally.
 """ 
-function formataxis!(axis::Axis, width = 800; 
-        hidespines = ( :r, :t ), hidex = false, hidexticks = false, hidey = false, 
-        hideyticks = false, setorigin = false, setpoint = nothing, trimspines = true
-    )
-    formataxishidespines!(axis, hidespines)
-    axis.spinewidth = width / 800
-    axis.xtrimspine = trimspines; axis.ytrimspine = trimspines
+function formataxis!(
+    axis::Axis, width=800; 
+    hidex=false, hidexticks=false, hidey=false, hideyticks=false, 
+    setorigin=false, setpoint=nothing, #trimspines = true
+)
+    #formataxishidespines!(axis, hidespines)
+    #axis.spinewidth = width / 800
+    #axis.xtrimspine = trimspines; axis.ytrimspine = trimspines
     axis.xgridvisible = false; axis.ygridvisible = false
     axis.xtickwidth = width / 800; axis.ytickwidth = width / 800
     axis.xlabelsize = width / 67; axis.ylabelsize = width / 67
@@ -430,11 +437,11 @@ For an `Axis3`, the `z` value may be provided alone, which assumes `x = y = 0`.
     `nothing`, no extension to the axes is performed.
 
 """
-setvalue!(axis::Axis, y::Real = 0) = setvalue!(axis, 0, y)
+setvalue!(axis::Axis, y::Real=0) = setvalue!(axis, 0, y)
 setvalue!(axis::Axis, x, y) = scatter!(axis, [x], [y], markersize = 0)
 setvalue!(axis::Axis3, z::Real = 0) = setvalue!(axis, 0, 0, z)
 setvalue!(axis::Axis3, x, y, z) = scatter!(axis, [x], [y], [z], markersize = 0)
-setvalue!(axis, x::Nothing) = nothing 
+setvalue!(::Any, ::Nothing) = nothing 
 setvalue!(axis, xy::Tuple) = setvalue!(axis, xy...)
 setorigin!(axis) = setvalue!(axis)
 
