@@ -785,7 +785,7 @@ datafit3plot = plotrenewalequationsamples(
 
 safesave(plotsdir("datafit3plot.svg"), datafit3plot)
 
-#=
+
 ## Analysis 4
 
 # with separate lead and lag for each area 
@@ -832,7 +832,7 @@ datafit4plot = plotrenewalequationsamples(
     xticks=( [ 1, 93, 215 ], [ "June", "Sept.", "Jan." ] ),
     xtitle="Date, 2020–2021",
 )
-=#
+
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -845,14 +845,14 @@ datafit4plot = plotrenewalequationsamples(
 maskingdatachain1 = loadanalysisdictsasdf("maskingdatamodel1", 8, maxrounds, 1110)
 plotchains(maskingdatachain1)
 maskingdatafit1 = samplerenewalequation_2sets(
-    COVIDSERIALINTERVAL, maskingdatachain1, facialcoveringsrecommended[1:133, :]; 
-    initialvalues=maskcovidcases[1:28, :], 
+    COVIDSERIALINTERVAL, maskingdatachain1, facialcoveringsrecommended[1:191, :]; 
+    initialvalues=maskcovidcases[1:90, :], 
     Ns=POPULATION2020,
     #psi=0.4, timeknots=collect(1:303/10:304),
-    timeknots=collect(1.0:28:133),
+    timeknots=[ 1.0; collect(56.0:28:191) ],
 )
 maskingdatafit1plot = plotrenewalequationsamples(
-    maskcovidcases[1:133, :], W_maskcoviddata[1:133, :], POPULATION2020, maskingdatafit1;
+    maskcovidcases[1:191, :], W_maskcoviddata[1:191, :], POPULATION2020, maskingdatafit1;
     #plotsize=( 600, 400 ),
     #=columntitles=[ 
         "Halton", 
@@ -873,6 +873,60 @@ maskingdatafit1plot = plotrenewalequationsamples(
 
 safesave(plotsdir("maskingdatafit1plot.pdf"), maskingdatafit1plot)
 
+## Analysis 2 
+# Effect of mask requirements. No other considerations of confounding 
+
+maskingdatachain2 = loadanalysisdictsasdf("maskingdatamodel2", 8, maxrounds, 1120)
+plotchains(maskingdatachain2)
+maskingdatafit2 = samplerenewalequation_2sets(
+    COVIDSERIALINTERVAL, maskingdatachain2, facialcoveringsrequired; 
+    initialvalues=maskcovidcases[1:90, :], 
+    Ns=POPULATION2020,
+    #psi=0.4, timeknots=collect(1:303/10:304),
+    timeknots=[ 1.0; collect(56.0:28:257) ],
+)
+maskingdatafit2plot = plotrenewalequationsamples(
+    maskcovidcases, W_maskcoviddata, POPULATION2020, maskingdatafit2;
+)
+
+
+## Analysis 3 
+# Effect of mask requirements with secondary interventions of end of stay-at-home and some
+# businesses reopening
+
+maskingdatachain3 = loadanalysisdictsasdf("maskingdatamodel3", 8, maxrounds, 1130)
+plotchains(maskingdatachain3)
+maskingdatafit3 = samplerenewalequation_2sets(
+    COVIDSERIALINTERVAL, maskingdatachain3, facialcoveringsrequired; 
+    initialvalues=maskcovidcases[1:100, :], 
+    Ns=POPULATION2020,
+    #psi=0.4, timeknots=collect(1:303/10:304),
+    timeknots=[ 1.0; collect(56.0:28:257) ],
+    secondaryinterventions=[ endstayathometimes, somebusinessreopen ],
+)
+maskingdatafit3plot = plotrenewalequationsamples(
+    maskcovidcases, W_maskcoviddata, POPULATION2020, maskingdatafit3;
+)
+
+
+## Analysis 4 
+# Add lead and lag times  
+
+maskingdatachain4 = loadanalysisdictsasdf("maskingdatamodel4", 8, maxrounds, 1140)
+plotchains(maskingdatachain4)
+maskingdatafit4 = samplerenewalequation_2sets(
+    COVIDSERIALINTERVAL, maskingdatachain4, facialcoveringsrequired; 
+    initialvalues=maskcovidcases[1:100, :], 
+    Ns=POPULATION2020,
+    #psi=0.4, timeknots=collect(1:303/10:304),
+    timeknots=[ 1.0; collect(56.0:28:257) ],
+    secondaryinterventions=[ 
+        [ endstayathometimes, somebusinessreopen ]; secondaryinterventions_data 
+    ],
+)
+maskingdatafit4plot = plotrenewalequationsamples(
+    maskcovidcases, W_maskcoviddata, POPULATION2020, maskingdatafit4;
+)
 
 
 
