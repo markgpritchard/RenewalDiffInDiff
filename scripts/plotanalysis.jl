@@ -14,21 +14,29 @@ maxrounds = 12
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 generationintervalplot = let
-    fig = Figure(; size=( 500, 250 ))
-    ax = Axis(fig[1, 1])
-    scatter!(ax, 0:20, [ fseir(t) for t ∈ 0:20 ]; color=:black)
-    formataxis!(ax)
-
-    Label(fig[1, 0], "generation interval, f(τ)"; fontsize=11.84, rotation=π/2, tellheight=false)
-    Label(fig[2, 1], "time, τ"; fontsize=11.84, tellwidth=false)
-
-    colgap!(fig.layout, 1, 5)
-    rowgap!(fig.layout, 1, 5)
+    fig = with_theme(theme_latexfonts()) do
+        fig = Figure(; size=( 500, 250 ))
+        ax = Axis(fig[1, 1])
+        scatter!(ax, 0:20, [ fseir(t) for t ∈ 0:20 ]; color=:black)
+        formataxis!(ax)
+    
+        Label(
+            fig[1, 0], L"generation interval, $g(\tau)$"; 
+            fontsize=11.84, rotation=π/2, tellheight=false
+        )
+        Label(
+            fig[2, 1], L"time, $\tau$"; 
+            fontsize=11.84, tellwidth=false
+        )
+    
+        colgap!(fig.layout, 1, 5)
+        rowgap!(fig.layout, 1, 5)
+        fig
+    end
     fig
 end
 
 safesave(plotsdir("generationintervalplot.pdf"), generationintervalplot)
-
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -155,47 +163,55 @@ sim1fit1discreteplot = plotrenewalequationsamples(
 )
 =#
 sim1discreteplot = let
-    fig = Figure(; size=( 500, 350 ))
+    fig = with_theme(theme_latexfonts()) do
+        fig = Figure(; size=( 500, 350 ))
 
-    ga = GridLayout(fig[1, 1])
-    gb = GridLayout(fig[1, 2])
+        ga = GridLayout(fig[1, 1])
+        gb = GridLayout(fig[1, 2])
 
-    plotrenewalequationsamples!(
-        ga,
-        simulation1dataset["cases_counterfactual"],
-        simulation1dataset["cases_counterfactual"], 
-        W_sim1_0, 
-        simulation1dataset["Ns"], 
-        sim1fit0discrete,
-        fitws(simulation1dataset["cases_counterfactual"], simulation1dataset["Ns"], sim1fit0discrete); 
-        betafunctions=[ beta1a, beta1bcounterfactual ], 
-        betafunctions_counterfactual=[ beta1a, beta1bcounterfactual ],
-        infectiousduration=2.5,
-        rhoclip = 2.5,
-        columntitles=[ 
-            "Group 1", 
-            "Group 2" 
-        ],
-        columntitlefontsize=10,
-        xtitle="Time (days)",
-    )
+        plotrenewalequationsamples!(
+            ga,
+            simulation1dataset["cases_counterfactual"],
+            simulation1dataset["cases_counterfactual"], 
+            W_sim1_0, 
+            simulation1dataset["Ns"], 
+            sim1fit0discrete,
+            fitws(
+                simulation1dataset["cases_counterfactual"], 
+                simulation1dataset["Ns"], 
+                sim1fit0discrete
+            ); 
+            betafunctions=[ beta1a, beta1bcounterfactual ], 
+            betafunctions_counterfactual=[ beta1a, beta1bcounterfactual ],
+            infectiousduration=2.5,
+            rhoclip = 2.5,
+            columntitles=[ 
+                "Group 1", 
+                "Group 2" 
+            ],
+            columntitlefontsize=10,
+            markersize=2,
+            xtitle="Time, days",
+        )
 
-    plotrenewalequationsamples!(
-        gb, simulation1dataset, W_sim1, sim1fit1discrete; 
-        betafunctions=[ beta1a, beta1b ], 
-        betafunctions_counterfactual=[ beta1a, beta1bcounterfactual ],
-        infectiousduration=2.5,
-        rhoclip = 2.5,
-        columntitles=[ 
-            "Group 1", 
-            "Group 2" 
-        ],
-        columntitlefontsize=10,
-        xtitle="Time (days)",
-    )
+        plotrenewalequationsamples!(
+            gb, simulation1dataset, W_sim1, sim1fit1discrete; 
+            betafunctions=[ beta1a, beta1b ], 
+            betafunctions_counterfactual=[ beta1a, beta1bcounterfactual ],
+            infectiousduration=2.5,
+            rhoclip = 2.5,
+            columntitles=[ 
+                "Group 1", 
+                "Group 2" 
+            ],
+            columntitlefontsize=10,
+            markersize=2,
+            xtitle="Time, days",
+        )
 
-    labelplots!([ "A", "B" ], [ ga, gb ])
-
+        labelplots!([ "A", "B" ], [ ga, gb ])
+        fig
+    end
     fig
 end
 

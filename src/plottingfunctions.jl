@@ -133,7 +133,7 @@ function plotrenewalequationsamples!(
     gl::GridLayout, 
     cases::Matrix, cases_counterfactual, w, Ns::Vector, fittedvaluesset, fittedws;
     betafunctions=nothing, betafunctions_counterfactual=nothing,
-    datacolour=COLOURVECTOR[1], simcolour=COLOURVECTOR[2], fittedcolour=( :gray, 0.75 ), 
+    datacolour=:black, simcolour=COLOURVECTOR[2], fittedcolour=( COLOURVECTOR[1], 0.75 ), 
     infectiousduration=1, markersize=3, rhoclip=Inf,
     columntitles=nothing, columntitlefontsize=11.84, 
     xticklabelrotation=0.0, xticks=Makie.automatic, xtitle="Time"
@@ -156,7 +156,10 @@ function plotrenewalequationsamples!(
         )
 
         if !isnothing(columntitles)
-            Label(gl[0, i], columntitles[i]; fontsize=columntitlefontsize, tellwidth=false)
+            Label(
+            gl[0, i], columntitles[i]; 
+            fontsize=columntitlefontsize, halign=:left, tellwidth=false
+        )
         end
         
         band!(axs1[i], xs, ws[:, 1], ws[:, 2]; color=fittedcolour)
@@ -201,33 +204,21 @@ function plotrenewalequationsamples!(
 
     for col ∈ 1:nlocations
         if col == 1 
-            formataxis!(axs1[col]; hidex=true, hidexticks=true, hidespines=( :b, :r, :t ))
-            formataxis!(axs2[col]; hidex=true, hidexticks=true, hidespines=( :b, :r, :t ))
-            formataxis!(axs3[col]; hidex=true, hidexticks=true, hidespines=( :b, :r, :t ))
-            formataxis!(axs4[col]; hidespines=( :r, :t ))
+            formataxis!(axs1[col]; hidex=true,)
+            formataxis!(axs2[col]; hidex=true,)
+            formataxis!(axs3[col]; hidex=true,)
+            formataxis!(axs4[col])
         else
-            formataxis!(
-                axs1[col]; 
-                hidex=true, hidexticks=true, hidey=true, hideyticks=true, 
-                hidespines=( :b, :r, :t, :l )
-            )
-            formataxis!(
-                axs2[col]; 
-                hidex=true, hidexticks=true, hidey=true, hideyticks=true, 
-                hidespines=( :b, :r, :t, :l )
-            )
-            formataxis!(
-                axs3[col]; 
-                hidex=true, hidexticks=true, hidey=true, hideyticks=true, 
-                hidespines=( :b, :r, :t, :l )
-            )
-            formataxis!(axs4[col]; hidey=true, hideyticks=true, hidespines=( :r, :t, :l ))
+            formataxis!(axs1[col]; hidex=true, hidey=true,)
+            formataxis!(axs2[col]; hidex=true, hidey=true,)
+            formataxis!(axs3[col]; hidex=true, hidey=true,)
+            formataxis!(axs4[col]; hidey=true,)
         end
     end
 
-    Label(gl[1, 0], "w(gt)"; fontsize=11.84, rotation=π/2, tellheight=false)
+    Label(gl[1, 0], L"$w_{gt}$"; fontsize=11.84, rotation=π/2, tellheight=false)
     Label(
-        gl[2, 0], "R₀"; 
+        gl[2, 0], L"\mathcal{R}_0"; 
         fontsize=11.84, rotation=π/2, tellheight=false
     )
     Label(gl[3, 0], "Diagnoses"; fontsize=11.84, rotation=π/2, tellheight=false)
