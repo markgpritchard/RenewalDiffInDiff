@@ -24,10 +24,7 @@ generationintervalplot = let
             fig[1, 0], L"generation interval, $g(\tau)$"; 
             fontsize=11.84, rotation=π/2, tellheight=false
         )
-        Label(
-            fig[2, 1], L"time, $\tau$"; 
-            fontsize=11.84, tellwidth=false
-        )
+        Label(fig[2, 1], L"time, $\tau$"; fontsize=11.84, tellwidth=false)
     
         colgap!(fig.layout, 1, 5)
         rowgap!(fig.layout, 1, 5)
@@ -56,7 +53,9 @@ sim1fit0discretepriorsample = samplerenewalequation_2sets(
     Ns=simulation1dataset["Ns"], 
     timeperiods=timeperiods2,
 )
-sim1fit0kvdiscretepriorsample = keyvalues(sim1model0discretepriorsampledf, sim1fit0discretepriorsample)
+sim1fit0kvdiscretepriorsample = keyvalues(
+    sim1model0discretepriorsampledf, sim1fit0discretepriorsample
+)
 println(sim1fit0kvdiscretepriorsample)
 
 sim1model1discretepriorsample = sample(sim1model1discrete, Prior(), 16384)
@@ -68,55 +67,10 @@ sim1fit1discretepriorsample = samplerenewalequation_2sets(
     Ns=simulation1dataset["Ns"], 
     timeperiods=timeperiods2,
 )
-sim1fit1kvdiscretepriorsample = keyvalues(sim1model1discretepriorsampledf, sim1fit1discretepriorsample)
-#println(sim1fit1kvdiscretepriorsample)
-
-sim1discretepriorsampleplot = let
-    fig = Figure(; size=( 500, 350 ))
-
-    ga = GridLayout(fig[1, 1])
-    gb = GridLayout(fig[1, 2])
-
-    plotrenewalequationsamples!(
-        ga,
-        simulation1dataset["cases_counterfactual"],
-        simulation1dataset["cases_counterfactual"], 
-        W_sim1_0, 
-        simulation1dataset["Ns"], 
-        sim1fit0discretepriorsample,
-        fitws(simulation1dataset["cases_counterfactual"], simulation1dataset["Ns"], sim1fit0discretepriorsample); 
-        betafunctions=[ beta1a, beta1bcounterfactual ], 
-        betafunctions_counterfactual=[ beta1a, beta1bcounterfactual ],
-        infectiousduration=2.5,
-        #rhoclip = 2.5,
-        columntitles=[ 
-            "Group 1", 
-            "Group 2" 
-        ],
-        columntitlefontsize=10,
-        xtitle="Time (days)",
-    )
-
-    plotrenewalequationsamples!(
-        gb, simulation1dataset, W_sim1, sim1fit1discretepriorsample; 
-        betafunctions=[ beta1a, beta1b ], 
-        betafunctions_counterfactual=[ beta1a, beta1bcounterfactual ],
-        infectiousduration=2.5,
-        #rhoclip = 2.5,
-        columntitles=[ 
-            "Group 1", 
-            "Group 2" 
-        ],
-        columntitlefontsize=10,
-        xtitle="Time (days)",
-    )
-
-    labelplots!([ "A", "B" ], [ ga, gb ])
-
-    fig
-end
-
-safesave(plotsdir("sim1discretepriorsampleplot.pdf"), sim1discretepriorsampleplot)
+sim1fit1kvdiscretepriorsample = keyvalues(
+    sim1model1discretepriorsampledf, sim1fit1discretepriorsample
+)
+println(sim1fit1kvdiscretepriorsample)
 
 sim1chain0discrete = loadanalysisdictsasdf("sim1model0discrete", 8, maxrounds, 100)
 plotchains(sim1chain0discrete)
@@ -139,84 +93,6 @@ sim1fit1discrete = samplerenewalequation_2sets(
 )
 sim1fit1kvdiscrete = keyvalues(sim1chain1discrete, sim1fit1discrete)
 println(sim1fit1kvdiscrete)
-
-
-
-
-#=
-sim1fit1discreteplot = plotrenewalequationsamples(
-    simulation1dataset["cases_counterfactual"],
-    simulation1dataset["cases_counterfactual"], 
-    W_sim1_0, 
-    simulation1dataset["Ns"], 
-    sim1fit0discrete,
-    fitws(simulation1dataset["cases_counterfactual"], simulation1dataset["Ns"], sim1fit0discrete); 
-    betafunctions=[ beta1a, beta1bcounterfactual ], 
-    betafunctions_counterfactual=[ beta1a, beta1bcounterfactual ],
-    infectiousduration=2.5,
-    plotsize=( 400, 400 ),
-    #rhoclip = 2,
-   # secondaryinterventions=[
-   #     InterventionsMatrix([ nothing, 36 ], 100),
-   #     InterventionsMatrix([ nothing, 64 ], 100)
-   # ],
-)
-=#
-sim1discreteplot = let
-    fig = with_theme(theme_latexfonts()) do
-        fig = Figure(; size=( 500, 350 ))
-
-        ga = GridLayout(fig[1, 1])
-        gb = GridLayout(fig[1, 2])
-
-        plotrenewalequationsamples!(
-            ga,
-            simulation1dataset["cases_counterfactual"],
-            simulation1dataset["cases_counterfactual"], 
-            W_sim1_0, 
-            simulation1dataset["Ns"], 
-            sim1fit0discrete,
-            fitws(
-                simulation1dataset["cases_counterfactual"], 
-                simulation1dataset["Ns"], 
-                sim1fit0discrete
-            ); 
-            betafunctions=[ beta1a, beta1bcounterfactual ], 
-            betafunctions_counterfactual=[ beta1a, beta1bcounterfactual ],
-            infectiousduration=2.5,
-            rhoclip = 2.5,
-            columntitles=[ 
-                "Group 1", 
-                "Group 2" 
-            ],
-            columntitlefontsize=10,
-            markersize=2,
-            xtitle="Time, days",
-        )
-
-        plotrenewalequationsamples!(
-            gb, simulation1dataset, W_sim1, sim1fit1discrete; 
-            betafunctions=[ beta1a, beta1b ], 
-            betafunctions_counterfactual=[ beta1a, beta1bcounterfactual ],
-            infectiousduration=2.5,
-            rhoclip = 2.5,
-            columntitles=[ 
-                "Group 1", 
-                "Group 2" 
-            ],
-            columntitlefontsize=10,
-            markersize=2,
-            xtitle="Time, days",
-        )
-
-        labelplots!([ "A", "B" ], [ ga, gb ])
-        fig
-    end
-    fig
-end
-
-safesave(plotsdir("sim1discreteplot.pdf"), sim1discreteplot)
-
 
 sim1chain0 = loadanalysisdictsasdf("sim1model0", 8, maxrounds, 100)
 chainsplot1_0 = plotchains(
@@ -251,8 +127,6 @@ sim1fit0 = samplerenewalequation_2sets(
 sim1fit0kv = keyvalues(sim1chain0, sim1fit0)
 println(sim1fit0kv)
 
-println("mean=$(exp(mean(sim1chain0.logdelta))); CrI=$(exp.(quantile(sim1chain0.logdelta, [ 0.05, 0.95 ]))))")
-
 sim1chain1 = loadanalysisdictsasdf("sim1model1", 8, maxrounds, 110)
 plotchains(sim1chain1)
 sim1fit1 = samplerenewalequation_2sets(
@@ -263,8 +137,6 @@ sim1fit1 = samplerenewalequation_2sets(
 )
 sim1fit1kv = keyvalues(sim1chain1, sim1fit1)
 println(sim1fit1kv)
-
-println("mean=$(exp(mean(sim1chain1.logdelta))); CrI=$(exp.(quantile(sim1chain1.logdelta, [ 0.05, 0.95 ]))))")
 
 sim1chain2 = loadanalysisdictsasdf("sim1model2", 8, maxrounds, 120)
 plotchains(sim1chain2)
@@ -279,18 +151,6 @@ sim1fit2 = samplerenewalequation_2sets(
     ],
 )
 sim1fit2kv = keyvalues(sim1chain2, sim1fit2)
-sim1fit1plot = plotrenewalequationsamples(
-    simulation1dataset, W_sim1, sim1fit2; 
-    betafunctions=[ beta1a, beta1b ], 
-    betafunctions_counterfactual=[ beta1a, beta1bcounterfactual ],
-    infectiousduration=2.5,
-    plotsize=( 400, 400 ),
-    #rhoclip = 2,
-   # secondaryinterventions=[
-   #     InterventionsMatrix([ nothing, 36 ], 100),
-   #     InterventionsMatrix([ nothing, 64 ], 100)
-   # ],
-)
 
 sim1chaina1 = loadanalysisdictsasdf("sim1modela1", 8, maxrounds, 10110)
 plotchains(sim1chaina1)
@@ -301,61 +161,91 @@ sim1fita1 = samplerenewalequation_2sets(
     timeknots=[ [ 1 ]; collect(11:89/4:100) ],
 )
 sim1fita1kv = keyvalues(sim1chaina1, sim1fita1)
-sim1fit1plot = plotrenewalequationsamples(
-    simulation1dataset, W_sim1, sim1fita1; 
-    betafunctions=[ beta1a, beta1b ], 
-    betafunctions_counterfactual=[ beta1a, beta1bcounterfactual ],
-    infectiousduration=2.5,
-    plotsize=( 400, 400 ),
-    #rhoclip = 2,
-   # secondaryinterventions=[
-   #     InterventionsMatrix([ nothing, 36 ], 100),
-   #     InterventionsMatrix([ nothing, 64 ], 100)
-   # ],
-)
 
 sim1plot = let
-    fig = Figure(; size=( 500, 350 ))
+    fig = with_theme(theme_latexfonts()) do
+        #fig = Figure(; size=( 500, 650 ))
+        fig = Figure(; size=( 500, 350 ))
 
-    ga = GridLayout(fig[1, 1])
-    gb = GridLayout(fig[1, 2])
+        ga = GridLayout(fig[1, 1])
+        gb = GridLayout(fig[1, 2])
+        #gc = GridLayout(fig[2, 1])
+        #gd = GridLayout(fig[2, 2])
 
-    plotrenewalequationsamples!(
-        ga,
-        simulation1dataset["cases_counterfactual"],
-        simulation1dataset["cases_counterfactual"], 
-        W_sim1_0, 
-        simulation1dataset["Ns"], 
-        sim1fit0,
-        fitws(simulation1dataset["cases_counterfactual"], simulation1dataset["Ns"], sim1fit0); 
-        betafunctions=[ beta1a, beta1bcounterfactual ], 
-        betafunctions_counterfactual=[ beta1a, beta1bcounterfactual ],
-        infectiousduration=2.5,
-        rhoclip = 2.5,
-        columntitles=[ 
-            "Group 1", 
-            "Group 2" 
-        ],
-        columntitlefontsize=10,
-        xtitle="Time (days)",
-    )
+        plotrenewalequationsamples!(
+            ga,
+            simulation1dataset["cases_counterfactual"],
+            simulation1dataset["cases_counterfactual"], 
+            W_sim1_0, 
+            simulation1dataset["Ns"], 
+            sim1fit0discrete,
+            fitws(
+                simulation1dataset["cases_counterfactual"], 
+                simulation1dataset["Ns"], 
+                sim1fit0discrete
+            ); 
+            betafunctions=[ beta1a, beta1bcounterfactual ], 
+            betafunctions_counterfactual=[ beta1a, beta1bcounterfactual ],
+            infectiousduration=2.5,
+            rhoclip = 2.5,
+            simcolour=COLOURVECTOR[3],
+            columntitles=[ "Group 1", "Group 2" ],
+            columntitlefontsize=10,
+            markersize=2,
+            xtitle="Time, days",
+        )
 
-    plotrenewalequationsamples!(
-        gb, simulation1dataset, W_sim1, sim1fit1; 
-        betafunctions=[ beta1a, beta1b ], 
-        betafunctions_counterfactual=[ beta1a, beta1bcounterfactual ],
-        infectiousduration=2.5,
-        rhoclip = 2.5,
-        columntitles=[ 
-            "Group 1", 
-            "Group 2" 
-        ],
-        columntitlefontsize=10,
-        xtitle="Time (days)",
-    )
+        plotrenewalequationsamples!(
+            gb, simulation1dataset, W_sim1, sim1fit1discrete; 
+            betafunctions=[ beta1a, beta1b ], 
+            betafunctions_counterfactual=[ beta1a, beta1bcounterfactual ],
+            infectiousduration=2.5,
+            rhoclip = 2.5,
+            simcolour=COLOURVECTOR[3],
+            columntitles=[ "Group 1", "Group 2" ],
+            columntitlefontsize=10,
+            markersize=2,
+            xtitle="Time, days",
+        )
+        #=
+        plotrenewalequationsamples!(
+            gc,
+            simulation1dataset["cases_counterfactual"],
+            simulation1dataset["cases_counterfactual"], 
+            W_sim1_0, 
+            simulation1dataset["Ns"], 
+            sim1fit0,
+            fitws(
+                simulation1dataset["cases_counterfactual"], 
+                simulation1dataset["Ns"], 
+                sim1fit0
+            ); 
+            betafunctions=[ beta1a, beta1bcounterfactual ], 
+            betafunctions_counterfactual=[ beta1a, beta1bcounterfactual ],
+            infectiousduration=2.5,
+            rhoclip = 2.5,
+            simcolour=COLOURVECTOR[3],
+            columntitles=[ "Group 1", "Group 2" ],
+            columntitlefontsize=10,
+            xtitle="Time (days)",
+        )
 
-    labelplots!([ "A", "B" ], [ ga, gb ])
-
+        plotrenewalequationsamples!(
+            gd, simulation1dataset, W_sim1, sim1fit1; 
+            betafunctions=[ beta1a, beta1b ], 
+            betafunctions_counterfactual=[ beta1a, beta1bcounterfactual ],
+            infectiousduration=2.5,
+            rhoclip=2.5,
+            simcolour=COLOURVECTOR[3],
+            columntitles=[ "Group 1", "Group 2" ],
+            columntitlefontsize=10,
+            xtitle="Time (days)",
+        )
+        =#
+        #labelplots!([ "A", "B", "C", "D" ], [ ga, gb, gc, gd ])
+        labelplots!([ "A", "B" ], [ ga, gb ])
+        fig
+    end
     fig
 end
 
@@ -377,18 +267,42 @@ sim1afit1 = samplerenewalequation_2sets(
 sim1afit1kv = keyvalues(sim1achain1, sim1afit1)
 println(sim1afit1kv)
 
-sim1afit1plot = plotrenewalequationsamples(
-    simulation1a_dataset, W_sim1a, sim1afit1; 
-    betafunctions=[ beta1a_a, beta1a_b ], 
-    betafunctions_counterfactual=[ beta1a_a, beta1a_bcounterfactual ],
-    infectiousduration=2.5,
-    plotsize=( 500, 350 ),
-    rhoclip = 2.5,
-   # secondaryinterventions=[
-   #     InterventionsMatrix([ nothing, 36 ], 100),
-   #     InterventionsMatrix([ nothing, 64 ], 100)
-   # ],
-)
+sim1afit1plot = let
+    fig = with_theme(theme_latexfonts()) do
+        fig = Figure(; size=( 500, 350 ))
+
+        ga = GridLayout(fig[1, 1])
+        gb = GridLayout(fig[1, 2])
+
+        plotrenewalequationsamples!(
+            ga, simulation1dataset, W_sim1, sim1fit1; 
+            betafunctions=[ beta1a, beta1b ], 
+            betafunctions_counterfactual=[ beta1a, beta1bcounterfactual ],
+            infectiousduration=2.5,
+            rhoclip=2.5,
+            simcolour=COLOURVECTOR[3],
+            columntitles=[ "Group 1", "Group 2" ],
+            columntitlefontsize=10,
+            xtitle="Time (days)",
+        )
+
+        plotrenewalequationsamples!(
+            gb, simulation1a_dataset, W_sim1a, sim1afit1; 
+            betafunctions=[ beta1a_a, beta1a_b ], 
+            betafunctions_counterfactual=[ beta1a_a, beta1a_bcounterfactual ],
+            infectiousduration=2.5,
+            rhoclip = 2.5,            
+            simcolour=COLOURVECTOR[3],
+            columntitles=[ "Group 1", "Group 2" ],
+            columntitlefontsize=10,
+            xtitle="Time (days)",
+        )
+
+        labelplots!([ "A", "B" ], [ ga, gb ])
+        fig
+    end
+    fig
+end
 
 safesave(plotsdir("sim1afit1plot.pdf"), sim1afit1plot)
 
@@ -438,43 +352,40 @@ sim2fit1kv = keyvalues(sim2chain1, sim2fit1)
 println(sim2fit1kv)
 
 sim2plot = let
-    fig = Figure(; size=( 500, 350 ))
+    fig = with_theme(theme_latexfonts()) do
+        fig = Figure(; size=( 500, 350 ))
 
-    ga = GridLayout(fig[1, 1])
-    gb = GridLayout(fig[1, 2])
+        ga = GridLayout(fig[1, 1])
+        gb = GridLayout(fig[1, 2])
 
-    plotrenewalequationsamples!(
-        ga, simulation2dataset, W_sim2, sim2fit0; 
-        betafunctions=[ beta2a, beta2b, beta2c ], 
-        betafunctions_counterfactual=[ beta2a, beta2bcounterfactual, beta2ccounterfactual ],
-        infectiousduration=2.5,
-        rhoclip = 2.5,
-        columntitles=[ 
-            "Group 1", 
-            "Group 2",
-            "Group 3" 
-        ],
-        columntitlefontsize=10,
-        xtitle="Time (days)",
-    )
+        plotrenewalequationsamples!(
+            ga, simulation2dataset, W_sim2, sim2fit0; 
+            betafunctions=[ beta2a, beta2b, beta2c ], 
+            betafunctions_counterfactual=[ beta2a, beta2bcounterfactual, beta2ccounterfactual ],
+            infectiousduration=2.5,
+            rhoclip = 2.5,
+            simcolour=COLOURVECTOR[3],
+            columntitles=[ "Group 1", "Group 2", "Group 3" ],
+            columntitlefontsize=10,
+            xtitle="Time (days)",
+        )
 
-    plotrenewalequationsamples!(
-        gb, simulation2dataset, W_sim2, sim2fit1; 
-        betafunctions=[ beta2a, beta2b, beta2c ], 
-        betafunctions_counterfactual=[ beta2a, beta2bcounterfactual, beta2ccounterfactual ],
-        infectiousduration=2.5,
-        rhoclip = 2.5,
-        columntitles=[ 
-            "Group 1", 
-            "Group 2",
-            "Group 3" 
-        ],
-        columntitlefontsize=10,
-        xtitle="Time (days)",
-    )
+        plotrenewalequationsamples!(
+            gb, simulation2dataset, W_sim2, sim2fit1; 
+            betafunctions=[ beta2a, beta2b, beta2c ], 
+            betafunctions_counterfactual=[ beta2a, beta2bcounterfactual, beta2ccounterfactual ],
+            infectiousduration=2.5,
+            rhoclip = 2.5,
+            simcolour=COLOURVECTOR[3],
+            columntitles=[ "Group 1", "Group 2", "Group 3" ],
+            columntitlefontsize=10,
+            xtitle="Time (days)",
+        )
 
-    labelplots!([ "A", "B" ], [ ga, gb ])
+        labelplots!([ "A", "B" ], [ ga, gb ])
 
+        fig
+    end
     fig
 end
 
@@ -560,16 +471,6 @@ sim3fit1 = samplerenewalequation_2sets(
     Ns=simulation3dataset["Ns"], 
     timeknots=[ [ 1 ]; collect(11:89/4:100) ],
 )
-sim3fit1plot = plotrenewalequationsamples(
-    simulation3dataset, W_sim3, sim3fit1; 
-    betafunctions=[ beta3a, beta3b ], 
-    betafunctions_counterfactual=[ beta3a, beta3bcounterfactual ],
-    infectiousduration=2.5,
-    plotsize=( 400, 400 ),
-    rhoclip=5,
-)
-
-safesave(plotsdir("sim3fit1plot.svg"), sim3fit1plot)
 
 sim3chain2 = loadanalysisdictsasdf("sim3model2", 8, maxrounds, 320)
 plotchains(sim3chain2)
@@ -583,14 +484,46 @@ sim3fit2 = samplerenewalequation_2sets(
         InterventionsMatrix([ nothing, 64 ], 100)
     ],
 )
-sim3fit2plot = plotrenewalequationsamples(
-    simulation3dataset, W_sim3, sim3fit2; 
-    betafunctions=[ beta3a, beta3b ], 
-    betafunctions_counterfactual=[ beta3a, beta3bcounterfactual ],
-    infectiousduration=2.5,
-    plotsize=( 400, 400 ),
-    rhoclip=5,
-)
+
+sim3plot = let
+    fig = with_theme(theme_latexfonts()) do
+        fig = Figure(; size=( 500, 350 ))
+
+        ga = GridLayout(fig[1, 1])
+        gb = GridLayout(fig[1, 2])
+
+        plotrenewalequationsamples!(
+            ga, simulation3dataset, W_sim3, sim3fit1; 
+            betafunctions=[ beta3a, beta3b ], 
+            betafunctions_counterfactual=[ beta3a, beta3bcounterfactual ],
+            infectiousduration=2.5,
+            rhoclip = 5,
+            simcolour=COLOURVECTOR[3],
+            columntitles=[ "Group 1", "Group 2" ],
+            columntitlefontsize=10,
+            xtitle="Time (days)",
+        )
+
+        plotrenewalequationsamples!(
+            gb, simulation3dataset, W_sim3, sim3fit2; 
+            betafunctions=[ beta3a, beta3b ], 
+            betafunctions_counterfactual=[ beta3a, beta3bcounterfactual ],
+            infectiousduration=2.5,
+            rhoclip = 5,
+            simcolour=COLOURVECTOR[3],
+            columntitles=[ "Group 1", "Group 2" ],
+            columntitlefontsize=10,
+            xtitle="Time (days)",
+        )
+
+        labelplots!([ "A", "B" ], [ ga, gb ])
+
+        fig
+    end
+    fig
+end
+
+safesave(plotsdir("sim3plot.svg"), sim3plot)
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -671,11 +604,11 @@ datafit1 = samplerenewalequation_2sets(
     initialvalues=allcovidcases[1:100, :], 
     Ns=selectpops,
     #psi=0.4, timeknots=collect(1:303/10:304),
-    timeknots=collect(1.0:28:216),
+    timeknots=[ collect(1.0:28:216); [216] ],
 )
 datafit1plot = plotrenewalequationsamples(
     allcovidcases, W_allcoviddata, selectpops, datafit1;
-    plotsize=( 500, 350 ),
+    plotsize=( 587, 411 ),
     columntitles=[ 
         "Halton", 
         "Knowsley", 
@@ -688,6 +621,7 @@ datafit1plot = plotrenewalequationsamples(
         "Wirral" 
     ],
     columntitlefontsize=10,
+    markersize=2,
     xticklabelrotation=-π/4,
     xticks=( [ 1, 93, 215 ], [ "June", "Sept.", "Jan." ] ),
     xtitle="Date, 2020–2021",
@@ -695,38 +629,9 @@ datafit1plot = plotrenewalequationsamples(
 
 safesave(plotsdir("datafit1plot.pdf"), datafit1plot)
 
-# force 28% reduction 
+datafit1kv = keyvalues(datachain1, datafit1)
+println(datafit1kv)
 
-reduceddatafit1 = deepcopy(datafit1)
-for g ∈ 1:9, t ∈ 1:216 
-    if masstesting[t, g] == 1 
-        for x ∈ eachindex(reduceddatafit1.y_matrix_poisson_vec)
-            reduceddatafit1.y_matrix_poisson_vec[x][t, g] = round(
-                Int, reduceddatafit1.y_matrix_poisson_vec[x][t, g] / 1.28
-            )
-        end
-    end 
-end
-
-datafit1plotreduced = plotrenewalequationsamples(
-    allcovidcases, W_allcoviddata, selectpops, reduceddatafit1;
-    plotsize=( 600, 400 ),
-    columntitles=[ 
-        "Halton", 
-        "Knowsley", 
-        "Liverpool", 
-        "Sefton", 
-        "St Helens", 
-        "Warrington", 
-        "W. Lancs", 
-        "Wigan", 
-        "Wirral" 
-    ],
-    columntitlefontsize=10,
-    xticklabelrotation=-π/4,
-    xticks=( [ 1, 93, 215 ], [ "June", "Sept.", "Jan." ] ),
-    xtitle="Date, 2020–2021",
-)
 
 ## Analysis 2 
 # Pillar 1 test results 
@@ -737,13 +642,13 @@ datafit2 = samplerenewalequation_2sets(
     COVIDSERIALINTERVAL, datachain2, masstesting; 
     initialvalues=pil1covidcases[1:124, :], 
     Ns=selectpops,
-    timeknots=collect(1.0:28:216),
+    timeknots=[ collect(1.0:28:216); [216] ],
     #timeknots=collect(1:303/10:304),
     #secondaryinterventions=secondaryinterventions_data
 )
 datafit2plot = plotrenewalequationsamples(
     pil1covidcases, W_pil1coviddata, selectpops, datafit2;
-    #plotsize=( 600, 400 ),
+    plotsize=( 587, 411 ),
     columntitles=[ 
         "Halton", 
         "Knowsley", 
@@ -756,10 +661,14 @@ datafit2plot = plotrenewalequationsamples(
         "Wirral" 
     ],
     columntitlefontsize=10,
+    markersize=2,
     xticklabelrotation=-π/4,
     xticks=( [ 1, 93, 215 ], [ "June", "Sept.", "Jan." ] ),
     xtitle="Date, 2020–2021",
 )
+
+datafit2kv = keyvalues(datachain2, datafit2)
+println(datafit2kv)
 
 
 ## Analysis 3
@@ -773,7 +682,7 @@ datafit3 = samplerenewalequation_2sets(
     initialvalues=allcovidcases[1:100, :], 
     Ns=selectpops,
     #psi=0.4, timeknots=collect(1:303/10:304),
-    timeknots=collect(1.0:28:216),
+    timeknots=[ collect(1.0:28:216); [216] ],
     secondaryinterventions=[ 
         InterventionsMatrix([ 172, 172, 146, 172, 172, 217, 217, 217, 172 ], 216), 
         InterventionsMatrix([ 200, 200, 174, 200, 200, 217, 217, 217, 200 ], 216), 
@@ -813,7 +722,7 @@ datafit4 = samplerenewalequation_2sets(
     initialvalues=allcovidcases[1:100, :], 
     Ns=selectpops,
     #psi=0.4, timeknots=collect(1:303/10:304),
-    timeknots=collect(1.0:28:216),
+    timeknots=[ collect(1.0:28:216); [216] ],
     secondaryinterventions=[ 
         InterventionsMatrix([ 172, 217, 217, 217, 217, 217, 217, 217, 217 ], 216), 
         InterventionsMatrix([ 200, 217, 217, 217, 217, 217, 217, 217, 217 ], 216), 
@@ -865,7 +774,7 @@ maskingdatafit1 = samplerenewalequation_2sets(
     initialvalues=maskcovidcases[1:90, :], 
     Ns=POPULATION2020,
     #psi=0.4, timeknots=collect(1:303/10:304),
-    timeknots=[ 1.0; collect(56.0:28:191) ],
+    timeknots=[ 1.0; collect(56.0:28:191); 191 ],
 )
 maskingdatafit1plot = plotrenewalequationsamples(
     maskcovidcases[1:191, :], W_maskcoviddata[1:191, :], POPULATION2020, maskingdatafit1;
@@ -899,7 +808,7 @@ maskingdatafit2 = samplerenewalequation_2sets(
     initialvalues=maskcovidcases[1:90, :], 
     Ns=POPULATION2020,
     #psi=0.4, timeknots=collect(1:303/10:304),
-    timeknots=[ 1.0; collect(56.0:28:257) ],
+    timeknots=[ 1.0; collect(56.0:28:224); 257 ],
 )
 maskingdatafit2plot = plotrenewalequationsamples(
     maskcovidcases, W_maskcoviddata, POPULATION2020, maskingdatafit2;
@@ -917,7 +826,7 @@ maskingdatafit3 = samplerenewalequation_2sets(
     initialvalues=maskcovidcases[1:100, :], 
     Ns=POPULATION2020,
     #psi=0.4, timeknots=collect(1:303/10:304),
-    timeknots=[ 1.0; collect(56.0:28:257) ],
+    timeknots=[ 1.0; collect(56.0:28:224); 257 ],
     secondaryinterventions=[ endstayathometimes, somebusinessreopen ],
 )
 maskingdatafit3plot = plotrenewalequationsamples(
@@ -935,7 +844,7 @@ maskingdatafit4 = samplerenewalequation_2sets(
     initialvalues=maskcovidcases[1:100, :], 
     Ns=POPULATION2020,
     #psi=0.4, timeknots=collect(1:303/10:304),
-    timeknots=[ 1.0; collect(56.0:28:257) ],
+    timeknots=[ 1.0; collect(56.0:28:224); 257 ],
     secondaryinterventions=[ 
         [ endstayathometimes, somebusinessreopen ]; secondaryinterventions_data 
     ],

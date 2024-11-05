@@ -29,7 +29,10 @@ const _NOPLOTNAMES = [
 
 plotchains(data::Chains; kwargs...) = plotchains(DataFrame(data); kwargs...)
 
-function plotchains(data::DataFrame; size=( 400, 5000 ), ylabels=RenewalDiffInDiff.automatic, kwargs...)
+function plotchains(
+    data::DataFrame; 
+    size=( 400, 5000 ), ylabels=RenewalDiffInDiff.automatic, kwargs...
+)
     @unpack colnames, plotnames_ind = _processplotchains(data; kwargs...)
         
     fig = Figure(; size)
@@ -53,7 +56,7 @@ function plotchains(data::DataFrame; size=( 400, 5000 ), ylabels=RenewalDiffInDi
         if i == n_ax 
             formataxis!(a)
         else 
-            formataxis!(a; hidex=true, hidexticks=true, hidespines=( :b, :t, :r))
+            formataxis!(a; hidex=true)
         end
     end
 
@@ -61,8 +64,6 @@ function plotchains(data::DataFrame; size=( 400, 5000 ), ylabels=RenewalDiffInDi
 
     colgap!(fig.layout, 1, 5)
     rowgap!(fig.layout, n_ax, 5)
-
-    #Label(fig[1, 0], "generation interval, f(τ)"; fontsize=11.84, rotation=π/2, tellheight=false)
     
     return fig
 end
@@ -346,11 +347,14 @@ The additional keyword argument `horizontal` is available when formatting a `Col
 function formataxis!(
     axis::Axis, width=800; 
     hidex=false, hidexticks=false, hidey=false, hideyticks=false, 
-    setorigin=false, setpoint=nothing, #trimspines = true
+    setorigin=false, setpoint=nothing, hidespines=nothing, trimspines = false
 )
-    #formataxishidespines!(axis, hidespines)
-    #axis.spinewidth = width / 800
-    #axis.xtrimspine = trimspines; axis.ytrimspine = trimspines
+    if !isnothing(hidespines)
+        @warn "Current preference to avoid using hidespines"
+        formataxishidespines!(axis, hidespines)
+    end
+    axis.spinewidth = width / 800
+    axis.xtrimspine = trimspines; axis.ytrimspine = trimspines
     axis.xgridvisible = false; axis.ygridvisible = false
     axis.xtickwidth = width / 800; axis.ytickwidth = width / 800
     axis.xlabelsize = width / 67; axis.ylabelsize = width / 67

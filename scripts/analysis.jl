@@ -514,7 +514,7 @@ datamodel1 = diffindiffparameters_splinetimes(
     W_allcoviddata, 
     allcovidcases,
     masstesting, 
-    collect(1.0:28:216),
+    [ collect(1.0:28:216); [216] ],
     selectpops;
     psiprior=0.4,
 )
@@ -530,7 +530,7 @@ datamodel2 = diffindiffparameters_splinetimes(
     W_pil1coviddata, 
     pil1covidcases,
     masstesting, 
-    collect(1.0:28:216),
+    [ collect(1.0:28:216); [216] ],
     selectpops;
     psiprior=0.4,
 )
@@ -547,7 +547,7 @@ datamodel3 = diffindiffparameters_splinetimes(
     W_allcoviddata, 
     allcovidcases,
     masstesting, 
-    collect(1.0:28:216),
+    [ collect(1.0:28:216); [216] ],
     selectpops;
     psiprior=0.4,
     secondaryinterventions=[ 
@@ -629,7 +629,7 @@ maskingdatamodel1 = diffindiffparameters_splinetimes(
     W_maskcoviddata[1:191, :], 
     maskcovidcases[1:191, :],
     facialcoveringsrecommended[1:191, :], 
-    [ 1.0; collect(56.0:28:191) ],
+    [ 1.0; collect(56.0:28:191); 191 ],
     POPULATION2020;
     psiprior=0.4,
 )
@@ -644,7 +644,7 @@ maskingdatamodel2 = diffindiffparameters_splinetimes(
     W_maskcoviddata, 
     maskcovidcases,
     facialcoveringsrequired, 
-    [ 1.0; collect(56.0:28:257) ],
+    [ 1.0; collect(56.0:28:224); 257 ],
     POPULATION2020;
     psiprior=0.4,
 )
@@ -660,7 +660,7 @@ maskingdatamodel3 = diffindiffparameters_splinetimes(
     W_maskcoviddata, 
     maskcovidcases,
     facialcoveringsrequired, 
-    [ 1.0; collect(56.0:28:257) ],
+    [ 1.0; collect(56.0:28:224); 257 ],
     POPULATION2020;
     psiprior=0.4,
     secondaryinterventions=[ endstayathometimes, somebusinessreopen ],
@@ -682,7 +682,7 @@ maskingdatamodel4 = diffindiffparameters_splinetimes(
     W_maskcoviddata, 
     maskcovidcases, 
     facialcoveringsrequired, 
-    [ 1.0; collect(56.0:28:257) ],
+    [ 1.0; collect(56.0:28:224); 257 ],
     POPULATION2020;
     secondaryinterventions=[ 
         [ endstayathometimes, somebusinessreopen ]; secondaryinterventions_data 

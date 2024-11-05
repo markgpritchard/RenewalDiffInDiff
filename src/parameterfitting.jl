@@ -986,9 +986,9 @@ function _findanalysisfilename(modelname, n_chains, maxrounds, seed)
     end
 end
 
-function keyvalues(fitteddf, fittedvaluesset)
+function keyvalues(fitteddf, fittedvaluesset; cri=[ 0.05, 0.95 ])
     deltamean = exp(mean(fitteddf.logdelta))
-    deltap05_95 = exp.(quantile(fitteddf.logdelta, [ 0.05, 0.95 ]))
+    deltap05_95 = exp.(quantile(fitteddf.logdelta, cri))
     totalcases = Matrix{Int}(
         undef, 
         length(fittedvaluesset.y_matrix_poisson_vec), 
@@ -1010,7 +1010,7 @@ function keyvalues(fitteddf, fittedvaluesset)
                 sum(fittedvaluesset.y_matrix_poisson_vec_counterfactual[i][:, j])
             for j ∈ axes(fittedvaluesset.y_matrix_poisson_vec[i], 2)
         ]
-        for j ∈  axes(fittedvaluesset.y_matrix_poisson_vec[i], 2)
+        for j ∈ axes(fittedvaluesset.y_matrix_poisson_vec[i], 2)
             x, ind = findmax(fittedvaluesset.y_matrix_poisson_vec[i][:, j])
             x_cf, ind_cf = findmax(
                 fittedvaluesset.y_matrix_poisson_vec_counterfactual[i][:, j]
@@ -1020,17 +1020,11 @@ function keyvalues(fitteddf, fittedvaluesset)
         end
     end
     totalcasesmeaneffect = [ mean(totalcases[:, i]) for i ∈ axes(totalcases, 2) ]
-    totalcasesp05_90 = [ 
-        quantile(totalcases[:, i], [ 0.05, 0.95 ]) 
-        for i ∈ axes(totalcases, 2) 
-    ]
+    totalcasesp05_90 = [ quantile(totalcases[:, i], cri) for i ∈ axes(totalcases, 2) ]
     peakcasesmeaneffect = [ mean(peakcases[:, i]) for i ∈ axes(peakcases, 2) ]
-    peakcasesp05_90 = [ quantile(peakcases[:, i], [ 0.05, 0.95 ]) for i ∈ axes(peakcases, 2) ]
+    peakcasesp05_90 = [ quantile(peakcases[:, i], cri) for i ∈ axes(peakcases, 2) ]
     peakcasesdatemeaneffect = [ mean(peakcasesdate[:, i]) for i ∈ axes(peakcasesdate, 2) ]
-    peakcasesdatep05_90 = [ 
-        quantile(peakcasesdate[:, i], [ 0.05, 0.95 ]) 
-        for i ∈ axes(peakcasesdate, 2) 
-    ]
+    peakcasesdatep05_90 = [ quantile(peakcasesdate[:, i], cri) for i ∈ axes(peakcasesdate, 2) ]
     return (
         deltamean=deltamean,
         deltap05_95=deltap05_95,
