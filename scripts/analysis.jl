@@ -560,6 +560,27 @@ datac3config = @ntuple modelname="datamodel3" model=datamodel3 n_rounds n_chains
 datachain3dict = produce_or_load(pol_fitparameter, datac3config, datadir("sims"))
 
 
+## Analysis 3
+
+# Pillar 1 test results with lead and lag
+
+datamodel5 = diffindiffparameters_splinetimes(
+    W_pil1coviddata, 
+    pil1covidcases,
+    masstesting, 
+    [ collect(1.0:28:216); [216] ],
+    selectpops;
+    psiprior=0.4,
+    secondaryinterventions=[ 
+        InterventionsMatrix([ 172, 172, 146, 172, 172, 217, 217, 217, 172 ], 216), 
+        InterventionsMatrix([ 200, 200, 174, 200, 200, 217, 217, 217, 200 ], 216), 
+    ],
+)
+
+datac5config = @ntuple modelname="datamodel5" model=datamodel5 n_rounds n_chains=8 seed=1050+id
+datachain5dict = produce_or_load(pol_fitparameter, datac5config, datadir("sims"))
+
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Masking data 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -603,7 +603,6 @@ datafit1 = samplerenewalequation_2sets(
     COVIDSERIALINTERVAL, datachain1, masstesting; 
     initialvalues=allcovidcases[1:100, :], 
     Ns=selectpops,
-    #psi=0.4, timeknots=collect(1:303/10:304),
     timeknots=[ collect(1.0:28:216); [216] ],
 )
 datafit1plot = plotrenewalequationsamples(
@@ -643,8 +642,6 @@ datafit2 = samplerenewalequation_2sets(
     initialvalues=pil1covidcases[1:124, :], 
     Ns=selectpops,
     timeknots=[ collect(1.0:28:216); [216] ],
-    #timeknots=collect(1:303/10:304),
-    #secondaryinterventions=secondaryinterventions_data
 )
 datafit2plot = plotrenewalequationsamples(
     pil1covidcases, W_pil1coviddata, selectpops, datafit2;
@@ -681,7 +678,6 @@ datafit3 = samplerenewalequation_2sets(
     COVIDSERIALINTERVAL, datachain3, masstesting; 
     initialvalues=allcovidcases[1:100, :], 
     Ns=selectpops,
-    #psi=0.4, timeknots=collect(1:303/10:304),
     timeknots=[ collect(1.0:28:216); [216] ],
     secondaryinterventions=[ 
         InterventionsMatrix([ 172, 172, 146, 172, 172, 217, 217, 217, 172 ], 216), 
@@ -757,6 +753,45 @@ datafit4plot = plotrenewalequationsamples(
     xticks=( [ 1, 93, 215 ], [ "June", "Sept.", "Jan." ] ),
     xtitle="Date, 2020–2021",
 )
+
+## Analysis 5 
+# Pillar 1 test results with lead and lag
+
+datachain5 = loadanalysisdictsasdf("datamodel5", 8, maxrounds, 1050)
+plotchains(datachain5)
+datafit2 = samplerenewalequation_2sets(
+    COVIDSERIALINTERVAL, datachain5, masstesting; 
+    initialvalues=pil1covidcases[1:124, :], 
+    Ns=selectpops,
+    timeknots=[ collect(1.0:28:216); [216] ],
+    secondaryinterventions=[ 
+        InterventionsMatrix([ 172, 172, 146, 172, 172, 217, 217, 217, 172 ], 216), 
+        InterventionsMatrix([ 200, 200, 174, 200, 200, 217, 217, 217, 200 ], 216), 
+    ],
+)
+datafit5plot = plotrenewalequationsamples(
+    pil1covidcases, W_pil1coviddata, selectpops, datafit5;
+    plotsize=( 587, 411 ),
+    columntitles=[ 
+        "Halton", 
+        "Knowsley", 
+        "Liverpool", 
+        "Sefton", 
+        "St Helens", 
+        "Warrington", 
+        "W. Lancs", 
+        "Wigan", 
+        "Wirral" 
+    ],
+    columntitlefontsize=10,
+    markersize=2,
+    xticklabelrotation=-π/4,
+    xticks=( [ 1, 93, 215 ], [ "June", "Sept.", "Jan." ] ),
+    xtitle="Date, 2020–2021",
+)
+
+datafit5kv = keyvalues(datachain5, datafit5)
+println(datafit5kv)
 
 
 
