@@ -12,16 +12,7 @@ function renewalequation_expectedcases(
     f_output = _renewalfoutput(f, y_vector)
     return renewalequation_expectedcases(ρ, s, f_output; kwargs...)
 end
-#=
-function renewalequation_expectedcases(
-    f, rho_matrix::AbstractMatrix{T}, initialvalues::AbstractMatrix, Ns::AbstractVector; 
-    kwargs...
-) where T
-    y_matrix = Matrix{T}(undef, size(rho_matrix))
-    renewalequation_expectedcases!(f, y_matrix, rho_matrix, initialvalues, Ns; kwargs...)
-    return y_matrix
-end
-=#
+
 function renewalequation_expectedcases!(
     f, y_matrix::AbstractMatrix, rho_matrix::AbstractMatrix, 
     initialvalues::AbstractMatrix, Ns::AbstractVector, psi; 
@@ -59,16 +50,7 @@ function renewalequation_poissoncases(
     pcases = renewalequation_poissoncases(ρ, s, f_output)
     return min(round(Int, s * (N * psi), RoundDown), pcases)
 end
-#=
-function renewalequation_poissoncases(
-    f, rho_matrix::AbstractMatrix{T}, initialvalues::AbstractMatrix, Ns::AbstractVector; 
-    kwargs...
-) where T
-    y_matrix = Matrix{T}(undef, size(rho_matrix))
-    renewalequation_poissoncases!(f, y_matrix, rho_matrix, initialvalues, Ns; kwargs...)
-    return y_matrix
-end
-=#
+
 function renewalequation_poissoncases!(
     f, y_matrix::AbstractMatrix, rho_matrix::AbstractMatrix, 
     initialvalues::AbstractMatrix, Ns::AbstractVector, psi; 
@@ -370,89 +352,3 @@ function samplerenewalequation_2sets(f, chaindf, interventions; columnseeds=1, k
     values2 = values(results_counterfactual)
     return NamedTuple{allnames}(( values1..., values2... ))
 end
-
-## Version to estimate R_t
-#=
-renewalequation_expectedcases_rt(ρ::Number, f_output::Number; kwargs...) = *(ρ, f_output)
-
-function renewalequation_expectedcases_rt(
-    f, y_vector::AbstractVector, ρ::Number; 
-    kwargs...
-)
-    f_output = _renewalfoutput(f, y_vector)
-    return renewalequation_expectedcases(ρ, f_output; kwargs...)
-end
-
-function renewalequation_expectedcases_rt(
-    f, rho_matrix::AbstractMatrix{T}, initialvalues::AbstractMatrix; 
-    kwargs...
-) where T
-    y_matrix = Matrix{T}(undef, size(rho_matrix))
-    renewalequation_expectedcases!(f, y_matrix, rho_matrix, initialvalues; kwargs...)
-    return y_matrix
-end
-
-function renewalequation_expectedcases_rt!(
-    f, y_matrix::AbstractMatrix, rho_matrix::AbstractMatrix, 
-    initialvalues::AbstractMatrix; 
-    kwargs...
-)
-    for g ∈ axes(y_matrix, 2)
-        for t ∈ axes(y_matrix, 1)
-            if t <= size(initialvalues, 1)
-                y_matrix[t, g] = initialvalues[t, g]
-            else
-                y_matrix[t, g] = renewalequation_expectedcases_rt(
-                    f, y_matrix[1:(t-1), g], rho_matrix[t, g]; 
-                    kwargs...
-                )
-            end
-        end
-    end
-end
-
-renewalequation_poissoncases_rt(expctcases::Real) = renewalequation_poissoncases(expctcases)
-
-function renewalequation_poissoncases_rt(ρ::Number, f_output::Number)
-    expctcases = renewalequation_expectedcases_rt(ρ, f_output) 
-    return renewalequation_poissoncases_rt(expctcases)
-end
-
-function renewalequation_poissoncases_rt(
-    f, y_vector::AbstractVector, ρ::Number; 
-    kwargs...
-)
-    f_output = _renewalfoutput(f, y_vector)
-    return renewalequation_poissoncases_rt(ρ, f_output)
-end
-
-function renewalequation_poissoncases_rt(
-    f, rho_matrix::AbstractMatrix{T}, initialvalues::AbstractMatrix; 
-    kwargs...
-) where T
-    y_matrix = Matrix{T}(undef, size(rho_matrix))
-    renewalequation_poissoncases_rt!(f, y_matrix, rho_matrix, initialvalues; kwargs...)
-    return y_matrix
-end
-
-function renewalequation_poissoncases_rt!(
-    f, y_matrix::AbstractMatrix, rho_matrix::AbstractMatrix, 
-    initialvalues::AbstractMatrix; 
-    columnseeds=nothing, kwargs...
-)
-    for g ∈ axes(y_matrix, 2)
-        _setcolumnseed!(columnseeds, g)
-        for t ∈ axes(y_matrix, 1)
-            if t <= size(initialvalues, 1)
-                y_matrix[t, g] = initialvalues[t, g]
-            else
-                pcases = renewalequation_poissoncases_rt(
-                    f, y_matrix[1:(t-1), g], rho_matrix[t, g]; 
-                    kwargs...
-                )
-                y_matrix[t, g] = pcases
-            end
-        end
-    end
-end
-=#

@@ -390,7 +390,6 @@ sim3model2 = diffindiffparameters_splinetimes(
         InterventionsMatrix([ nothing, 36 ], 100),
         InterventionsMatrix([ nothing, 64 ], 100)
     ],
-
 )
 
 s3c2config = @ntuple modelname="sim3model2" model=sim3model2 n_rounds n_chains=8 seed=320+id
@@ -466,6 +465,18 @@ sim4chain2dict = produce_or_load(pol_fitparameter, s4c2config, datadir("sims"))
 # Limit to those local authorities near Liverpool that were in the same tiers for control in
 # 2020
 
+const LOCATIONINDEXES = [
+    15,  # Halton
+    17,  # Knowsley
+    19,  # Liverpool
+    28,  # Sefton
+    31,  # St Helens
+    35,  # Warrington
+    36,  # West Lancashire
+    37,  # Wigan
+    38,  # Wirral
+]
+
 ## Convert DataFrame to appropriate matrices 
 let 
     # check that each location has the same number of rows 
@@ -481,20 +492,17 @@ let
     # (Halton, Knowsley, Liverpool, Sefton, St Helens, Wirral)
     global allcovidcases = Matrix{Int}(undef, covidlength, 9)
     global pil1covidcases = Matrix{Int}(undef, covidlength, 9)
-    #start date in Liverpool 7 November 2020 
-    stl = Dates.value(Date("2020-11-07") - Date("2020-05-31"))
-    # Liverpool stopped being unique 3 December 
-    str = Dates.value(Date("2020-12-03") - Date("2020-05-31"))
     stv = [ 
-        i == 3 ? 
-            stl : i ∈ [ 1, 2, 4, 5, 9 ] ?
-                str :
-                nothing 
+        i == 3 ?  # is Liverpool: start date is 7 November 2020 
+            Dates.value(Date("2020-11-07") - Date("2020-05-31")) : 
+            i ∈ [ 1, 2, 4, 5, 9 ] ?  # areas where testing introduced on 3 December 
+                Dates.value(Date("2020-12-03") - Date("2020-05-31")) :
+                nothing  # places where the testing programme was not introduced in 2020
         for i ∈ 1:9 
     ]
     global masstesting = InterventionsMatrix(stv, covidlength)
     for i ∈ 1:9
-        k = [ 15, 17, 19, 28, 31, 35, 36, 37, 38 ][i]
+        k = LOCATIONINDEXES[i]
         _tdf = filter(:location => x -> x == k, coviddf)
         for j ∈ 1:covidlength
             allcovidcases[j, i] = _tdf.cases[j]
@@ -502,7 +510,7 @@ let
         end
     end 
 end
-selectpops = [ populations[x] for x ∈ [ 15, 17, 19, 28, 31, 35, 36, 37, 38 ] ]
+selectpops = [ populations[x] for x ∈ LOCATIONINDEXES ]
 
 W_allcoviddata = generatew_gt(COVIDSERIALINTERVAL, allcovidcases, selectpops)
 W_pil1coviddata = generatew_gt(COVIDSERIALINTERVAL, pil1covidcases, selectpops)

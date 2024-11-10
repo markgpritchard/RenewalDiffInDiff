@@ -1,5 +1,4 @@
 
-
 function interventionsoffset(A::InterventionsMatrix{T}, v::Int) where T
     newstime = [ _interventionsoffset(stime, v, A.duration) for stime ∈ A.starttimes ]
     return InterventionsMatrix(T, newstime, A.duration)
@@ -72,11 +71,9 @@ function _nunique(x)
     return length(y)
 end
 
-
 function seir_deterministic(u, p, ::Number)
     s, e, i, r = u
     n = sum(u)
-
     return [
         s * (exp(-p.β * i / n)),  # s 
         s * (1 - exp(-p.β * i / n)) + e * (exp(-p.μ)),  # e 
