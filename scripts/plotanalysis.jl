@@ -207,42 +207,7 @@ sim1plot = let
             markersize=2,
             xtitle="Time, days",
         )
-        #=
-        plotrenewalequationsamples!(
-            gc,
-            simulation1dataset["cases_counterfactual"],
-            simulation1dataset["cases_counterfactual"], 
-            W_sim1_0, 
-            simulation1dataset["Ns"], 
-            sim1fit0,
-            fitws(
-                simulation1dataset["cases_counterfactual"], 
-                simulation1dataset["Ns"], 
-                sim1fit0
-            ); 
-            betafunctions=[ beta1a, beta1bcounterfactual ], 
-            betafunctions_counterfactual=[ beta1a, beta1bcounterfactual ],
-            infectiousduration=2.5,
-            rhoclip = 2.5,
-            simcolour=COLOURVECTOR[3],
-            columntitles=[ "Group 1", "Group 2" ],
-            columntitlefontsize=10,
-            xtitle="Time (days)",
-        )
 
-        plotrenewalequationsamples!(
-            gd, simulation1dataset, W_sim1, sim1fit1; 
-            betafunctions=[ beta1a, beta1b ], 
-            betafunctions_counterfactual=[ beta1a, beta1bcounterfactual ],
-            infectiousduration=2.5,
-            rhoclip=2.5,
-            simcolour=COLOURVECTOR[3],
-            columntitles=[ "Group 1", "Group 2" ],
-            columntitlefontsize=10,
-            xtitle="Time (days)",
-        )
-        =#
-        #labelplots!([ "A", "B", "C", "D" ], [ ga, gb, gc, gd ])
         labelplots!([ "A", "B" ], [ ga, gb ])
         fig
     end
