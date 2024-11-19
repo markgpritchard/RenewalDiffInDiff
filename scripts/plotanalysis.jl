@@ -43,7 +43,7 @@ safesave(plotsdir("generationintervalplot.pdf"), generationintervalplot)
 ## Discrete-time analyses
 
 ### Priors 
-
+#=
 sim1model0discretepriorsample = sample(sim1model0discrete, Prior(), 16384)
 sim1model0discretepriorsampledf = DataFrame(sim1model0discretepriorsample)
 plotchains(sim1model0discretepriorsampledf)
@@ -71,7 +71,7 @@ sim1fit1kvdiscretepriorsample = keyvalues(
     sim1model1discretepriorsampledf, sim1fit1discretepriorsample
 )
 println(sim1fit1kvdiscretepriorsample)
-
+=#
 sim1chain0discrete = loadanalysisdictsasdf("sim1model0discrete", 8, maxrounds, 100)
 plotchains(sim1chain0discrete)
 sim1fit0discrete = samplerenewalequation_2sets(
@@ -164,13 +164,12 @@ sim1fita1kv = keyvalues(sim1chaina1, sim1fita1)
 
 sim1plot = let
     fig = with_theme(theme_latexfonts()) do
-        #fig = Figure(; size=( 500, 650 ))
-        fig = Figure(; size=( 500, 350 ))
+        fig = Figure(; size=( 587, 700 ))
 
         ga = GridLayout(fig[1, 1])
-        gb = GridLayout(fig[1, 2])
-        #gc = GridLayout(fig[2, 1])
-        #gd = GridLayout(fig[2, 2])
+        gb = GridLayout(fig[1, 2])        
+        gc = GridLayout(fig[2, 1])
+        gd = GridLayout(fig[2, 2])
 
         plotrenewalequationsamples!(
             ga,
@@ -208,7 +207,43 @@ sim1plot = let
             xtitle="Time, days",
         )
 
-        labelplots!([ "A", "B" ], [ ga, gb ])
+        plotrenewalequationsamples!(
+            gc,
+            simulation1dataset["cases_counterfactual"],
+            simulation1dataset["cases_counterfactual"], 
+            W_sim1_0, 
+            simulation1dataset["Ns"], 
+            sim1fit0,
+            fitws(
+                simulation1dataset["cases_counterfactual"], 
+                simulation1dataset["Ns"], 
+                sim1fit0
+            ); 
+            betafunctions=[ beta1a, beta1bcounterfactual ], 
+            betafunctions_counterfactual=[ beta1a, beta1bcounterfactual ],
+            infectiousduration=2.5,
+            rhoclip = 2.5,
+            simcolour=COLOURVECTOR[3],
+            columntitles=[ "Group 1", "Group 2" ],
+            columntitlefontsize=10,
+            markersize=2,
+            xtitle="Time, days",
+        )
+
+        plotrenewalequationsamples!(
+            gd, simulation1dataset, W_sim1, sim1fit1; 
+            betafunctions=[ beta1a, beta1b ], 
+            betafunctions_counterfactual=[ beta1a, beta1bcounterfactual ],
+            infectiousduration=2.5,
+            rhoclip = 2.5,
+            simcolour=COLOURVECTOR[3],
+            columntitles=[ "Group 1", "Group 2" ],
+            columntitlefontsize=10,
+            markersize=2,
+            xtitle="Time, days",
+        )
+
+        labelplots!([ "A", "B", "C", "D" ], [ ga, gb, gc, gd ])
         fig
     end
     fig
@@ -234,7 +269,7 @@ println(sim1afit1kv)
 
 sim1afit1plot = let
     fig = with_theme(theme_latexfonts()) do
-        fig = Figure(; size=( 500, 350 ))
+        fig = Figure(; size=( 587, 411 ))
 
         ga = GridLayout(fig[1, 1])
         gb = GridLayout(fig[1, 2])

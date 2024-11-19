@@ -206,7 +206,7 @@ function plotrenewalequationsamples!(
         end
     end
 
-    Label(gl[1, 0], L"$w_{gt}$"; fontsize=11.84, rotation=π/2, tellheight=false)
+    Label(gl[1, 0], L"$w_{jt}$"; fontsize=11.84, rotation=π/2, tellheight=false)
     Label(
         gl[2, 0], L"\mathcal{R}_0"; 
         fontsize=11.84, rotation=π/2, tellheight=false
