@@ -116,7 +116,6 @@ chainsplot1_0 = plotchains(
         "θ",
     ],
 )
-safesave(plotsdir("chainsplot1_0.pdf"), chainsplot1_0)
 
 sim1fit0 = samplerenewalequation_2sets(
     fseir, sim1chain0, simulation1dataset["interventions"]; 
@@ -267,46 +266,6 @@ sim1afit1 = samplerenewalequation_2sets(
 sim1afit1kv = keyvalues(sim1achain1, sim1afit1)
 println(sim1afit1kv)
 
-sim1afit1plot = let
-    fig = with_theme(theme_latexfonts()) do
-        fig = Figure(; size=( 587, 411 ))
-
-        ga = GridLayout(fig[1, 1])
-        gb = GridLayout(fig[1, 2])
-
-        plotrenewalequationsamples!(
-            ga, simulation1dataset, W_sim1, sim1fit1; 
-            betafunctions=[ beta1a, beta1b ], 
-            betafunctions_counterfactual=[ beta1a, beta1bcounterfactual ],
-            infectiousduration=2.5,
-            rhoclip=2.5,
-            simcolour=COLOURVECTOR[3],
-            columntitles=[ "Group 1", "Group 2" ],
-            columntitlefontsize=10,
-            xtitle="Time (days)",
-        )
-
-        plotrenewalequationsamples!(
-            gb, simulation1a_dataset, W_sim1a, sim1afit1; 
-            betafunctions=[ beta1a_a, beta1a_b ], 
-            betafunctions_counterfactual=[ beta1a_a, beta1a_bcounterfactual ],
-            infectiousduration=2.5,
-            rhoclip = 2.5,            
-            simcolour=COLOURVECTOR[3],
-            columntitles=[ "Group 1", "Group 2" ],
-            columntitlefontsize=10,
-            xtitle="Time (days)",
-        )
-
-        labelplots!([ "A", "B" ], [ ga, gb ])
-        fig
-    end
-    fig
-end
-
-safesave(plotsdir("sim1afit1plot.pdf"), sim1afit1plot)
-
-
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Simulation 2 
@@ -351,46 +310,6 @@ sim2fit1plot = plotrenewalequationsamples(
 sim2fit1kv = keyvalues(sim2chain1, sim2fit1)
 println(sim2fit1kv)
 
-sim2plot = let
-    fig = with_theme(theme_latexfonts()) do
-        fig = Figure(; size=( 500, 350 ))
-
-        ga = GridLayout(fig[1, 1])
-        gb = GridLayout(fig[1, 2])
-
-        plotrenewalequationsamples!(
-            ga, simulation2dataset, W_sim2, sim2fit0; 
-            betafunctions=[ beta2a, beta2b, beta2c ], 
-            betafunctions_counterfactual=[ beta2a, beta2bcounterfactual, beta2ccounterfactual ],
-            infectiousduration=2.5,
-            rhoclip = 2.5,
-            simcolour=COLOURVECTOR[3],
-            columntitles=[ "Group 1", "Group 2", "Group 3" ],
-            columntitlefontsize=10,
-            xtitle="Time (days)",
-        )
-
-        plotrenewalequationsamples!(
-            gb, simulation2dataset, W_sim2, sim2fit1; 
-            betafunctions=[ beta2a, beta2b, beta2c ], 
-            betafunctions_counterfactual=[ beta2a, beta2bcounterfactual, beta2ccounterfactual ],
-            infectiousduration=2.5,
-            rhoclip = 2.5,
-            simcolour=COLOURVECTOR[3],
-            columntitles=[ "Group 1", "Group 2", "Group 3" ],
-            columntitlefontsize=10,
-            xtitle="Time (days)",
-        )
-
-        labelplots!([ "A", "B" ], [ ga, gb ])
-
-        fig
-    end
-    fig
-end
-
-safesave(plotsdir("sim2plot.pdf"), sim2plot)
-
 sim2chain2 = loadanalysisdictsasdf("sim2model2", 8, maxrounds, 220)
 plotchains(sim2chain2)
 sim2fit2 = samplerenewalequation_2sets(
@@ -404,14 +323,6 @@ sim2fit2 = samplerenewalequation_2sets(
         InterventionsMatrix([ nothing, 64, nothing ], 100),
         InterventionsMatrix([ nothing, nothing, 84 ], 100),
     ],
-)
-sim2fit2plot = plotrenewalequationsamples(
-    simulation2dataset, W_sim2, sim2fit2; 
-    betafunctions=[ beta2a, beta2b, beta2c ], 
-    betafunctions_counterfactual=[ beta2a, beta2bcounterfactual, beta2ccounterfactual ],
-    infectiousduration=2.5,
-    plotsize=( 400, 400 ),
-    rhoclip=4,
 )
 
 sim2chain3 = loadanalysisdictsasdf("sim2model3", 8, maxrounds, 230)
@@ -427,14 +338,7 @@ sim2fit3 = samplerenewalequation_2sets(
         InterventionsMatrix([ nothing, 64, 84 ], 100)
     ],
 )
-sim2fit3plot = plotrenewalequationsamples(
-    simulation2dataset, W_sim2, sim2fit3; 
-    betafunctions=[ beta2a, beta2b, beta2c ], 
-    betafunctions_counterfactual=[ beta2a, beta2bcounterfactual, beta2ccounterfactual ],
-    infectiousduration=2.5,
-    plotsize=( 400, 400 ),
-    rhoclip=2.5,
-)
+
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -485,46 +389,6 @@ sim3fit2 = samplerenewalequation_2sets(
     ],
 )
 
-sim3plot = let
-    fig = with_theme(theme_latexfonts()) do
-        fig = Figure(; size=( 500, 350 ))
-
-        ga = GridLayout(fig[1, 1])
-        gb = GridLayout(fig[1, 2])
-
-        plotrenewalequationsamples!(
-            ga, simulation3dataset, W_sim3, sim3fit1; 
-            betafunctions=[ beta3a, beta3b ], 
-            betafunctions_counterfactual=[ beta3a, beta3bcounterfactual ],
-            infectiousduration=2.5,
-            rhoclip = 5,
-            simcolour=COLOURVECTOR[3],
-            columntitles=[ "Group 1", "Group 2" ],
-            columntitlefontsize=10,
-            xtitle="Time (days)",
-        )
-
-        plotrenewalequationsamples!(
-            gb, simulation3dataset, W_sim3, sim3fit2; 
-            betafunctions=[ beta3a, beta3b ], 
-            betafunctions_counterfactual=[ beta3a, beta3bcounterfactual ],
-            infectiousduration=2.5,
-            rhoclip = 5,
-            simcolour=COLOURVECTOR[3],
-            columntitles=[ "Group 1", "Group 2" ],
-            columntitlefontsize=10,
-            xtitle="Time (days)",
-        )
-
-        labelplots!([ "A", "B" ], [ ga, gb ])
-
-        fig
-    end
-    fig
-end
-
-safesave(plotsdir("sim3plot.svg"), sim3plot)
-
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Simulation 4 
@@ -538,19 +402,6 @@ sim4fit0 = samplerenewalequation_2sets(
     Ns=simulation4dataset["Ns"], 
     timeknots=[ [ 1 ]; collect(11:89/4:100) ],
 )
-sim4fit0plot = plotrenewalequationsamples(
-    simulation4dataset["cases_counterfactual"],
-    simulation4dataset["cases_counterfactual"], 
-    W_sim4_0, 
-    simulation4dataset["Ns"], 
-    sim4fit0,
-    fitws(simulation4dataset["cases_counterfactual"], simulation4dataset["Ns"], sim4fit0); 
-    betafunctions=[ beta4a, beta4bcounterfactual ], 
-    betafunctions_counterfactual=[ beta4a, beta4bcounterfactual ],
-    infectiousduration=2.5,
-    plotsize=( 400, 400 ),
-    rhoclip=2.5,
-)
 
 sim4chain1 = loadanalysisdictsasdf("sim4model1", 8, maxrounds, 410)
 plotchains(sim4chain1)
@@ -560,16 +411,6 @@ sim4fit1 = samplerenewalequation_2sets(
     Ns=simulation4dataset["Ns"], 
     timeknots=[ [ 1 ]; collect(11:89/4:100) ],
 )
-sim4fit1plot = plotrenewalequationsamples(
-    simulation4dataset, W_sim4, sim4fit1; 
-    betafunctions=[ beta4a, beta4b ], 
-    betafunctions_counterfactual=[ beta4a, beta4bcounterfactual ],
-    infectiousduration=2.5,
-    plotsize=( 400, 400 ),
-    rhoclip=2.5,
-)
-
-safesave(plotsdir("sim4fit1plot.svg"), sim4fit1plot)
 
 sim4chain2 = loadanalysisdictsasdf("sim4model2", 8, maxrounds, 420)
 plotchains(sim4chain2)
@@ -583,14 +424,79 @@ sim4fit2 = samplerenewalequation_2sets(
         InterventionsMatrix([ nothing, 64 ], 100)
     ],
 )
-sim4fit2plot = plotrenewalequationsamples(
-    simulation4dataset, W_sim4, sim4fit2; 
-    betafunctions=[ beta4a, beta4b ], 
-    betafunctions_counterfactual=[ beta4a, beta4bcounterfactual ],
-    infectiousduration=2.5,
-    plotsize=( 400, 400 ),
-    rhoclip=5,
-)
+
+sim2plot = let
+    fig = with_theme(theme_latexfonts()) do
+        fig = Figure(; size=( 587, 700 ))
+
+        gu = GridLayout(fig[1, 1]) 
+        gl = GridLayout(fig[2, 1])
+        ga = GridLayout(gu[1, 1])
+        gb = GridLayout(gu[1, 2])        
+        gc = GridLayout(gl[1, 1])
+        gd = GridLayout(gl[1, 2])
+
+        plotrenewalequationsamples!(
+            ga, simulation1a_dataset, W_sim1a, sim1afit1; 
+            betafunctions=[ beta1a, beta1b ], 
+            betafunctions_counterfactual=[ beta1a_a, beta1a_bcounterfactual ],
+            infectiousduration=2.5,
+            #rhoclip = 2.5,
+            simcolour=COLOURVECTOR[3],
+            columntitles=[ "Group 1", "Group 2" ],
+            columntitlefontsize=10,
+            markersize=2,
+            xtitle="Time, days",
+        )
+
+        plotrenewalequationsamples!(
+            gb, simulation2dataset, W_sim2, sim2fit2; 
+            betafunctions=[ beta2a, beta2b, beta2c ], 
+            betafunctions_counterfactual=[ beta2a, beta2bcounterfactual, beta2ccounterfactual ],
+            infectiousduration=2.5,
+            #rhoclip = 2.5,
+            simcolour=COLOURVECTOR[3],
+            columntitles=[ "Group 1", "Group 2", "Group 3" ],
+            columntitlefontsize=10,
+            markersize=2,
+            xtitle="Time, days",
+        )
+
+        plotrenewalequationsamples!(
+            gc, simulation3dataset, W_sim3, sim3fit2; 
+            betafunctions=[ beta3a, beta3b ], 
+            betafunctions_counterfactual=[ beta3a, beta3bcounterfactual ],
+            infectiousduration=2.5,
+            #rhoclip = 2.5,
+            simcolour=COLOURVECTOR[3],
+            columntitles=[ "Group 1", "Group 2" ],
+            columntitlefontsize=10,
+            markersize=2,
+            xtitle="Time, days",
+        )
+
+        plotrenewalequationsamples!(
+            gd, simulation4dataset, W_sim4, sim4fit2; 
+            betafunctions=[ beta4a, beta4b ], 
+            betafunctions_counterfactual=[ beta4a, beta4bcounterfactual ],        
+            infectiousduration=2.5,
+            #rhoclip = 2.5,
+            simcolour=COLOURVECTOR[3],
+            columntitles=[ "Group 1", "Group 2" ],
+            columntitlefontsize=10,
+            markersize=2,
+            xtitle="Time, days",
+        )
+
+        colsize!(gu, 1, Auto(2))
+        colsize!(gu, 2, Auto(3))
+        labelplots!([ "A", "B", "C", "D" ], [ ga, gb, gc, gd ])
+        fig
+    end
+    fig
+end
+
+safesave(plotsdir("sim2plot.pdf"), sim2plot)
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
