@@ -19,16 +19,19 @@ paralleltrendsfig = let
         for t ∈ round.(Int, ts)
     ]
     xs2cf = xs1 .+ 0.05
+
+    bandcolour = ( COLOURVECTOR[3], 0.3 )
+
         
     fig = with_theme(theme_latexfonts()) do
         fig = Figure(; size=( 500, 300 ))
         ax = Axis(fig[1, 1])
         ax2 = Axis(fig[1, 2])
         
+        band!(ax, ts[50:100], xs2cf[50:100], xs2[50:100]; color=bandcolour)
         lines!(ax, ts, xs1; color=:black)
         lines!(ax, ts, xs2; color=COLOURVECTOR[1])
-        lines!(ax, ts[50:100], xs2cf[50:100]; color=:red, linestyle=:dash)
-        band!(ax, ts[50:100], xs2cf[50:100], xs2[50:100]; color=( :red, 0.3 ))
+        lines!(ax, ts[50:100], xs2cf[50:100]; color=COLOURVECTOR[3], linestyle=:dash)
             
         arrows!(ax, [ 50 ], xs2[50:50] .+ 0.075, [ 0 ], [ -0.05 ])
     
@@ -103,64 +106,67 @@ sirparraleltrendsfig = let
     sol1cfr0_constant25 = df1.value1[10] .* 2 ./ 1000 - df2.value1[10] .* 2 ./ 1000
     sol1cfr0 = df2.value1[10:end] .* 2 ./ 1000 .+ sol1cfr0_constant25
 
+    bandcolour = ( COLOURVECTOR[3], 0.3 )
+
     fig = with_theme(theme_latexfonts()) do 
-        fig = Figure(; size=( 500, 350 ))
+        fig = Figure(; size=( 587, 298 ))
         axs = [ Axis(fig[1, i]) for i ∈ [ 1, 3, 5 ] ]
         axs2 = [ Axis(fig[2, i]) for i ∈ [ 1, 3, 5 ] ]
     
-        lines!(axs[1], df1.timestamp, df1.value2; color=:black)
-        lines!(axs[1], df2.timestamp, df2.value2; color=COLOURVECTOR[1])
-        lines!(axs[1], df1.timestamp[10:end], sol1cf; color=:red, linestyle=:dash)
         band!(
             axs[1], df1.timestamp[10:end], df1.value2[10:end], sol1cf; 
-            color=( :red, 0.3 )
+            color=bandcolour
         )
+        lines!(axs[1], df1.timestamp, df1.value2; color=:black)
+        lines!(axs[1], df2.timestamp, df2.value2; color=COLOURVECTOR[1])
+        lines!(axs[1], df1.timestamp[10:end], sol1cf; color=COLOURVECTOR[3], linestyle=:dash)
         arrows!(axs[1], df1.timestamp[10:10], df1.value2[10:10] .+ 40, [ 0 ], [ -20 ])
     
         formataxis!(axs[1]; hidex=true, hidexticks=true)
     
-        lines!(axs2[1], df1.timestamp, log.(df1.value2); color=:black)
-        lines!(axs2[1], df2.timestamp, log.(df2.value2); color=COLOURVECTOR[1])
-        lines!(axs2[1], df1.timestamp[10:end], logsol1cf; color=:red, linestyle=:dash)
         band!(
             axs2[1], df1.timestamp[10:end], log.(df1.value2[10:end]), logsol1cf; 
-            color=( :red, 0.3 )
+            color=bandcolour
         )
+        lines!(axs2[1], df1.timestamp, log.(df1.value2); color=:black)
+        lines!(axs2[1], df2.timestamp, log.(df2.value2); color=COLOURVECTOR[1])
+        lines!(axs2[1], df1.timestamp[10:end], logsol1cf; color=COLOURVECTOR[3], linestyle=:dash)
         formataxis!(axs2[1])
         arrows!(
             axs2[1], df1.timestamp[10:10], log.(df1.value2[10:10]) .+ 1.5, [ 0 ], [ -0.75 ]
         )
     
-        lines!(axs[2], df1.timestamp, df1.value4; color=:black)
-        lines!(axs[2], df2.timestamp, df2.value4; color=COLOURVECTOR[1])
-        lines!(axs[2], df1.timestamp[10:end], cumulativesol1cf; color=:red, linestyle=:dash)
         band!(
             axs[2], df1.timestamp[10:end], df1.value4[10:end], cumulativesol1cf; 
-            color=( :red, 0.3 )
+            color=bandcolour
         )
+        lines!(axs[2], df1.timestamp, df1.value4; color=:black)
+        lines!(axs[2], df2.timestamp, df2.value4; color=COLOURVECTOR[1])
+        lines!(axs[2], df1.timestamp[10:end], cumulativesol1cf; color=COLOURVECTOR[3], linestyle=:dash)
         arrows!(axs[2], df1.timestamp[10:10], df1.value4[10:10] .+ 200, [ 0 ], [ -100 ])
     
         formataxis!(axs[2]; hidex=true, hidexticks=true)
     
-        lines!(axs2[2], df1.timestamp, log.(df1.value4); color=:black)
-        lines!(axs2[2], df2.timestamp, log.(df2.value4); color=COLOURVECTOR[1])
-        lines!(axs2[2], df1.timestamp[10:end], cumulativelogsol1cf; color=:red, linestyle=:dash)
         band!(
             axs2[2], df1.timestamp[10:end], log.(df1.value4[10:end]), cumulativelogsol1cf; 
-            color=( :red, 0.3 )
+            color=bandcolour
         )
-        formataxis!(axs2[2])
+        lines!(axs2[2], df1.timestamp, log.(df1.value4); color=:black)
+        lines!(axs2[2], df2.timestamp, log.(df2.value4); color=COLOURVECTOR[1])
+        lines!(axs2[2], df1.timestamp[10:end], cumulativelogsol1cf; color=COLOURVECTOR[3], linestyle=:dash)
         arrows!(
             axs2[2], df1.timestamp[10:10], log.(df1.value4[10:10]) .+ 1.125, [ 0 ], [ -0.6 ]
         )
+
+        formataxis!(axs2[2])
     
-        lines!(axs[3], df1.timestamp, df1.value1 .* 2 ./ 1000; color=:black)
-        lines!(axs[3], df2.timestamp, df2.value1 .* 2 ./ 1000; color=COLOURVECTOR[1])
-        lines!(axs[3], df1.timestamp[10:end], sol1cfr0; color=:red, linestyle=:dash)
         band!(
             axs[3], df1.timestamp[10:end], df1.value1[10:end] .* 2 ./ 1000, sol1cfr0; 
-            color=( :red, 0.3 )
+            color=bandcolour
         )
+        lines!(axs[3], df1.timestamp, df1.value1 .* 2 ./ 1000; color=:black)
+        lines!(axs[3], df2.timestamp, df2.value1 .* 2 ./ 1000; color=COLOURVECTOR[1])
+        lines!(axs[3], df1.timestamp[10:end], sol1cfr0; color=COLOURVECTOR[3], linestyle=:dash)
         arrows!(
             axs[3], 
             df1.timestamp[10:10], 
@@ -192,15 +198,15 @@ sirparraleltrendsfig = let
             fontsize=11.84, rotation=π/2, tellheight=false
         )
         Label(
-            fig[2, 2], "Log cumulative infectious"; 
+            fig[2, 2], "Log cumulative\ninfectious"; 
             fontsize=11.84, rotation=π/2, tellheight=false
         )
         Label(
-            fig[1, 4], "Effective reproduction ratio"; 
+            fig[1, 4], "Effective\nreproduction ratio"; 
             fontsize=11.84, rotation=π/2, tellheight=false
         )
         Label(
-            fig[2, 4], "Basic reproduction ratio"; 
+            fig[2, 4], "Basic reproduction\nratio"; 
             fontsize=11.84, rotation=π/2, tellheight=false
         )
     
