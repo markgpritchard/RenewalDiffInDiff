@@ -441,7 +441,7 @@ sim2plot = let
             betafunctions=[ beta1a, beta1b ], 
             betafunctions_counterfactual=[ beta1a_a, beta1a_bcounterfactual ],
             infectiousduration=2.5,
-            #rhoclip = 2.5,
+            rhoclip = 45,
             simcolour=COLOURVECTOR[3],
             columntitles=[ "Group 1", "Group 2" ],
             columntitlefontsize=10,
@@ -454,7 +454,7 @@ sim2plot = let
             betafunctions=[ beta2a, beta2b, beta2c ], 
             betafunctions_counterfactual=[ beta2a, beta2bcounterfactual, beta2ccounterfactual ],
             infectiousduration=2.5,
-            #rhoclip = 2.5,
+            rhoclip = 4,
             simcolour=COLOURVECTOR[3],
             columntitles=[ "Group 1", "Group 2", "Group 3" ],
             columntitlefontsize=10,
@@ -467,7 +467,7 @@ sim2plot = let
             betafunctions=[ beta3a, beta3b ], 
             betafunctions_counterfactual=[ beta3a, beta3bcounterfactual ],
             infectiousduration=2.5,
-            #rhoclip = 2.5,
+            rhoclip = 4,
             simcolour=COLOURVECTOR[3],
             columntitles=[ "Group 1", "Group 2" ],
             columntitlefontsize=10,
@@ -480,7 +480,7 @@ sim2plot = let
             betafunctions=[ beta4a, beta4b ], 
             betafunctions_counterfactual=[ beta4a, beta4bcounterfactual ],        
             infectiousduration=2.5,
-            #rhoclip = 2.5,
+            rhoclip = 4,
             simcolour=COLOURVECTOR[3],
             columntitles=[ "Group 1", "Group 2" ],
             columntitlefontsize=10,
@@ -488,8 +488,8 @@ sim2plot = let
             xtitle="Time, days",
         )
 
-        colsize!(gu, 1, Auto(2))
-        colsize!(gu, 2, Auto(3))
+        colsize!(gu, 1, Auto(2.5))
+        colsize!(gu, 2, Auto(3.5))
         labelplots!([ "A", "B", "C", "D" ], [ ga, gb, gc, gd ])
         fig
     end
@@ -511,26 +511,31 @@ datafit1 = samplerenewalequation_2sets(
     Ns=selectpops,
     timeknots=[ collect(1.0:28:216); [216] ],
 )
-datafit1plot = plotrenewalequationsamples(
-    allcovidcases, W_allcoviddata, selectpops, datafit1;
-    plotsize=( 587, 411 ),
-    columntitles=[ 
-        "Halton", 
-        "Knowsley", 
-        "Liverpool", 
-        "Sefton", 
-        "St Helens", 
-        "Warrington", 
-        "W. Lancs", 
-        "Wigan", 
-        "Wirral" 
-    ],
-    columntitlefontsize=10,
-    markersize=2,
-    xticklabelrotation=-π/4,
-    xticks=( [ 1, 93, 215 ], [ "June", "Sept.", "Jan." ] ),
-    xtitle="Date, 2020–2021",
-)
+datafit1plot = with_theme(theme_latexfonts()) do 
+    fig = Figure(; size=( 587, 411 ))
+    ga = GridLayout(fig[1, 1])
+    plotrenewalequationsamples!(
+        ga, allcovidcases, W_allcoviddata, selectpops, datafit1;
+        columntitles=[ 
+            "Halton", 
+            "Knowsley", 
+            "Liverpool", 
+            "Sefton", 
+            "St Helens", 
+            "Warrington", 
+            "W. Lancs", 
+            "Wigan", 
+            "Wirral" 
+        ],
+        columntitlefontsize=10,
+        markersize=2,
+        xticklabelrotation=-π/4,
+        xticks=( [ 1, 93, 215 ], [ "June", "Sept.", "Jan." ] ),
+        xtitle="Date, 2020–2021",
+    )
+    
+    fig
+end
 
 safesave(plotsdir("datafit1plot.pdf"), datafit1plot)
 
@@ -549,26 +554,33 @@ datafit2 = samplerenewalequation_2sets(
     Ns=selectpops,
     timeknots=[ collect(1.0:28:216); [216] ],
 )
-datafit2plot = plotrenewalequationsamples(
-    pil1covidcases, W_pil1coviddata, selectpops, datafit2;
-    plotsize=( 587, 411 ),
-    columntitles=[ 
-        "Halton", 
-        "Knowsley", 
-        "Liverpool", 
-        "Sefton", 
-        "St Helens", 
-        "Warrington", 
-        "W. Lancs", 
-        "Wigan", 
-        "Wirral" 
-    ],
-    columntitlefontsize=10,
-    markersize=2,
-    xticklabelrotation=-π/4,
-    xticks=( [ 1, 93, 215 ], [ "June", "Sept.", "Jan." ] ),
-    xtitle="Date, 2020–2021",
-)
+datafit2plot = with_theme(theme_latexfonts()) do 
+    fig = Figure(; size=( 587, 411 ))
+    ga = GridLayout(fig[1, 1])
+    plotrenewalequationsamples!(
+        ga, pil1covidcases, W_pil1coviddata, selectpops, datafit2;
+        columntitles=[ 
+            "Halton", 
+            "Knowsley", 
+            "Liverpool", 
+            "Sefton", 
+            "St Helens", 
+            "Warrington", 
+            "W. Lancs", 
+            "Wigan", 
+            "Wirral" 
+        ],
+        columntitlefontsize=10,
+        markersize=2,
+        xticklabelrotation=-π/4,
+        xticks=( [ 1, 93, 215 ], [ "June", "Sept.", "Jan." ] ),
+        xtitle="Date, 2020–2021",
+    )
+    
+    fig 
+end
+
+safesave(plotsdir("datafit2plot.pdf"), datafit2plot)
 
 datafit2kv = keyvalues(datachain2, datafit2)
 println(datafit2kv)
@@ -590,29 +602,34 @@ datafit3 = samplerenewalequation_2sets(
         InterventionsMatrix([ 200, 200, 174, 200, 200, 217, 217, 217, 200 ], 216), 
     ],
 )
-datafit3plot = plotrenewalequationsamples(
-    allcovidcases, W_allcoviddata, selectpops, datafit3;
-    #plotsize=( 600, 400 ),
-    columntitles=[ 
-        "Halton", 
-        "Knowsley", 
-        "Liverpool", 
-        "Sefton", 
-        "St Helens", 
-        "Warrington", 
-        "W. Lancs", 
-        "Wigan", 
-        "Wirral" 
-    ],
-    columntitlefontsize=10,
-    xticklabelrotation=-π/4,
-    xticks=( [ 1, 93, 215 ], [ "June", "Sept.", "Jan." ] ),
-    xtitle="Date, 2020–2021",
-)
+datafit3plot = with_theme(theme_latexfonts()) do 
+    fig = Figure(; size=( 587, 411 ))
+    ga = GridLayout(fig[1, 1])
+    plotrenewalequationsamples!(
+        ga, allcovidcases, W_allcoviddata, selectpops, datafit3;
+        columntitles=[ 
+            "Halton", 
+            "Knowsley", 
+            "Liverpool", 
+            "Sefton", 
+            "St Helens", 
+            "Warrington", 
+            "W. Lancs", 
+            "Wigan", 
+            "Wirral" 
+        ],
+        columntitlefontsize=10,
+        xticklabelrotation=-π/4,
+        xticks=( [ 1, 93, 215 ], [ "June", "Sept.", "Jan." ] ),
+        xtitle="Date, 2020–2021",
+    )
+
+    fig
+end
 
 safesave(plotsdir("datafit3plot.svg"), datafit3plot)
 
-
+#=
 ## Analysis 4
 
 # with separate lead and lag for each area 
@@ -659,13 +676,14 @@ datafit4plot = plotrenewalequationsamples(
     xticks=( [ 1, 93, 215 ], [ "June", "Sept.", "Jan." ] ),
     xtitle="Date, 2020–2021",
 )
+=#
 
 ## Analysis 5 
 # Pillar 1 test results with lead and lag
 
 datachain5 = loadanalysisdictsasdf("datamodel5", 8, maxrounds, 1050)
 plotchains(datachain5)
-datafit2 = samplerenewalequation_2sets(
+datafit5 = samplerenewalequation_2sets(
     COVIDSERIALINTERVAL, datachain5, masstesting; 
     initialvalues=pil1covidcases[1:124, :], 
     Ns=selectpops,
@@ -675,29 +693,90 @@ datafit2 = samplerenewalequation_2sets(
         InterventionsMatrix([ 200, 200, 174, 200, 200, 217, 217, 217, 200 ], 216), 
     ],
 )
-datafit5plot = plotrenewalequationsamples(
-    pil1covidcases, W_pil1coviddata, selectpops, datafit5;
-    plotsize=( 587, 411 ),
-    columntitles=[ 
-        "Halton", 
-        "Knowsley", 
-        "Liverpool", 
-        "Sefton", 
-        "St Helens", 
-        "Warrington", 
-        "W. Lancs", 
-        "Wigan", 
-        "Wirral" 
-    ],
-    columntitlefontsize=10,
-    markersize=2,
-    xticklabelrotation=-π/4,
-    xticks=( [ 1, 93, 215 ], [ "June", "Sept.", "Jan." ] ),
-    xtitle="Date, 2020–2021",
-)
+datafit5plot = with_theme(theme_latexfonts()) do 
+    fig = Figure(; size=( 587, 411 ))
+    ga = GridLayout(fig[1, 1])
+    plotrenewalequationsamples!(
+        ga, pil1covidcases, W_pil1coviddata, selectpops, datafit5;
+        columntitles=[ 
+            "Halton", 
+            "Knowsley", 
+            "Liverpool", 
+            "Sefton", 
+            "St Helens", 
+            "Warrington", 
+            "W. Lancs", 
+            "Wigan", 
+            "Wirral" 
+        ],
+        columntitlefontsize=10,
+        markersize=2,
+        xticklabelrotation=-π/4,
+        xticks=( [ 1, 93, 215 ], [ "June", "Sept.", "Jan." ] ),
+        xtitle="Date, 2020–2021",
+    )
+
+    fig 
+end
+
+safesave(plotsdir("datafit5plot.svg"), datafit5plot)
+
 
 datafit5kv = keyvalues(datachain5, datafit5)
 println(datafit5kv)
+
+chainplot1 = let 
+    @unpack colnames, plotnames_ind = processplotchains(datachain1)
+    fig = with_theme(theme_latexfonts()) do 
+        fig = Figure(; size=( 500, 700 ))
+        ga = GridLayout(fig[1, 1])
+        gb = GridLayout(fig[1, 2])
+    
+        plotchains!(ga, datachain1; colnames=colnames, plotnames_ind=plotnames_ind[1:13])
+        plotchains!(gb, datachain1; colnames=colnames, plotnames_ind=plotnames_ind[14:end])
+    
+        fig 
+    end
+    fig
+end
+
+safesave(plotsdir("chainplot1.svg"), chainplot1)
+
+chainplot2 = let 
+    @unpack colnames, plotnames_ind = processplotchains(datachain2)
+    fig = with_theme(theme_latexfonts()) do 
+        fig = Figure(; size=( 500, 700 ))
+        ga = GridLayout(fig[1, 1])
+        gb = GridLayout(fig[1, 2])
+    
+        plotchains!(ga, datachain2; colnames=colnames, plotnames_ind=plotnames_ind[1:13])
+        plotchains!(gb, datachain2; colnames=colnames, plotnames_ind=plotnames_ind[14:end])
+    
+        fig 
+    end
+    fig
+end
+
+safesave(plotsdir("chainplot2.svg"), chainplot2)
+
+chainplot3 = let 
+    @unpack colnames, plotnames_ind = processplotchains(datachain3)
+    fig = with_theme(theme_latexfonts()) do 
+        fig = Figure(; size=( 500, 700 ))
+        ga = GridLayout(fig[1, 1])
+        gb = GridLayout(fig[1, 2])
+    
+        plotchains!(ga, datachain3; colnames=colnames, plotnames_ind=plotnames_ind[1:14])
+        plotchains!(gb, datachain3; colnames=colnames, plotnames_ind=plotnames_ind[15:end])
+    
+        fig 
+    end
+    fig
+end
+
+safesave(plotsdir("chainplot3.svg"), chainplot3)
+
+
 
 
 

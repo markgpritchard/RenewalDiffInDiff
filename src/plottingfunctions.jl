@@ -18,14 +18,28 @@ const _NOPLOTNAMES = [
 
 plotchains(data::Chains; kwargs...) = plotchains(DataFrame(data); kwargs...)
 
-function plotchains(
-    data::DataFrame; 
-    size=( 400, 5000 ), ylabels=RenewalDiffInDiff.automatic, kwargs...
-)
-    @unpack colnames, plotnames_ind = _processplotchains(data; kwargs...)
-        
+function plotchains(data::DataFrame; size=( 400, 5000 ), kwargs...)
     fig = Figure(; size)
-    ax = [ Axis(fig[i, 1]) for i ∈ eachindex(plotnames_ind) ]
+    plotchains!(fig, data; kwargs...)
+    return fig
+end
+
+function plotchains!(fig::Figure, data::DataFrame; kwargs...)
+    gl = GridLayout(fig[1, 1])
+    plotchains!(gl, data; kwargs...)
+end
+
+function plotchains!(
+    gl::GridLayout, data::DataFrame; 
+    colnames=RenewalDiffInDiff.automatic, plotnames_ind=RenewalDiffInDiff.automatic,
+    ylabels=RenewalDiffInDiff.automatic, kwargs...
+)
+    @unpack colnames, plotnames_ind = processplotchains(
+        data;
+        colnames, plotnames_ind, kwargs...
+    )
+        
+    ax = [ Axis(gl[i, 1]) for i ∈ eachindex(plotnames_ind) ]
     n_ax = length(ax)
     for (j, chainid) ∈ enumerate(unique(data.chain))
         inds = findall(x -> x == chainid, data.chain)
@@ -33,9 +47,9 @@ function plotchains(
             lines!(ax[i], getproperty(data, colnames[k])[inds]; color=COLOURVECTOR[j])
             if j == 1 
                 if ylabels == RenewalDiffInDiff.automatic
-                    Label(fig.layout[i, 0], "$(colnames[k])"; rotation=π/2, tellheight=false)
+                    Label(gl[i, 0], "$(colnames[k])"; rotation=π/2, tellheight=false)
                 else 
-                    Label(fig.layout[i, 0], ylabels[i]; tellheight=false)
+                    Label(gl[i, 0], ylabels[i]; tellheight=false)
                 end
             end
         end
@@ -49,12 +63,38 @@ function plotchains(
         end
     end
 
-    Label(fig[n_ax+1, 1], "sample"; fontsize=11.84, tellwidth=false)
+    Label(gl[n_ax+1, 1], "sample"; fontsize=11.84, tellwidth=false)
 
-    colgap!(fig.layout, 1, 5)
-    rowgap!(fig.layout, n_ax, 5)
-    
-    return fig
+    colgap!(gl, 1, 5)
+    rowgap!(gl, n_ax, 5)
+end
+
+function _processplotchains(
+    data, ::RenewalDiffInDiff.Automatic, ::RenewalDiffInDiff.Automatic; 
+    logdensity="log_density"
+)
+    return _processplotchains(data; logdensity)
+end
+
+function _processplotchains(
+    data, cn, ::RenewalDiffInDiff.Automatic; 
+    logdensity="log_density"
+)
+    @unpack plotnames_ind = _processplotchains(data; kwargs...)
+    return @ntuple colnames=cn plotnames_ind
+end
+
+function _processplotchains(
+    data, ::RenewalDiffInDiff.Automatic, pni; 
+    logdensity="log_density"
+)
+    @unpack colnames = _processplotchains(data; kwargs...)
+    return @ntuple colnames plotnames_ind=pni
+
+end
+
+function _processplotchains(data, colnames, plotnames_ind; logdensity="log_density")
+    return @ntuple colnames plotnames_ind
 end
 
 function _processplotchains(data; logdensity="log_density")
@@ -64,6 +104,10 @@ function _processplotchains(data; logdensity="log_density")
     _plotnames_ind = findall(x -> x ∉ _NOPLOTNAMES, colnames)
     plotnames_ind = [ lp_ind; _plotnames_ind ]
     return @ntuple colnames plotnames_ind
+end
+
+function processplotchains(data; colnames=RenewalDiffInDiff.automatic, plotnames_ind=RenewalDiffInDiff.automatic, logdensity="log_density")
+    _processplotchains(data, colnames, plotnames_ind; logdensity)
 end
 
 function plotrenewalequationsamples(args...; plotsize=( 800, 800 ), kwargs...)
