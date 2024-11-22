@@ -244,7 +244,12 @@ function plotrenewalequationsamples_w!(
         end
     end
 
-    Label(gl[row, 0], ytitle; fontsize=11.84, rotation=π/2, tellheight=false)
+    if !isnothing(ytitle)
+        Label(
+            gl[row, 0], ytitle; 
+            fontsize=11.84, rotation=π/2, tellheight=false
+        )
+    end
     if !hidex && !isnothing(xtitle)
         Label(gl[(row + 1), 1:nlocations], xtitle; fontsize=11.84, tellwidth=false)
     end
@@ -313,10 +318,13 @@ function plotrenewalequationsamples_r0!(
         end
     end
 
-    Label(
-        gl[row, 0], ytitle; 
-        fontsize=11.84, rotation=π/2, tellheight=false
-    )
+    if !isnothing(ytitle)
+        Label(
+            gl[row, 0], ytitle; 
+            fontsize=11.84, rotation=π/2, tellheight=false
+        )
+    end
+
     if !hidex && !isnothing(xtitle)
         Label(gl[(row + 1), 1:nlocations], xtitle; fontsize=11.84, tellwidth=false)
     end
@@ -373,7 +381,13 @@ function plotrenewalequationsamples_cases!(
         end
     end
 
-    Label(gl[row, 0], ytitle; fontsize=11.84, rotation=π/2, tellheight=false)
+    if !isnothing(ytitle)
+        Label(
+            gl[row, 0], ytitle; 
+            fontsize=11.84, rotation=π/2, tellheight=false
+        )
+    end
+
     if !hidex && !isnothing(xtitle)
         Label(gl[(row + 1), 1:nlocations], xtitle; fontsize=11.84, tellwidth=false)
     end
@@ -463,10 +477,12 @@ function plotrenewalequationsamples_causaleffect!(
         end
     end
 
-    Label(
-        gl[row, 0], ytitle; 
-        fontsize=11.84, rotation=π/2, tellheight=false
-    )
+    if !isnothing(ytitle)
+        Label(
+            gl[row, 0], ytitle; 
+            fontsize=11.84, rotation=π/2, tellheight=false
+        )
+    end
     if !hidex && !isnothing(xtitle)
         Label(gl[(row + 1), 1:nlocations], xtitle; fontsize=11.84, tellwidth=false)
     end
