@@ -168,105 +168,229 @@ function plotrenewalequationsamples!(
     cases::Matrix, cases_counterfactual, w, Ns::Vector, fittedvaluesset, fittedws;
     betafunctions=nothing, betafunctions_counterfactual=nothing,
     datacolour=:black, simcolour=COLOURVECTOR[2], fittedcolour=( COLOURVECTOR[1], 0.75 ), 
+    counterfactualcolour=( COLOURVECTOR[2], 0.75 ),
     infectiousduration=1, markersize=3, rhoclip=Inf,
     columntitles=nothing, columntitlefontsize=11.84, 
+    plotrhocounterfactuals=false,
     xticklabelrotation=0.0, xticks=Makie.automatic, xtitle="Time"
 )
-    duration = size(cases, 1)
     nlocations = size(cases, 2)
-    xs = eachindex(fittedvaluesset.rho_matrix_vec[1][:, 1])
-
-    axs1 = [ Axis(gl[1, i]; xticklabelrotation, xticks) for i ∈ 1:nlocations ]
-    axs2 = [ Axis(gl[2, i]; xticklabelrotation, xticks) for i ∈ 1:nlocations ]
-    axs3 = [ Axis(gl[3, i]; xticklabelrotation, xticks) for i ∈ 1:nlocations ]
-    axs4 = [ Axis(gl[4, i]; xticklabelrotation, xticks) for i ∈ 1:nlocations ]
-
     for i ∈ 1:nlocations
-        ws = _modelquantiles(fittedws, i)
-        rhoqs = _modelquantiles(fittedvaluesset, :rho_matrix_vec, i)
-        yqs = _modelquantiles(fittedvaluesset, :y_matrix_poisson_vec, i)
-        yqs_cf = _modelquantiles(
-            fittedvaluesset, :y_matrix_poisson_vec, :y_matrix_poisson_vec_counterfactual, i
-        )
-
         if !isnothing(columntitles)
             Label(
             gl[0, i], columntitles[i]; 
             fontsize=columntitlefontsize, halign=:left, tellwidth=false
         )
         end
-        
-        band!(axs1[i], xs, ws[:, 1], ws[:, 2]; color=fittedcolour)
-        scatter!(
-            axs1[i], [ RenewalDiffInDiff._skip(x) ? missing : x for x ∈ w[:, i] ];
-            color=datacolour, markersize
-        )
-
-        inds = findall(x -> x <= rhoclip, rhoqs[:, 2])
-        band!(axs2[i], xs[inds], rhoqs[:, 1][inds], rhoqs[:, 2][inds]; color=fittedcolour)
-
-        band!(
-            axs3[i], xs, 100_000 .* yqs[:, 1] ./ Ns[i], 100_000 .* yqs[:, 2] ./ Ns[i]; 
-            color=fittedcolour
-        )
-        scatter!(
-            axs3[i], 100_000 .* cases[:, i] ./ Ns[i]; 
-            color=datacolour, markersize
-        )
-
-        band!(
-            axs4[i], xs, 100_000 .* yqs_cf[:, 1] ./ Ns[i], 100_000 .* yqs_cf[:, 2] ./ Ns[i]; 
-            color=fittedcolour
-        )
-        
-        isnothing(betafunctions) && continue
-        scatter!(
-            axs2[i], [ betafunctions[i](t) * infectiousduration for t ∈ 1:duration ]; 
-            color=simcolour, markersize
-        )
-    
-        isnothing(cases_counterfactual) && continue
-        scatter!(
-            axs4[i], 100_000 .* (cases[:, i] .- cases_counterfactual[:, i]) ./ Ns[i]; 
-            color=simcolour, markersize
-        )
-    end
-    linkyaxes!(axs1...)
-    linkyaxes!(axs2...)
-    linkyaxes!(axs3...)
-    linkyaxes!(axs4...)
-
-    for col ∈ 1:nlocations
-        if col == 1 
-            formataxis!(axs1[col]; hidex=true,)
-            formataxis!(axs2[col]; hidex=true,)
-            formataxis!(axs3[col]; hidex=true,)
-            formataxis!(axs4[col])
-        else
-            formataxis!(axs1[col]; hidex=true, hidey=true,)
-            formataxis!(axs2[col]; hidex=true, hidey=true,)
-            formataxis!(axs3[col]; hidex=true, hidey=true,)
-            formataxis!(axs4[col]; hidey=true,)
-        end
     end
 
-    Label(gl[1, 0], L"$w_{jt}$"; fontsize=11.84, rotation=π/2, tellheight=false)
-    Label(
-        gl[2, 0], L"\mathcal{R}_0"; 
-        fontsize=11.84, rotation=π/2, tellheight=false
+    plotrenewalequationsamples_w!(
+        gl, cases, w, fittedvaluesset, fittedws, 1;
+        datacolour, fittedcolour, markersize, hidex=true, xticklabelrotation, xticks, xtitle
     )
-    Label(gl[3, 0], "Diagnoses"; fontsize=11.84, rotation=π/2, tellheight=false)
-    Label(
-        gl[4, 0], "Difference"; 
-        fontsize=11.84, rotation=π/2, tellheight=false
+    plotrenewalequationsamples_r0!(
+        gl, cases, fittedvaluesset, 2;
+        betafunctions, simcolour, fittedcolour, infectiousduration, markersize, rhoclip,
+        plotcounterfactuals=plotrhocounterfactuals, counterfactualcolour, 
+        hidex=true, xticklabelrotation, xticks, xtitle
     )
-    Label(gl[5, 1:nlocations], xtitle; fontsize=11.84, tellwidth=false)
+    plotrenewalequationsamples_cases!(
+        gl, cases, Ns, fittedvaluesset, 3;
+        datacolour, fittedcolour, markersize, hidex=true, xticklabelrotation, xticks, xtitle
+    )
+    plotrenewalequationsamples_causaleffect!(
+        gl, cases, cases_counterfactual, Ns, fittedvaluesset, 4;
+        simcolour, fittedcolour, markersize, rhoclip, 
+        hidex=false, xticklabelrotation, xticks, xtitle
+    )
 
     colgap!(gl, 1, 5)
     if isnothing(columntitles)
         rowgap!(gl, 4, 5)
     else
         for r ∈ [ 1, 5 ] rowgap!(gl, r, 5) end 
+    end
+end
+
+function plotrenewalequationsamples_w!(
+    gl::GridLayout, 
+    cases::Matrix, w, fittedvaluesset, fittedws, row;
+    datacolour=:black, fittedcolour=( COLOURVECTOR[1], 0.75 ), 
+    markersize=3,
+    hidex=true,
+    xticklabelrotation=0.0, xticks=Makie.automatic, xtitle="Time", ytitle=L"$w_{jt}$",
+)
+    nlocations = size(cases, 2)
+    xs = eachindex(fittedvaluesset.rho_matrix_vec[1][:, 1])
+
+    axs = [ Axis(gl[row, i]; xticklabelrotation, xticks) for i ∈ 1:nlocations ]
+
+    for i ∈ 1:nlocations
+        ws = _modelquantiles(fittedws, i)     
+        band!(axs[i], xs, ws[:, 1], ws[:, 2]; color=fittedcolour)
+        scatter!(
+            axs[i], [ RenewalDiffInDiff._skip(x) ? missing : x for x ∈ w[:, i] ];
+            color=datacolour, markersize
+        )
+    end
+    linkyaxes!(axs...)
+
+    for col ∈ 1:nlocations
+        if col == 1 
+            formataxis!(axs[col]; hidex)
+        else
+            formataxis!(axs[col]; hidex, hidey=true,)
+        end
+    end
+
+    Label(gl[row, 0], ytitle; fontsize=11.84, rotation=π/2, tellheight=false)
+    if !hidex && !isnothing(xtitle)
+        Label(gl[(row + 1), 1:nlocations], xtitle; fontsize=11.84, tellwidth=false)
+    end
+end
+
+function plotrenewalequationsamples_r0!(
+    gl::GridLayout, 
+    cases::Matrix, fittedvaluesset, row;
+    betafunctions=nothing, 
+    simcolour=COLOURVECTOR[2], fittedcolour=( COLOURVECTOR[1], 0.75 ), 
+    infectiousduration=1, markersize=3, rhoclip=Inf,
+    hidex=true,
+    plotcounterfactuals=false, counterfactualcolour=( COLOURVECTOR[2], 0.75 ), 
+    xticklabelrotation=0.0, xticks=Makie.automatic, xtitle="Time", ytitle=L"\mathcal{R}_0",
+)
+    nlocations = size(cases, 2)
+    xs = eachindex(fittedvaluesset.rho_matrix_vec[1][:, 1])
+
+    axs = [ Axis(gl[row, i]; xticklabelrotation, xticks) for i ∈ 1:nlocations ]
+
+    for i ∈ 1:nlocations
+        rhoqs = _modelquantiles(fittedvaluesset, :rho_matrix_vec, i)
+        inds = findall(x -> x <= rhoclip, rhoqs[:, 2])
+        band!(axs[i], xs[inds], rhoqs[:, 1][inds], rhoqs[:, 2][inds]; color=fittedcolour)
+        if plotcounterfactuals 
+            crhoqs = _modelquantiles(fittedvaluesset, :rho_matrix_vec_counterfactual, i)
+            cinds = findall(x -> x <= rhoclip, crhoqs[:, 2])
+            band!(
+                axs[i], xs[cinds], crhoqs[:, 1][cinds], crhoqs[:, 2][cinds]; 
+                color=counterfactualcolour
+            )    
+        end
+
+        isnothing(betafunctions) && continue
+        scatter!(
+            axs2[i], [ betafunctions[i](t) * infectiousduration for t ∈ 1:duration ]; 
+            color=simcolour, markersize
+        )
+    end
+    linkyaxes!(axs...)
+
+    for col ∈ 1:nlocations
+        if col == 1 
+            formataxis!(axs[col]; hidex,)
+        else
+            formataxis!(axs[col]; hidex, hidey=true,)
+        end
+    end
+
+    Label(
+        gl[row, 0], ytitle; 
+        fontsize=11.84, rotation=π/2, tellheight=false
+    )
+    if !hidex && !isnothing(xtitle)
+        Label(gl[(row + 1), 1:nlocations], xtitle; fontsize=11.84, tellwidth=false)
+    end
+end
+
+function plotrenewalequationsamples_cases!(
+    gl::GridLayout, 
+    cases::Matrix, Ns::Vector, fittedvaluesset, row;
+    datacolour=:black, fittedcolour=( COLOURVECTOR[1], 0.75 ), 
+    markersize=3, 
+    hidex=true, 
+    xticklabelrotation=0.0, xticks=Makie.automatic, xtitle="Time", ytitle="Diagnoses",
+)
+    duration = size(cases, 1)
+    nlocations = size(cases, 2)
+    xs = eachindex(fittedvaluesset.rho_matrix_vec[1][:, 1])
+
+    axs = [ Axis(gl[row, i]; xticklabelrotation, xticks) for i ∈ 1:nlocations ]
+
+    for i ∈ 1:nlocations
+        yqs = _modelquantiles(fittedvaluesset, :y_matrix_poisson_vec, i)
+
+        band!(
+            axs[i], xs, 100_000 .* yqs[:, 1] ./ Ns[i], 100_000 .* yqs[:, 2] ./ Ns[i]; 
+            color=fittedcolour
+        )
+        scatter!(
+            axs[i], 100_000 .* cases[:, i] ./ Ns[i]; 
+            color=datacolour, markersize
+        )
+    end
+    linkyaxes!(axs...)
+
+    for col ∈ 1:nlocations
+        if col == 1 
+            formataxis!(axs[col]; hidex,)
+        else
+            formataxis!(axs[col]; hidex, hidey=true,)
+        end
+    end
+
+    Label(gl[row, 0], ytitle; fontsize=11.84, rotation=π/2, tellheight=false)
+    if !hidex && !isnothing(xtitle)
+        Label(gl[(row + 1), 1:nlocations], xtitle; fontsize=11.84, tellwidth=false)
+    end
+end
+
+function plotrenewalequationsamples_causaleffect!(
+    gl::GridLayout, 
+    cases::Matrix, cases_counterfactual, Ns::Vector, fittedvaluesset, row;
+    simcolour=COLOURVECTOR[2], fittedcolour=( COLOURVECTOR[1], 0.75 ), 
+    markersize=3, rhoclip=Inf,
+    hidex=false,
+    xticklabelrotation=0.0, xticks=Makie.automatic, xtitle="Time", ytitle="Difference",
+)
+    duration = size(cases, 1)
+    nlocations = size(cases, 2)
+    xs = eachindex(fittedvaluesset.rho_matrix_vec[1][:, 1])
+
+    axs = [ Axis(gl[row, i]; xticklabelrotation, xticks) for i ∈ 1:nlocations ]
+
+    for i ∈ 1:nlocations
+        yqs = _modelquantiles(fittedvaluesset, :y_matrix_poisson_vec, i)
+        yqs_cf = _modelquantiles(
+            fittedvaluesset, :y_matrix_poisson_vec, :y_matrix_poisson_vec_counterfactual, i
+        )
+
+        band!(
+            axs[i], xs, 100_000 .* yqs_cf[:, 1] ./ Ns[i], 100_000 .* yqs_cf[:, 2] ./ Ns[i]; 
+            color=fittedcolour
+        )
+    
+        isnothing(cases_counterfactual) && continue
+        scatter!(
+            axs[i], 100_000 .* (cases[:, i] .- cases_counterfactual[:, i]) ./ Ns[i]; 
+            color=simcolour, markersize
+        )
+    end
+    linkyaxes!(axs...)
+
+    for col ∈ 1:nlocations
+        if col == 1 
+            formataxis!(axs[col]; hidex,)
+        else
+            formataxis!(axs[col]; hidex, hidey=true,)
+        end
+    end
+
+    Label(
+        gl[row, 0], ytitle; 
+        fontsize=11.84, rotation=π/2, tellheight=false
+    )
+    if !hidex && !isnothing(xtitle)
+        Label(gl[(row + 1), 1:nlocations], xtitle; fontsize=11.84, tellwidth=false)
     end
 end
 

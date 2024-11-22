@@ -539,6 +539,33 @@ end
 
 safesave(plotsdir("datafit1plot.pdf"), datafit1plot)
 
+datafir1r0plot = with_theme(theme_latexfonts()) do 
+    fig = Figure(; size=( 587, 411 ))
+    ga = GridLayout(fig[1, 1])
+    plotrenewalequationsamples!(
+        ga, allcovidcases, W_allcoviddata, selectpops, datafit1;
+        columntitles=[ 
+            "Halton", 
+            "Knowsley", 
+            "Liverpool", 
+            "Sefton", 
+            "St Helens", 
+            "Warrington", 
+            "W. Lancs", 
+            "Wigan", 
+            "Wirral" 
+        ],
+        columntitlefontsize=10,
+        markersize=2,
+        xticklabelrotation=-π/4,
+        xticks=( [ 1, 93, 215 ], [ "June", "Sept.", "Jan." ] ),
+        xtitle="Date, 2020–2021",
+        plotrhocounterfactuals=true,
+    )
+    
+    fig
+end
+
 datafit1kv = keyvalues(datachain1, datafit1)
 println(datafit1kv)
 
