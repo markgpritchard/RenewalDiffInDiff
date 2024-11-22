@@ -94,6 +94,164 @@ sim1fit1discrete = samplerenewalequation_2sets(
 sim1fit1kvdiscrete = keyvalues(sim1chain1discrete, sim1fit1discrete)
 println(sim1fit1kvdiscrete)
 
+subsetsim1plot = with_theme(theme_latexfonts()) do 
+    fig = Figure(; size=( 587, 411 ))
+    ga = GridLayout(fig[1, 1])
+    gb = GridLayout(fig[1, 2])
+    
+    let
+        axs1 = plotrenewalequationsamples_w!(
+            ga, 
+            simulation1dataset["cases_counterfactual"], 
+            W_sim1_0, sim1fit0discrete, 
+            fitws(
+                simulation1dataset["cases_counterfactual"], 
+                simulation1dataset["Ns"], 
+                sim1fit0discrete
+            ), 
+            1;
+            markersize=2,
+            hidex=true,
+            ytitle=L"~ \\ ~ \\ $w_{jt}$",
+        )
+        axs2 = plotrenewalequationsamples_r0!(
+            ga, simulation1dataset["cases_counterfactual"], sim1fit0discrete, 2;
+            betafunctions=[ beta1a, beta1bcounterfactual ], infectiousduration=2.5,
+            plotcounterfactuals=true, 
+            ytitle=L"~ \\ ~ \\ $\mathcal{R}_0$",
+        )
+        axs3 = plotrenewalequationsamples_cases!(
+            ga, 
+            simulation1dataset["cases_counterfactual"], 
+            simulation1dataset["Ns"], 
+            sim1fit0discrete, 
+            3;
+            markersize=2, fittedparameter=:y_matrix_det_vec_counterfactual,
+            fittedcolour=( COLOURVECTOR[2], 0.75 ), 
+            ytitle=L"~ \\ ~ \\ Without \\ intervetion$$",
+        )
+        axs4 = plotrenewalequationsamples_cases!(
+            ga, 
+            simulation1dataset["cases_counterfactual"], 
+            simulation1dataset["Ns"],
+            sim1fit0discrete,
+            4;
+            markersize=2, fittedparameter=:y_matrix_det_vec,
+            ytitle=L"~ \\ ~ \\ With \\ intervetion$$",
+        )
+        axs5 = plotrenewalequationsamples_causaleffect!(
+            ga, simulation1dataset["cases_counterfactual"], simulation1dataset["cases_counterfactual"], simulation1dataset["Ns"], sim1fit0discrete, 5;
+            cumulativedifference=true,
+            fittedparameter=:y_matrix_det_vec,
+            counterfactualfittedparameter=:y_matrix_det_vec_counterfactual,
+            ytickformat=(vs -> [ "$(round(Int, v))" for v ∈ vs ]),
+            xtitle="Time, days",
+            ytitle=L"~ \\ ~ \\ Cumulative \\ difference$$",
+        )
+    
+        linkaxes!(axs3..., axs4...)
+    
+        for (i, ℓ) ∈ enumerate([ "Group 1", "Group 2" ])
+            Label(
+                ga[0, i], ℓ; 
+                fontsize=10, halign=:left, tellwidth=false
+            )
+        end
+    
+        braceaxis = Axis(ga[3:5, 0])
+        bracket!(braceaxis, 0, 0, 0, 10; color=:black)
+        formataxis!(braceaxis; hidex=true, hidexticks=true, hidey=true, hideyticks=true)
+        hidespines!(braceaxis, :l, :r, :t, :b)
+        Label(
+            ga[3:5, -1], L"Diagnoses, per $100\,000$"; 
+            fontsize=11.84, rotation=π/2, tellheight=false
+        )
+        colgap!(ga, 1, -5)  
+        colgap!(ga, 2, 5)  
+        for r ∈ [ 1, 6 ] rowgap!(ga, r, 5) end
+    end
+    
+    let
+        axs1 = plotrenewalequationsamples_w!(
+            gb, 
+            simulation1dataset["cases_counterfactual"], 
+            W_sim1_0, sim1fit0discrete, 
+            fitws(
+                simulation1dataset["cases_counterfactual"], 
+                simulation1dataset["Ns"], 
+                sim1fit0discrete
+            ), 
+            1;
+            markersize=2,
+            hidex=true,
+            ytitle=L"~ \\ ~ \\ $w_{jt}$",
+        )
+        axs2 = plotrenewalequationsamples_r0!(
+            gb, simulation1dataset["cases_counterfactual"], sim1fit0discrete, 2;
+            betafunctions=[ beta1a, beta1bcounterfactual ], infectiousduration=2.5,
+            plotcounterfactuals=true, 
+            ytitle=L"~ \\ ~ \\ $\mathcal{R}_0$",
+        )
+        axs3 = plotrenewalequationsamples_cases!(
+            gb, 
+            simulation1dataset["cases_counterfactual"], 
+            simulation1dataset["Ns"], 
+            sim1fit0discrete, 
+            3;
+            markersize=2, fittedparameter=:y_matrix_det_vec_counterfactual,
+            fittedcolour=( COLOURVECTOR[2], 0.75 ), 
+            ytitle=L"~ \\ ~ \\ Without \\ intervetion$$",
+        )
+        axs4 = plotrenewalequationsamples_cases!(
+            gb, 
+            simulation1dataset["cases_counterfactual"], 
+            simulation1dataset["Ns"],
+            sim1fit0discrete,
+            4;
+            markersize=2, fittedparameter=:y_matrix_det_vec,
+            ytitle=L"~ \\ ~ \\ With \\ intervetion$$",
+        )
+        axs5 = plotrenewalequationsamples_causaleffect!(
+            gb, simulation1dataset["cases_counterfactual"], simulation1dataset["cases_counterfactual"], simulation1dataset["Ns"], sim1fit0discrete, 5;
+            cumulativedifference=true,
+            fittedparameter=:y_matrix_det_vec,
+            counterfactualfittedparameter=:y_matrix_det_vec_counterfactual,
+            ytickformat=(vs -> [ "$(round(Int, v))" for v ∈ vs ]),
+            xtitle="Time, days",
+            ytitle=L"~ \\ ~ \\ Cumulative \\ difference$$",
+        )
+    
+        linkaxes!(axs3..., axs4...)
+    
+        for (i, ℓ) ∈ enumerate([ "Group 1", "Group 2" ])
+            Label(
+                gb[0, i], ℓ; 
+                fontsize=10, halign=:left, tellwidth=false
+            )
+        end
+    
+        braceaxis = Axis(gb[3:5, 0])
+        bracket!(braceaxis, 0, 0, 0, 10; color=:black)
+        formataxis!(braceaxis; hidex=true, hidexticks=true, hidey=true, hideyticks=true)
+        hidespines!(braceaxis, :l, :r, :t, :b)
+        Label(
+            gb[3:5, -1], L"Diagnoses, per $100\,000$"; 
+            fontsize=11.84, rotation=π/2, tellheight=false
+        )
+        colgap!(gb, 1, -5)  
+        colgap!(gb, 2, 5)  
+        for r ∈ [ 1, 6 ] rowgap!(gb, r, 5) end
+    end
+
+    fig
+end
+
+safesave(plotsdir("subsetsim1plot.pdf"), subsetsim1plot)
+
+
+
+
+
 sim1chain0 = loadanalysisdictsasdf("sim1model0", 8, maxrounds, 100)
 chainsplot1_0 = plotchains(
     sim1chain0; 

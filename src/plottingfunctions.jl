@@ -256,9 +256,9 @@ function plotrenewalequationsamples_r0!(
     gl::GridLayout, 
     cases::Matrix, fittedvaluesset, row;
     betafunctions=nothing, 
-    simcolour=COLOURVECTOR[2], 
+    simcolour=COLOURVECTOR[3], 
     fittedcolour=COLOURVECTOR[1], fittedbandcolour=( fittedcolour, 0.5 ),
-    infectiousduration=1, markersize=3, rhoclip=Inf,
+    infectiousduration=nothing, markersize=3, rhoclip=Inf,
     hidex=true,
     locationinds=RenewalDiffInDiff.automatic,
     plotcounterfactuals=false, 
@@ -273,6 +273,8 @@ function plotrenewalequationsamples_r0!(
         nlocations = length(locationinds)
         _locinds = locationinds
     end
+
+    duration = size(cases, 1)
     xs = eachindex(fittedvaluesset.rho_matrix_vec[1][:, 1])
 
     axs = [ Axis(gl[row, i]; xticklabelrotation, xticks) for i ∈ 1:nlocations ]
@@ -297,7 +299,7 @@ function plotrenewalequationsamples_r0!(
 
         isnothing(betafunctions) && continue
         scatter!(
-            axs2[i], [ betafunctions[ℓ](t) * infectiousduration for t ∈ 1:duration ]; 
+            axs[i], [ betafunctions[ℓ](t) * infectiousduration for t ∈ 1:duration ]; 
             color=simcolour, markersize
         )
     end
@@ -385,12 +387,13 @@ function plotrenewalequationsamples_causaleffect!(
     fittedparameter=:y_matrix_poisson_vec,
     counterfactualfittedparameter=:y_matrix_poisson_vec_counterfactual,
     cumulativedifference=false,
-    simcolour=COLOURVECTOR[2], 
+    simcolour=COLOURVECTOR[3], 
     fittedcolour=COLOURVECTOR[1], fittedbandcolour=( fittedcolour, 0.5 ),
     markersize=3, rhoclip=Inf,
     locationinds=RenewalDiffInDiff.automatic,
     hidex=false,
     xticklabelrotation=0.0, xticks=Makie.automatic, xtitle="Time", ytitle="Difference",
+    ytickformat=Makie.automatic,
 )
     if locationinds isa RenewalDiffInDiff.Automatic
         nlocations = size(cases, 2)
@@ -403,7 +406,7 @@ function plotrenewalequationsamples_causaleffect!(
     duration = size(cases, 1)
     xs = eachindex(fittedvaluesset.rho_matrix_vec[1][:, 1])
 
-    axs = [ Axis(gl[row, i]; xticklabelrotation, xticks) for i ∈ 1:nlocations ]
+    axs = [ Axis(gl[row, i]; xticklabelrotation, xticks, ytickformat) for i ∈ 1:nlocations ]
 
     for (i, ℓ) ∈ enumerate(_locinds)
         yqs_cf = _modelquantiles(
