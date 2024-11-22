@@ -799,23 +799,220 @@ sim3chain0 = loadanalysisdictsasdf("sim3model0", 8, maxrounds, 300)
 plotchains(sim3chain0)
 sim3fit0 = samplerenewalequation_2sets(
     fseir, sim3chain0, simulation3dataset["interventions"]; 
-    initialvalues=simulation3dataset["cases"][1:20, :], 
+    initialvalues=simulation3dataset["cases_counterfactual"][1:20, :], 
     Ns=simulation3dataset["Ns"], 
     timeknots=[ [ 1 ]; collect(11:89/4:100) ],
 )
-sim3fit0plot = plotrenewalequationsamples(
-    simulation3dataset["cases_counterfactual"],
-    simulation3dataset["cases_counterfactual"], 
-    W_sim3_0, 
-    simulation3dataset["Ns"], 
-    sim3fit0,
-    fitws(simulation3dataset["cases_counterfactual"], simulation3dataset["Ns"], sim3fit0); 
-    betafunctions=[ beta3a, beta3bcounterfactual ], 
-    betafunctions_counterfactual=[ beta3a, beta3bcounterfactual ],
-    infectiousduration=2.5,
-    plotsize=( 400, 400 ),
-    rhoclip=2.5,
+
+sim3chain0leadlag = loadanalysisdictsasdf("sim3model0leadlag", 8, maxrounds, 305)
+plotchains(sim3chain0leadlag)
+sim3fit0leadlag = samplerenewalequation_2sets(
+    fseir, sim3chain0leadlag, simulation3dataset["interventions"]; 
+    initialvalues=simulation3dataset["cases_counterfactual"][1:20, :], 
+    Ns=simulation3dataset["Ns"], 
+    timeknots=[ [ 1 ]; collect(11:89/4:100) ],
+    secondaryinterventions=[
+        InterventionsMatrix([ nothing, 36 ], 100),
+        InterventionsMatrix([ nothing, 64 ], 100)
+    ],
 )
+
+subsetsim3plot0 = with_theme(theme_latexfonts()) do 
+    fig = Figure(; size=( 587, 250 ))
+    ga = GridLayout(fig[1, 1])
+    gb = GridLayout(fig[1, 2])
+    
+    let
+        axs1 = plotrenewalequationsamples_r0!(
+            ga, simulation3dataset["cases_counterfactual"], sim3fit0, 1;
+            betafunctions=[ beta3a, beta3bcounterfactual ], infectiousduration=2.5,
+            plotcounterfactuals=true, 
+            ytitle=L"$\mathcal{R}_0$",
+            rhoclip=3,
+        )
+        axs2 = plotrenewalequationsamples_causaleffect!(
+            ga, 
+            simulation3dataset["cases_counterfactual"], 
+            simulation3dataset["cases_counterfactual"], 
+            simulation3dataset["Ns"], 
+            sim3fit0, 
+            2;
+            cumulativedifference=true,
+            fittedparameter=:y_matrix_det_vec,
+            counterfactualfittedparameter=:y_matrix_det_vec_counterfactual,
+            ytickformat=(vs -> [ "$(round(Int, v))" for v ∈ vs ]),
+            xtitle="Time, days",
+            ytitle=L"Cumulative \\ incidence$$",
+        )
+        
+        for (i, ℓ) ∈ enumerate([ "Group 1", "Group 2" ])
+            Label(
+                ga[0, i], ℓ; 
+                fontsize=10, halign=:left, tellwidth=false
+            )
+        end
+     
+        colgap!(ga, 1, 5)  
+        for r ∈ [ 1, 3 ] rowgap!(ga, r, 5) end
+    end
+    
+    let
+        axs1 = plotrenewalequationsamples_r0!(
+            gb, simulation3dataset["cases_counterfactual"], sim3fit0leadlag, 1;
+            betafunctions=[ beta3a, beta3bcounterfactual ], infectiousduration=2.5,
+            plotcounterfactuals=true, 
+            ytitle=L"$\mathcal{R}_0$",
+            rhoclip=3,
+        )
+        axs5 = plotrenewalequationsamples_causaleffect!(
+            gb, 
+            simulation3dataset["cases_counterfactual"], 
+            simulation3dataset["cases_counterfactual"], 
+            simulation3dataset["Ns"], 
+            sim3fit0leadlag,
+            2;
+            cumulativedifference=true,
+            fittedparameter=:y_matrix_det_vec,
+            counterfactualfittedparameter=:y_matrix_det_vec_counterfactual,
+            ytickformat=(vs -> [ "$(round(Int, v))" for v ∈ vs ]),
+            xtitle="Time, days",
+            ytitle=L"Cumulative \\ incidence$$",
+        )
+        
+        for (i, ℓ) ∈ enumerate([ "Group 1", "Group 2" ])
+            Label(
+                gb[0, i], ℓ; 
+                fontsize=10, halign=:left, tellwidth=false
+            )
+        end
+    
+        colgap!(gb, 1, 5)  
+        for r ∈ [ 1, 3 ] rowgap!(gb, r, 5) end
+    end
+
+    labelplots!([ "A", "B" ], [ ga, gb ])
+
+    fig
+end
+
+safesave(plotsdir("subsetsim3plot0.pdf"), subsetsim3plot0)
+
+subsetsim3plot0suppl = with_theme(theme_latexfonts()) do 
+    fig = Figure(; size=( 587, 350 ))
+    ga = GridLayout(fig[1, 1])
+    gb = GridLayout(fig[1, 2])
+    
+    let
+        axs1 = plotrenewalequationsamples_w!(
+            ga, 
+            simulation3dataset["cases_counterfactual"], 
+            W_sim3_0, sim1fit0, 
+            fitws(
+                simulation3dataset["cases_counterfactual"], 
+                simulation3dataset["Ns"], 
+                sim3fit0
+            ), 
+            1;
+            markersize=2,
+            hidex=true,
+            ytitle=L"$w_{jt}$",
+        )
+        axs2 = plotrenewalequationsamples_cases!(
+            ga, 
+            simulation3dataset["cases_counterfactual"], 
+            simulation3dataset["Ns"], 
+            sim3fit0, 
+            2;
+            markersize=2, fittedparameter=:y_matrix_det_vec_counterfactual,
+            fittedcolour=( COLOURVECTOR[2], 0.75 ), 
+            ytitle=L"Without \\ intervetion$$",
+        )
+        axs3 = plotrenewalequationsamples_cases!(
+            ga, 
+            simulation3dataset["cases_counterfactual"], 
+            simulation3dataset["Ns"],
+            sim3fit0,
+            3;
+            hidex=false,
+            markersize=2, fittedparameter=:y_matrix_det_vec,
+            xtitle="Time, days",
+            ytitle=L"With \\ intervetion$$",
+        )
+
+    
+        linkaxes!(axs2..., axs3...)
+    
+        for (i, ℓ) ∈ enumerate([ "Group 1", "Group 2" ])
+            Label(
+                ga[0, i], ℓ; 
+                fontsize=10, halign=:left, tellwidth=false
+            )
+        end
+     
+        colgap!(ga, 1, 5)  
+        for r ∈ [ 1, 4 ] rowgap!(ga, r, 5) end
+    end
+    
+    let
+        axs1 = plotrenewalequationsamples_w!(
+            gb, 
+            simulation3dataset["cases_counterfactual"], 
+            W_sim1, 
+            sim1fit1discrete, 
+            fitws(
+                simulation3dataset["cases_counterfactual"], 
+                simulation3dataset["Ns"], 
+                sim3fit0leadlag
+            ), 
+            1;
+            markersize=2,
+            hidex=true,
+            ytitle=L"$w_{jt}$",
+        )
+        axs2 = plotrenewalequationsamples_cases!(
+            gb, 
+            simulation3dataset["cases_counterfactual"], 
+            simulation3dataset["Ns"], 
+            sim3fit0leadlag, 
+            2;
+            markersize=2, fittedparameter=:y_matrix_det_vec_counterfactual,
+            fittedcolour=( COLOURVECTOR[2], 0.75 ), 
+            ytitle=L"Without \\ intervetion$$",
+        )
+        axs3 = plotrenewalequationsamples_cases!(
+            gb, 
+            simulation3dataset["cases_counterfactual"], 
+            simulation3dataset["Ns"],
+            sim3fit0leadlag,
+            3;
+            hidex=false,
+            markersize=2, fittedparameter=:y_matrix_det_vec,
+            xtitle="Time, days",
+            ytitle=L"With \\ intervetion$$",
+        )
+
+        linkaxes!(axs2..., axs3...)
+    
+        for (i, ℓ) ∈ enumerate([ "Group 1", "Group 2" ])
+            Label(
+                gb[0, i], ℓ; 
+                fontsize=10, halign=:left, tellwidth=false
+            )
+        end
+    
+        colgap!(gb, 1, 5)  
+        for r ∈ [ 1, 4 ] rowgap!(gb, r, 5) end    end
+
+    labelplots!([ "A", "B" ], [ ga, gb ])
+
+    fig
+end
+
+safesave(plotsdir("subsetsim3plot0suppl.pdf"), subsetsim3plot0suppl)
+
+
+
+
 
 sim3chain1 = loadanalysisdictsasdf("sim3model1", 8, maxrounds, 310)
 plotchains(sim3chain1)
