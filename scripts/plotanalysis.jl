@@ -539,32 +539,76 @@ end
 
 safesave(plotsdir("datafit1plot.pdf"), datafit1plot)
 
-datafir1r0plot = with_theme(theme_latexfonts()) do 
+subsetdatafit1plot = with_theme(theme_latexfonts()) do 
     fig = Figure(; size=( 587, 411 ))
     ga = GridLayout(fig[1, 1])
-    plotrenewalequationsamples!(
-        ga, allcovidcases, W_allcoviddata, selectpops, datafit1;
-        columntitles=[ 
-            "Halton", 
-            "Knowsley", 
-            "Liverpool", 
-            "Sefton", 
-            "St Helens", 
-            "Warrington", 
-            "W. Lancs", 
-            "Wigan", 
-            "Wirral" 
-        ],
-        columntitlefontsize=10,
-        markersize=2,
+    axs1 = plotrenewalequationsamples_r0!(
+        ga, allcovidcases, datafit1, 1;
+        locationinds=[ 1:5; [ 9 ] ],
+        plotcounterfactuals=true, 
+        xticks=xticks=( [ 1, 93, 215 ], [ "June", "Sept.", "Jan." ] ), 
+        ytitle=L"~ \\ ~ \\ $\mathcal{R}_0$",
+    )
+    axs2 = plotrenewalequationsamples_cases!(
+        ga, allcovidcases, selectpops, datafit1, 2;
+        locationinds=[ 1:5; [ 9 ] ],
+        markersize=2, fittedparameter=:y_matrix_det_vec_counterfactual,
+        fittedcolour=( COLOURVECTOR[2], 0.75 ), 
+        xticks=xticks=( [ 1, 93, 215 ], [ "June", "Sept.", "Jan." ] ), 
+        ytitle=L"~ \\ ~ \\ Without \\ intervetion$$",
+    )
+    axs3 = plotrenewalequationsamples_cases!(
+        ga, allcovidcases, selectpops, datafit1, 3;
+        locationinds=[ 1:5; [ 9 ] ],
+        markersize=2, fittedparameter=:y_matrix_det_vec,
+        xticks=xticks=( [ 1, 93, 215 ], [ "June", "Sept.", "Jan." ] ), 
+        ytitle=L"~ \\ ~ \\ With \\ intervetion$$",
+    )
+    axs4 = plotrenewalequationsamples_causaleffect!(
+        ga, allcovidcases, nothing, selectpops, datafit1, 4;
+        cumulativedifference=true,
+        fittedparameter=:y_matrix_det_vec,
+        counterfactualfittedparameter=:y_matrix_det_vec_counterfactual,
+        locationinds=[ 1:5; [ 9 ] ],
         xticklabelrotation=-π/4,
         xticks=( [ 1, 93, 215 ], [ "June", "Sept.", "Jan." ] ),
         xtitle="Date, 2020–2021",
-        plotrhocounterfactuals=true,
+        ytitle=L"~ \\ ~ \\ Cumulative \\ difference$$",
     )
-    
+
+    linkaxes!(axs2..., axs3...)
+
+    for (i, ℓ) ∈ enumerate([ 
+        "Halton", 
+        "Knowsley", 
+        "Liverpool", 
+        "Sefton", 
+        "St Helens",  
+        "Wirral" 
+    ])
+        Label(
+        ga[0, i], ℓ; 
+        fontsize=10, halign=:left, tellwidth=false
+    )
+    end
+
+    braceaxis = Axis(ga[2:4, 0])
+    bracket!(braceaxis, 0, 0, 0, 10; color=:black)
+    formataxis!(braceaxis; hidex=true, hidexticks=true, hidey=true, hideyticks=true)
+    hidespines!(braceaxis, :l, :r, :t, :b)
+    Label(
+        ga[2:4, -1], L"Recorded infections per $100\,000$"; 
+        fontsize=11.84, rotation=π/2, tellheight=false
+    )
+    colgap!(ga, 1, -5)  
+    colgap!(ga, 2, 5)  
+    for r ∈ [ 1, 5 ] rowgap!(ga, r, 5) end
+
     fig
 end
+
+safesave(plotsdir("subsetdatafit1plot.pdf"), subsetdatafit1plot)
+
 
 datafit1kv = keyvalues(datachain1, datafit1)
 println(datafit1kv)
@@ -611,6 +655,76 @@ safesave(plotsdir("datafit2plot.pdf"), datafit2plot)
 
 datafit2kv = keyvalues(datachain2, datafit2)
 println(datafit2kv)
+
+subsetdatafit2plot = with_theme(theme_latexfonts()) do 
+    fig = Figure(; size=( 587, 411 ))
+    ga = GridLayout(fig[1, 1])
+    axs1 = plotrenewalequationsamples_r0!(
+        ga, pil1covidcases, datafit2, 1;
+        locationinds=[ 1:5; [ 9 ] ],
+        plotcounterfactuals=true, 
+        xticks=xticks=( [ 1, 93, 215 ], [ "June", "Sept.", "Jan." ] ), 
+        ytitle=L"~ \\ ~ \\ $\mathcal{R}_0$",
+    )
+    axs2 = plotrenewalequationsamples_cases!(
+        ga, pil1covidcases, selectpops, datafit2, 2;
+        locationinds=[ 1:5; [ 9 ] ],
+        markersize=2, fittedparameter=:y_matrix_det_vec_counterfactual,
+        fittedcolour=( COLOURVECTOR[2], 0.75 ), 
+        xticks=xticks=( [ 1, 93, 215 ], [ "June", "Sept.", "Jan." ] ), 
+        ytitle=L"~ \\ ~ \\ Without \\ intervetion$$",
+    )
+    axs3 = plotrenewalequationsamples_cases!(
+        ga, pil1covidcases, selectpops, datafit2, 3;
+        locationinds=[ 1:5; [ 9 ] ],
+        markersize=2, fittedparameter=:y_matrix_det_vec,
+        xticks=xticks=( [ 1, 93, 215 ], [ "June", "Sept.", "Jan." ] ), 
+        ytitle=L"~ \\ ~ \\ With \\ intervetion$$",
+    )
+    axs4 = plotrenewalequationsamples_causaleffect!(
+        ga, pil1covidcases, nothing, selectpops, datafit2, 4;
+        cumulativedifference=true,
+        fittedparameter=:y_matrix_det_vec,
+        counterfactualfittedparameter=:y_matrix_det_vec_counterfactual,
+        locationinds=[ 1:5; [ 9 ] ],
+        xticklabelrotation=-π/4,
+        xticks=( [ 1, 93, 215 ], [ "June", "Sept.", "Jan." ] ),
+        xtitle="Date, 2020–2021",
+        ytitle=L"~ \\ ~ \\ Cumulative \\ difference$$",
+    )
+
+    linkaxes!(axs2..., axs3...)
+
+    for (i, ℓ) ∈ enumerate([ 
+        "Halton", 
+        "Knowsley", 
+        "Liverpool", 
+        "Sefton", 
+        "St Helens",  
+        "Wirral" 
+    ])
+        Label(
+        ga[0, i], ℓ; 
+        fontsize=10, halign=:left, tellwidth=false
+    )
+    end
+
+    braceaxis = Axis(ga[2:4, 0])
+    bracket!(braceaxis, 0, 0, 0, 10; color=:black)
+    formataxis!(braceaxis; hidex=true, hidexticks=true, hidey=true, hideyticks=true)
+    hidespines!(braceaxis, :l, :r, :t, :b)
+    Label(
+        ga[2:4, -1], L"Pillar 1 diagnoses per $100\,000$"; 
+        fontsize=11.84, rotation=π/2, tellheight=false
+    )
+    colgap!(ga, 1, -5)  
+    colgap!(ga, 2, 5)  
+    for r ∈ [ 1, 5 ] rowgap!(ga, r, 5) end
+
+    fig
+end
+
+safesave(plotsdir("subsetdatafit2plot.pdf"), subsetdatafit2plot)
 
 
 ## Analysis 3

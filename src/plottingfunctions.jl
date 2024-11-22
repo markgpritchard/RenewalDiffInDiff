@@ -215,7 +215,7 @@ end
 function plotrenewalequationsamples_w!(
     gl::GridLayout, 
     cases::Matrix, w, fittedvaluesset, fittedws, row;
-    datacolour=:black, fittedcolour=( COLOURVECTOR[1], 0.75 ), 
+    datacolour=:black, fittedcolour=COLOURVECTOR[1], fittedbandcolour=( fittedcolour, 0.5 ),
     markersize=3,
     hidex=true,
     xticklabelrotation=0.0, xticks=Makie.automatic, xtitle="Time", ytitle=L"$w_{jt}$",
@@ -227,7 +227,8 @@ function plotrenewalequationsamples_w!(
 
     for i ∈ 1:nlocations
         ws = _modelquantiles(fittedws, i)     
-        band!(axs[i], xs, ws[:, 1], ws[:, 2]; color=fittedcolour)
+        band!(axs[i], xs, ws[:, 1], ws[:, 3]; color=fittedbandcolour)
+        lines!(axs[i], xs, ws[:, 2]; color=fittedcolour)
         scatter!(
             axs[i], [ RenewalDiffInDiff._skip(x) ? missing : x for x ∈ w[:, i] ];
             color=datacolour, markersize
@@ -247,39 +248,56 @@ function plotrenewalequationsamples_w!(
     if !hidex && !isnothing(xtitle)
         Label(gl[(row + 1), 1:nlocations], xtitle; fontsize=11.84, tellwidth=false)
     end
+
+    return axs
 end
 
 function plotrenewalequationsamples_r0!(
     gl::GridLayout, 
     cases::Matrix, fittedvaluesset, row;
     betafunctions=nothing, 
-    simcolour=COLOURVECTOR[2], fittedcolour=( COLOURVECTOR[1], 0.75 ), 
+    simcolour=COLOURVECTOR[2], 
+    fittedcolour=COLOURVECTOR[1], fittedbandcolour=( fittedcolour, 0.5 ),
     infectiousduration=1, markersize=3, rhoclip=Inf,
     hidex=true,
-    plotcounterfactuals=false, counterfactualcolour=( COLOURVECTOR[2], 0.75 ), 
+    locationinds=RenewalDiffInDiff.automatic,
+    plotcounterfactuals=false, 
+    counterfactualcolour=( COLOURVECTOR[2], 0.75 ), 
+    counterfactualbandcolour=( counterfactualcolour, 0.5 ),
     xticklabelrotation=0.0, xticks=Makie.automatic, xtitle="Time", ytitle=L"\mathcal{R}_0",
 )
-    nlocations = size(cases, 2)
+    if locationinds isa RenewalDiffInDiff.Automatic
+        nlocations = size(cases, 2)
+        _locinds = 1:nlocations
+    else
+        nlocations = length(locationinds)
+        _locinds = locationinds
+    end
     xs = eachindex(fittedvaluesset.rho_matrix_vec[1][:, 1])
 
     axs = [ Axis(gl[row, i]; xticklabelrotation, xticks) for i ∈ 1:nlocations ]
 
-    for i ∈ 1:nlocations
-        rhoqs = _modelquantiles(fittedvaluesset, :rho_matrix_vec, i)
-        inds = findall(x -> x <= rhoclip, rhoqs[:, 2])
-        band!(axs[i], xs[inds], rhoqs[:, 1][inds], rhoqs[:, 2][inds]; color=fittedcolour)
+    for (i, ℓ) ∈ enumerate(_locinds)
+        rhoqs = _modelquantiles(fittedvaluesset, :rho_matrix_vec, ℓ)
+        inds = findall(x -> x <= rhoclip, rhoqs[:, 3])
+        band!(axs[i], xs[inds], rhoqs[:, 1][inds], rhoqs[:, 3][inds]; color=fittedbandcolour)
+        lines!(axs[i], xs[inds], rhoqs[:, 2][inds]; color=fittedcolour)
         if plotcounterfactuals 
-            crhoqs = _modelquantiles(fittedvaluesset, :rho_matrix_vec_counterfactual, i)
+            crhoqs = _modelquantiles(fittedvaluesset, :rho_matrix_vec_counterfactual, ℓ)
             cinds = findall(x -> x <= rhoclip, crhoqs[:, 2])
             band!(
-                axs[i], xs[cinds], crhoqs[:, 1][cinds], crhoqs[:, 2][cinds]; 
+                axs[i], xs[cinds], crhoqs[:, 1][cinds], crhoqs[:, 3][cinds]; 
+                color=counterfactualbandcolour
+            )  
+            lines!(
+                axs[i], xs[cinds], crhoqs[:, 2][cinds]; 
                 color=counterfactualcolour
             )    
         end
 
         isnothing(betafunctions) && continue
         scatter!(
-            axs2[i], [ betafunctions[i](t) * infectiousduration for t ∈ 1:duration ]; 
+            axs2[i], [ betafunctions[ℓ](t) * infectiousduration for t ∈ 1:duration ]; 
             color=simcolour, markersize
         )
     end
@@ -300,31 +318,46 @@ function plotrenewalequationsamples_r0!(
     if !hidex && !isnothing(xtitle)
         Label(gl[(row + 1), 1:nlocations], xtitle; fontsize=11.84, tellwidth=false)
     end
+
+    return axs
 end
 
 function plotrenewalequationsamples_cases!(
     gl::GridLayout, 
     cases::Matrix, Ns::Vector, fittedvaluesset, row;
-    datacolour=:black, fittedcolour=( COLOURVECTOR[1], 0.75 ), 
+    fittedparameter=:y_matrix_poisson_vec,
+    datacolour=:black, fittedcolour=COLOURVECTOR[1], fittedbandcolour=( fittedcolour, 0.5 ),
     markersize=3, 
     hidex=true, 
+    locationinds=RenewalDiffInDiff.automatic,
     xticklabelrotation=0.0, xticks=Makie.automatic, xtitle="Time", ytitle="Diagnoses",
 )
+    if locationinds isa RenewalDiffInDiff.Automatic
+        nlocations = size(cases, 2)
+        _locinds = 1:nlocations
+    else
+        nlocations = length(locationinds)
+        _locinds = locationinds
+    end
+
     duration = size(cases, 1)
-    nlocations = size(cases, 2)
     xs = eachindex(fittedvaluesset.rho_matrix_vec[1][:, 1])
 
     axs = [ Axis(gl[row, i]; xticklabelrotation, xticks) for i ∈ 1:nlocations ]
 
-    for i ∈ 1:nlocations
-        yqs = _modelquantiles(fittedvaluesset, :y_matrix_poisson_vec, i)
+    for (i, ℓ) ∈ enumerate(_locinds)
+        yqs = _modelquantiles(fittedvaluesset, fittedparameter, ℓ)
 
         band!(
-            axs[i], xs, 100_000 .* yqs[:, 1] ./ Ns[i], 100_000 .* yqs[:, 2] ./ Ns[i]; 
+            axs[i], xs, 100_000 .* yqs[:, 1] ./ Ns[ℓ], 100_000 .* yqs[:, 3] ./ Ns[ℓ]; 
+            color=fittedbandcolour
+        )
+        lines!(
+            axs[i], xs, 100_000 .* yqs[:, 2] ./ Ns[ℓ]; 
             color=fittedcolour
         )
         scatter!(
-            axs[i], 100_000 .* cases[:, i] ./ Ns[i]; 
+            axs[i], 100_000 .* cases[:, ℓ] ./ Ns[ℓ]; 
             color=datacolour, markersize
         )
     end
@@ -342,38 +375,80 @@ function plotrenewalequationsamples_cases!(
     if !hidex && !isnothing(xtitle)
         Label(gl[(row + 1), 1:nlocations], xtitle; fontsize=11.84, tellwidth=false)
     end
+
+    return axs
 end
 
 function plotrenewalequationsamples_causaleffect!(
     gl::GridLayout, 
     cases::Matrix, cases_counterfactual, Ns::Vector, fittedvaluesset, row;
-    simcolour=COLOURVECTOR[2], fittedcolour=( COLOURVECTOR[1], 0.75 ), 
+    fittedparameter=:y_matrix_poisson_vec,
+    counterfactualfittedparameter=:y_matrix_poisson_vec_counterfactual,
+    cumulativedifference=false,
+    simcolour=COLOURVECTOR[2], 
+    fittedcolour=COLOURVECTOR[1], fittedbandcolour=( fittedcolour, 0.5 ),
     markersize=3, rhoclip=Inf,
+    locationinds=RenewalDiffInDiff.automatic,
     hidex=false,
     xticklabelrotation=0.0, xticks=Makie.automatic, xtitle="Time", ytitle="Difference",
 )
+    if locationinds isa RenewalDiffInDiff.Automatic
+        nlocations = size(cases, 2)
+        _locinds = 1:nlocations
+    else
+        nlocations = length(locationinds)
+        _locinds = locationinds
+    end
+
     duration = size(cases, 1)
-    nlocations = size(cases, 2)
     xs = eachindex(fittedvaluesset.rho_matrix_vec[1][:, 1])
 
     axs = [ Axis(gl[row, i]; xticklabelrotation, xticks) for i ∈ 1:nlocations ]
 
-    for i ∈ 1:nlocations
-        yqs = _modelquantiles(fittedvaluesset, :y_matrix_poisson_vec, i)
+    for (i, ℓ) ∈ enumerate(_locinds)
         yqs_cf = _modelquantiles(
-            fittedvaluesset, :y_matrix_poisson_vec, :y_matrix_poisson_vec_counterfactual, i
+            fittedvaluesset, fittedparameter, counterfactualfittedparameter, ℓ
         )
-
-        band!(
-            axs[i], xs, 100_000 .* yqs_cf[:, 1] ./ Ns[i], 100_000 .* yqs_cf[:, 2] ./ Ns[i]; 
-            color=fittedcolour
-        )
-    
+        if cumulativedifference 
+            band!(
+                axs[i], 
+                xs, 
+                100_000 .* cumsum(yqs_cf[:, 1]) ./ Ns[ℓ], 
+                100_000 .* cumsum(yqs_cf[:, 3]) ./ Ns[ℓ]; 
+                color=fittedbandcolour
+            )
+            lines!(
+                axs[i], xs, 100_000 .* cumsum(yqs_cf[:, 2]) ./ Ns[ℓ]; 
+                color=fittedcolour
+            )
+        else 
+            band!(
+                axs[i], 
+                xs, 
+                100_000 .* yqs_cf[:, 1] ./ Ns[ℓ], 
+                100_000 .* yqs_cf[:, 3] ./ Ns[ℓ]; 
+                color=fittedbandcolour
+            )
+            lines!(
+                axs[i], xs, 100_000 .* yqs_cf[:, 2] ./ Ns[ℓ]; 
+                color=fittedcolour
+            )
+        end
+        
         isnothing(cases_counterfactual) && continue
-        scatter!(
-            axs[i], 100_000 .* (cases[:, i] .- cases_counterfactual[:, i]) ./ Ns[i]; 
-            color=simcolour, markersize
-        )
+        if cumulativedifference 
+            scatter!(
+                axs[i], 
+                100_000 .* cumsum(cases[:, ℓ] .- cases_counterfactual[:, ℓ]) ./ Ns[ℓ]; 
+                color=simcolour, markersize
+            )
+        else 
+            scatter!(
+                axs[i], 
+                100_000 .* (cases[:, ℓ] .- cases_counterfactual[:, ℓ]) ./ Ns[ℓ]; 
+                color=simcolour, markersize
+            )
+        end
     end
     linkyaxes!(axs...)
 
@@ -392,9 +467,11 @@ function plotrenewalequationsamples_causaleffect!(
     if !hidex && !isnothing(xtitle)
         Label(gl[(row + 1), 1:nlocations], xtitle; fontsize=11.84, tellwidth=false)
     end
+
+    return axs
 end
 
-function _modelquantiles(vec, col; quantiles=[ 0.05, 0.95 ])
+function _modelquantiles(vec, col; quantiles=[ 0.05, 0.5, 0.95 ])
     output = Matrix{Float64}(undef, length(vec[1][:, col]), length(quantiles))
     for i ∈ axes(output, 1)
         output[i, :] = quantile(
@@ -405,7 +482,7 @@ function _modelquantiles(vec, col; quantiles=[ 0.05, 0.95 ])
     return output
 end
 
-function _modelquantiles(dataset, var, col; quantiles=[ 0.05, 0.95 ])
+function _modelquantiles(dataset, var, col; quantiles=[ 0.05, 0.5, 0.95 ])
     output = Matrix{Float64}(
         undef, length(getproperty(dataset, var)[1][:, col]), length(quantiles)
     )
@@ -421,7 +498,7 @@ function _modelquantiles(dataset, var, col; quantiles=[ 0.05, 0.95 ])
     return output
 end
 
-function _modelquantiles(dataset, var, var_counterfactual, col; quantiles=[ 0.05, 0.95 ])
+function _modelquantiles(dataset, var, var_counterfactual, col; quantiles=[ 0.05, 0.5, 0.95 ])
     output = Matrix{Float64}(
         undef, length(getproperty(dataset, var)[1][:, col]), length(quantiles)
     )
