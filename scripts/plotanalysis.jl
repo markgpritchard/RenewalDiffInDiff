@@ -1221,7 +1221,8 @@ subsetsim3plotsuppl = with_theme(theme_latexfonts()) do
         end
     
         colgap!(gb, 1, 5)  
-        for r ∈ [ 1, 4 ] rowgap!(gb, r, 5) end    end
+        for r ∈ [ 1, 4 ] rowgap!(gb, r, 5) end    
+    end
 
     labelplots!([ "A", "B" ], [ ga, gb ])
 
