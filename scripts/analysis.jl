@@ -301,9 +301,9 @@ sim2model2 = diffindiffparameters_splinetimes(
     psiprior=0.5,
     secondaryinterventions=[
         InterventionsMatrix([ nothing, 36, nothing ], 100),
-        InterventionsMatrix([ nothing, nothing, 56 ], 100),
+        InterventionsMatrix([ nothing, nothing, 16 ], 100),
         InterventionsMatrix([ nothing, 64, nothing ], 100),
-        InterventionsMatrix([ nothing, nothing, 84 ], 100),
+        InterventionsMatrix([ nothing, nothing, 54 ], 100),
     ],
 )
 
@@ -353,11 +353,29 @@ sim3model0 = diffindiffparameters_splinetimes(
     simulation3dataset["interventions"], 
     [ [ 1 ]; collect(11:89/4:100) ],
     simulation3dataset["Ns"];
-    psiprior=0.3
+    psiprior=0.3,
 )
 
 s3c0config = @ntuple modelname="sim3model0" model=sim3model0 n_rounds n_chains=8 seed=300+id
 sim3chain0dict = produce_or_load(pol_fitparameter, s3c0config, datadir("sims"))
+
+# Add lag and lead times to explore non-parallel trends 
+
+sim3model0leadlag = diffindiffparameters_splinetimes(
+    W_sim3_0, 
+    simulation3dataset["cases_counterfactual"],
+    simulation3dataset["interventions"], 
+    [ [ 1 ]; collect(11:89/4:100) ],
+    simulation3dataset["Ns"];
+    psiprior=0.3,
+    secondaryinterventions=[
+        InterventionsMatrix([ nothing, 36 ], 100),
+        InterventionsMatrix([ nothing, 64 ], 100)
+    ],
+)
+
+s3c0configleadlag = @ntuple modelname="sim3model0" model=sim3model0leadlag n_rounds n_chains=8 seed=305+id
+sim3chain0dictleadlag = produce_or_load(pol_fitparameter, s3c0configleadlag, datadir("sims"))
 
 
 ## Analysis 1 
