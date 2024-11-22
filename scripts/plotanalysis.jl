@@ -627,7 +627,7 @@ datafit3plot = with_theme(theme_latexfonts()) do
     fig
 end
 
-safesave(plotsdir("datafit3plot.svg"), datafit3plot)
+safesave(plotsdir("datafit3plot.pdf"), datafit3plot)
 
 #=
 ## Analysis 4
@@ -719,7 +719,7 @@ datafit5plot = with_theme(theme_latexfonts()) do
     fig 
 end
 
-safesave(plotsdir("datafit5plot.svg"), datafit5plot)
+safesave(plotsdir("datafit5plot.pdf"), datafit5plot)
 
 
 datafit5kv = keyvalues(datachain5, datafit5)
@@ -740,7 +740,7 @@ chainplot1 = let
     fig
 end
 
-safesave(plotsdir("chainplot1.svg"), chainplot1)
+safesave(plotsdir("chainplot1.pdf"), chainplot1)
 
 chainplot2 = let 
     @unpack colnames, plotnames_ind = processplotchains(datachain2)
@@ -757,7 +757,7 @@ chainplot2 = let
     fig
 end
 
-safesave(plotsdir("chainplot2.svg"), chainplot2)
+safesave(plotsdir("chainplot2.pdf"), chainplot2)
 
 chainplot3 = let 
     @unpack colnames, plotnames_ind = processplotchains(datachain3)
@@ -774,7 +774,7 @@ chainplot3 = let
     fig
 end
 
-safesave(plotsdir("chainplot3.svg"), chainplot3)
+safesave(plotsdir("chainplot3.pdf"), chainplot3)
 
 
 
