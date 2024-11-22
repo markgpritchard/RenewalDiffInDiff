@@ -374,7 +374,7 @@ sim3model0leadlag = diffindiffparameters_splinetimes(
     ],
 )
 
-s3c0configleadlag = @ntuple modelname="sim3model0" model=sim3model0leadlag n_rounds n_chains=8 seed=305+id
+s3c0configleadlag = @ntuple modelname="sim3model0leadlag" model=sim3model0leadlag n_rounds n_chains=8 seed=305+id
 sim3chain0dictleadlag = produce_or_load(pol_fitparameter, s3c0configleadlag, datadir("sims"))
 
 
