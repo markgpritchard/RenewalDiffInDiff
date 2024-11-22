@@ -17,16 +17,16 @@ end
 function InterventionsMatrix(
     T::DataType, starttimes::Vector{U}, duration
 ) where U <: Union{Int, Nothing} 
+    # set any `missing` start times to be after the end of the study duration
     newstarttimes = Vector{Int}(undef, length(starttimes)) 
     for (i, t) ∈ enumerate(starttimes) 
-        if isnothing(t)
-            newstarttimes[i] = duration + 1 
-        else 
-            newstarttimes[i] = t 
-        end
+        newstarttimes[i] = _setinterventionsmatrixstarttimes(t, duration)
     end
     return InterventionsMatrix(T, newstarttimes, duration) 
 end
+
+_setinterventionsmatrixstarttimes(t::Int, ::Any) = t 
+_setinterventionsmatrixstarttimes(::Nothing, duration) = duration + 1
 
 InterventionsMatrix(args...) = InterventionsMatrix(Int, args...)
 

@@ -1,14 +1,9 @@
 
-using CairoMakie, DataFrames, Pigeons, Turing
+using CairoMakie, DataFrames, Pigeons, PlotFormatting, Turing
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Constants  
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-# colour scheme
-const COLOURVECTOR = [ 
-    :blue, :seagreen4, :plum, :brown2, :darkgoldenrod1, :dodgerblue3, :skyblue2, :lightgray 
-]
 
 # outputs from MCMC that are not plotted 
 const _NOPLOTNAMES = [ 
@@ -23,11 +18,28 @@ const _NOPLOTNAMES = [
 
 plotchains(data::Chains; kwargs...) = plotchains(DataFrame(data); kwargs...)
 
-function plotchains(data::DataFrame; size=( 400, 5000 ), ylabels=RenewalDiffInDiff.automatic, kwargs...)
-    @unpack colnames, plotnames_ind = _processplotchains(data; kwargs...)
-        
+function plotchains(data::DataFrame; size=( 400, 5000 ), kwargs...)
     fig = Figure(; size)
-    ax = [ Axis(fig[i, 1]) for i ∈ eachindex(plotnames_ind) ]
+    plotchains!(fig, data; kwargs...)
+    return fig
+end
+
+function plotchains!(fig::Figure, data::DataFrame; kwargs...)
+    gl = GridLayout(fig[1, 1])
+    plotchains!(gl, data; kwargs...)
+end
+
+function plotchains!(
+    gl::GridLayout, data::DataFrame; 
+    colnames=RenewalDiffInDiff.automatic, plotnames_ind=RenewalDiffInDiff.automatic,
+    ylabels=RenewalDiffInDiff.automatic, kwargs...
+)
+    @unpack colnames, plotnames_ind = processplotchains(
+        data;
+        colnames, plotnames_ind, kwargs...
+    )
+        
+    ax = [ Axis(gl[i, 1]) for i ∈ eachindex(plotnames_ind) ]
     n_ax = length(ax)
     for (j, chainid) ∈ enumerate(unique(data.chain))
         inds = findall(x -> x == chainid, data.chain)
@@ -35,9 +47,9 @@ function plotchains(data::DataFrame; size=( 400, 5000 ), ylabels=RenewalDiffInDi
             lines!(ax[i], getproperty(data, colnames[k])[inds]; color=COLOURVECTOR[j])
             if j == 1 
                 if ylabels == RenewalDiffInDiff.automatic
-                    Label(fig.layout[i, 0], "$(colnames[k])"; rotation=π/2, tellheight=false)
+                    Label(gl[i, 0], "$(colnames[k])"; rotation=π/2, tellheight=false)
                 else 
-                    Label(fig.layout[i, 0], ylabels[i]; tellheight=false)
+                    Label(gl[i, 0], ylabels[i]; tellheight=false)
                 end
             end
         end
@@ -47,18 +59,42 @@ function plotchains(data::DataFrame; size=( 400, 5000 ), ylabels=RenewalDiffInDi
         if i == n_ax 
             formataxis!(a)
         else 
-            formataxis!(a; hidex=true, hidexticks=true, hidespines=( :b, :t, :r))
+            formataxis!(a; hidex=true)
         end
     end
 
-    Label(fig[n_ax+1, 1], "sample"; fontsize=11.84, tellwidth=false)
+    Label(gl[n_ax+1, 1], "sample"; fontsize=11.84, tellwidth=false)
 
-    colgap!(fig.layout, 1, 5)
-    rowgap!(fig.layout, n_ax, 5)
+    colgap!(gl, 1, 5)
+    rowgap!(gl, n_ax, 5)
+end
 
-    #Label(fig[1, 0], "generation interval, f(τ)"; fontsize=11.84, rotation=π/2, tellheight=false)
-    
-    return fig
+function _processplotchains(
+    data, ::RenewalDiffInDiff.Automatic, ::RenewalDiffInDiff.Automatic; 
+    logdensity="log_density"
+)
+    return _processplotchains(data; logdensity)
+end
+
+function _processplotchains(
+    data, cn, ::RenewalDiffInDiff.Automatic; 
+    logdensity="log_density"
+)
+    @unpack plotnames_ind = _processplotchains(data; kwargs...)
+    return @ntuple colnames=cn plotnames_ind
+end
+
+function _processplotchains(
+    data, ::RenewalDiffInDiff.Automatic, pni; 
+    logdensity="log_density"
+)
+    @unpack colnames = _processplotchains(data; kwargs...)
+    return @ntuple colnames plotnames_ind=pni
+
+end
+
+function _processplotchains(data, colnames, plotnames_ind; logdensity="log_density")
+    return @ntuple colnames plotnames_ind
 end
 
 function _processplotchains(data; logdensity="log_density")
@@ -68,6 +104,10 @@ function _processplotchains(data; logdensity="log_density")
     _plotnames_ind = findall(x -> x ∉ _NOPLOTNAMES, colnames)
     plotnames_ind = [ lp_ind; _plotnames_ind ]
     return @ntuple colnames plotnames_ind
+end
+
+function processplotchains(data; colnames=RenewalDiffInDiff.automatic, plotnames_ind=RenewalDiffInDiff.automatic, logdensity="log_density")
+    _processplotchains(data, colnames, plotnames_ind; logdensity)
 end
 
 function plotrenewalequationsamples(args...; plotsize=( 800, 800 ), kwargs...)
@@ -127,7 +167,7 @@ function plotrenewalequationsamples!(
     gl::GridLayout, 
     cases::Matrix, cases_counterfactual, w, Ns::Vector, fittedvaluesset, fittedws;
     betafunctions=nothing, betafunctions_counterfactual=nothing,
-    datacolour=COLOURVECTOR[1], simcolour=COLOURVECTOR[2], fittedcolour=( :gray, 0.75 ), 
+    datacolour=:black, simcolour=COLOURVECTOR[2], fittedcolour=( COLOURVECTOR[1], 0.75 ), 
     infectiousduration=1, markersize=3, rhoclip=Inf,
     columntitles=nothing, columntitlefontsize=11.84, 
     xticklabelrotation=0.0, xticks=Makie.automatic, xtitle="Time"
@@ -150,7 +190,10 @@ function plotrenewalequationsamples!(
         )
 
         if !isnothing(columntitles)
-            Label(gl[0, i], columntitles[i]; fontsize=columntitlefontsize, tellwidth=false)
+            Label(
+            gl[0, i], columntitles[i]; 
+            fontsize=columntitlefontsize, halign=:left, tellwidth=false
+        )
         end
         
         band!(axs1[i], xs, ws[:, 1], ws[:, 2]; color=fittedcolour)
@@ -195,33 +238,21 @@ function plotrenewalequationsamples!(
 
     for col ∈ 1:nlocations
         if col == 1 
-            formataxis!(axs1[col]; hidex=true, hidexticks=true, hidespines=( :b, :r, :t ))
-            formataxis!(axs2[col]; hidex=true, hidexticks=true, hidespines=( :b, :r, :t ))
-            formataxis!(axs3[col]; hidex=true, hidexticks=true, hidespines=( :b, :r, :t ))
-            formataxis!(axs4[col]; hidespines=( :r, :t ))
+            formataxis!(axs1[col]; hidex=true,)
+            formataxis!(axs2[col]; hidex=true,)
+            formataxis!(axs3[col]; hidex=true,)
+            formataxis!(axs4[col])
         else
-            formataxis!(
-                axs1[col]; 
-                hidex=true, hidexticks=true, hidey=true, hideyticks=true, 
-                hidespines=( :b, :r, :t, :l )
-            )
-            formataxis!(
-                axs2[col]; 
-                hidex=true, hidexticks=true, hidey=true, hideyticks=true, 
-                hidespines=( :b, :r, :t, :l )
-            )
-            formataxis!(
-                axs3[col]; 
-                hidex=true, hidexticks=true, hidey=true, hideyticks=true, 
-                hidespines=( :b, :r, :t, :l )
-            )
-            formataxis!(axs4[col]; hidey=true, hideyticks=true, hidespines=( :r, :t, :l ))
+            formataxis!(axs1[col]; hidex=true, hidey=true,)
+            formataxis!(axs2[col]; hidex=true, hidey=true,)
+            formataxis!(axs3[col]; hidex=true, hidey=true,)
+            formataxis!(axs4[col]; hidey=true,)
         end
     end
 
-    Label(gl[1, 0], "w(gt)"; fontsize=11.84, rotation=π/2, tellheight=false)
+    Label(gl[1, 0], L"$w_{jt}$"; fontsize=11.84, rotation=π/2, tellheight=false)
     Label(
-        gl[2, 0], "R₀"; 
+        gl[2, 0], L"\mathcal{R}_0"; 
         fontsize=11.84, rotation=π/2, tellheight=false
     )
     Label(gl[3, 0], "Diagnoses"; fontsize=11.84, rotation=π/2, tellheight=false)
@@ -315,201 +346,3 @@ function fitws(cases::Matrix, Ns::Vector, fittedvaluesset)
     end
     return w_vec
 end
-
-""" 
-    formataxis!(axis::Axis, width = 800; <keyword arguments>)
-    formataxis!(axis::Axis3, width = 800; setorigin = false)
-    formataxis!(cb::Colorbar, width = 800; horizontal = false)
-    formataxis!(label::Label, width = 800)
-    formataxis!(legend::Legend, width = 800; horizontal = true)
-    formataxis!(axes::Array, args...; kwargs...)
-
-Apply consistent formatting to components of figures.
-
-## Arguments 
-The first argument is the element to be formatted. 
-
-`width` refers to the width of the whole figure. Text sizes and line widths are formatted 
-    to be a constant proportion of this width.
-
-## Keyword arguments
-Most keyword arguments are only available when formatting an `Axis` 
-* `hidespines = ( :r, :t )`: which sides of the plot are not to be displayed: accepts 
-    a tuple of symbols, `:b` for bottom, `:l` for left, `:r` for right, `:t` for top
-* `hidex = false`: whether to hide values on x-axis
-* `hidexticks = false`: whether to hide tick marks on x-axis (can only be hidden if `hidex = true`)
-* `hidey = false`: whether to hide values on y-axis
-* `hideyticks = false`: whether to hide tick marks on y-axis (can only be hidden if `hidey = true`)
-* `setorigin = false`: whether axes should be extended to a value of `0`
-* `setpoint = nothing`: can take a number or tuple and calls `setvalue!`
-* `trimspines = true`: whether to trim to axes at the minimum and maximum tick values
-The additional keyword argument `horizontal` is available when formatting a `Colorbar`
-    or `Legend`, and sets whether that item should be oriented horizontally.
-""" 
-function formataxis!(axis::Axis, width = 800; 
-        hidespines = ( :r, :t ), hidex = false, hidexticks = false, hidey = false, 
-        hideyticks = false, setorigin = false, setpoint = nothing, trimspines = true
-    )
-    formataxishidespines!(axis, hidespines)
-    axis.spinewidth = width / 800
-    axis.xtrimspine = trimspines; axis.ytrimspine = trimspines
-    axis.xgridvisible = false; axis.ygridvisible = false
-    axis.xtickwidth = width / 800; axis.ytickwidth = width / 800
-    axis.xlabelsize = width / 67; axis.ylabelsize = width / 67
-    axis.xticklabelsize = width / 80; axis.yticklabelsize = width / 80
-    axis.titlealign = :left; axis.titlesize = width / 65
-    if setorigin setorigin!(axis) end 
-    setvalue!(axis, setpoint)
-    if hidex 
-        hidexdecorations!(axis; ticks = hidexticks) 
-    else
-        if hidexticks 
-            @info "Function `formataxis!` cannot hide ticks on x axis unless `hidex` is true" 
-        end 
-    end 
-    if hidey 
-        hideydecorations!(axis; ticks = hideyticks) 
-    else 
-        if hideyticks 
-            @info "Function `formataxis!` cannot hide ticks on y axis unless `hidey` is true" 
-        end 
-    end 
-end 
-
-function formataxis!(axis::Axis3, width = 800; setorigin = false)
-    axis.xspinewidth = width / 800; axis.yspinewidth = width / 800; axis.zspinewidth = width / 800; 
-    axis.xgridvisible = false; axis.ygridvisible = false; axis.zgridvisible = false
-    axis.xtickwidth = width / 800; axis.ytickwidth = width / 800; axis.ztickwidth = width / 800
-    axis.xlabelsize = width / 67; axis.ylabelsize = width / 67; axis.zlabelsize = width / 67
-    axis.xticklabelsize = width / 80; axis.yticklabelsize = width / 80; axis.zticklabelsize = width / 80
-    axis.titlealign = :left; axis.titlesize = width / 65
-    if setorigin setorigin!(axis) end
-end 
-
-function formataxis!(legend::Legend, width = 800; horizontal = true)
-    legend.framevisible = false
-    legend.labelsize = width / 80; legend.titlesize = width / 80
-    legend.patchsize = (width / 40, width / 40)
-    if horizontal
-        legend.orientation = :horizontal
-        legend.titleposition = :left
-    else 
-        legend.margin = (10, 10, 10, 10)
-    end 
-end 
-
-function formataxis!(cb::Colorbar, width = 800; horizontal = false)
-    cb.ticklabelsize = width / 80; cb.labelsize = width / 67
-    if horizontal 
-        cb.height = width / 80 
-    else 
-        cb.width = width / 80 
-    end
-end 
-
-function formataxis!(label::Label, width = 800)
-    label.fontsize  = width / 67
-end 
-
-function formataxis!(axes::Array, width = 800; kwargs...)
-    for ax ∈ axes formataxis!(ax, width; kwargs...) end 
-end 
-
-"""
-    setvalue!(axis, <additional arguments>)
-
-Extends axes to include the provided value. 
-
-## Additional arguments 
-Separate arguments can be given for the `x`, `y` and `z` (for `Axis3`) axes. They 
-    may also be provided as a `Tuple`.  
-
-For an `Axis3`, the `z` value may be provided alone, which assumes `x = y = 0`. 
-    For an `Axis`, the `y` value may be provided alone, which assumes `x = 0`. If 
-    no additional arguments are given, the origin, is added. If `x` is supplied as 
-    `nothing`, no extension to the axes is performed.
-
-"""
-setvalue!(axis::Axis, y::Real = 0) = setvalue!(axis, 0, y)
-setvalue!(axis::Axis, x, y) = scatter!(axis, [x], [y], markersize = 0)
-setvalue!(axis::Axis3, z::Real = 0) = setvalue!(axis, 0, 0, z)
-setvalue!(axis::Axis3, x, y, z) = scatter!(axis, [x], [y], [z], markersize = 0)
-setvalue!(axis, x::Nothing) = nothing 
-setvalue!(axis, xy::Tuple) = setvalue!(axis, xy...)
-setorigin!(axis) = setvalue!(axis)
-
-# Function to hide spines. Not exported.
-
-formataxishidespines!(axis, hidespines::Nothing) = nothing
-formataxishidespines!(axis, hidespines::Symbol) = hidespines!(axis, hidespines)
-
-function formataxishidespines!(axis, hidespines)
-    for d ∈ hidespines hidespines!(axis, d) end
-end 
-
-
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Label subplots
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-""" 
-    labelplots!(labels, layouts; <keyword arguments>)
-
-Applies labels to plots within a larger figure.
-
-`labels` and `layouts` can each refer to an individual plot or can be a vector referring 
-    to several plots.
-
-# Keyword arguments 
-* `cols = 0`: which column within the plots should have the label applied. Can be 
-    provided as one integer for all plots or a vector of integers for each plot.
-* `rows = 0`: which row within the plots should have the label applied. Can be provided 
-    as one integer for all plots or a vector of integers for each plot.
-* `font = "TeX Gyre Heros Bold"`: font for the labels
-* `fontsize = 14`: label fontsize
-* `halign = :left`: label alignment
-* `padding = ( 0, 5, 5, 0 )`: label padding, provided as a `Tuple` in the order left, 
-    right, bottom, top
-"""
-function labelplots!(labels, layouts; cols=0, rows=0, kwargs...)
-    return _labelplots!(labels, layouts, rows, cols; kwargs...)
-end 
-
-function _labelplots!(labels::Vector{String}, layouts, rows::Int, cols; kwargs...)
-    rowvector=(zeros(Int, length(labels)) .+ rows) 
-    return _labelplots!(labels, layouts, rowvector, cols; kwargs...)
-end 
-
-function _labelplots!(
-    labels::Vector{String}, layouts, rows::Vector{<:Int}, cols::Int; 
-    kwargs...
-)
-    colvector = zeros(Int, length(labels)) .+ cols 
-    return _labelplots!(labels, layouts, rows, colvector; kwargs...)
-end 
-
-function _labelplots!(
-    labels::Vector{String}, layouts::Vector, rows::Vector{<:Int}, cols::Vector{<:Int};
-    kwargs...
-)
-    @assert length(labels) == length(layouts)
-    for (row, col, label, layout) ∈ zip(rows, cols, labels, layouts)
-        _labelplots!(label, layout, row, col; kwargs...)
-    end 
-end
-
-function _labelplots!(
-    labels::Vector{String}, layout, rows::Vector{<:Int}, cols::Vector{<:Int};
-    kwargs...
-)
-    for (row, col, label) ∈ zip(rows, cols, labels)
-        _labelplots!(label, layout, row, col; kwargs...)
-    end 
-end
-
-function _labelplots!(
-    label::String, layout, row::Int, col::Int;
-    font="TeX Gyre Heros Bold", fontsize=14, halign=:left, padding=( 0, 5, 5, 0 )
-)
-    Label(layout[row, col, TopLeft()], label; font, fontsize, halign, padding)
-end 

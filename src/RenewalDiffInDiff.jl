@@ -11,11 +11,11 @@ include("renewalequation.jl")
 include("parameterfitting.jl")
 include("extras.jl")
 
-export 
-    ## types.jl
-    InterventionsMatrix, InterventionsVector, SEIRParameters,
-    ## consts.jl/
-    COVIDSERIALINTERVAL
+ 
+## types.jl
+export InterventionsMatrix, InterventionsVector, SEIRParameters
+## consts.jl/
+export COVIDSERIALINTERVAL, POPULATION2020
 
 ## renewalequation.jl
 #export calculatesumfi, expectedinfections, poissoninfections, runrenewalequation, 
@@ -31,8 +31,8 @@ export renewalequation_expectedcases, renewalequation_expectedcases!,
 ## parameterfitting.jl
 export diffindiffparameters, diffindiffparameters_discretetimes, 
     diffindiffparameters_fittocurve_splinetimes, diffindiffparameters_polytimes, 
-    diffindiffparameters_splinetimes, generatew_gt, generatew_gtrow, generatez_gtminus1, 
-    keyvalues, loadanalysisdictsasdf
+    diffindiffparameters_twodiscretetimes, diffindiffparameters_splinetimes, generatew_gt, 
+    generatew_gtrow, generatez_gtminus1, keyvalues, loadanalysisdictsasdf
 
 ## extras.jl
 export getindex, interventionsoffset, length, seir_deterministic, size

@@ -18,6 +18,7 @@
 
 # Allow the simulations to be exported 
 !simulation1dataset.jld2
+!simulation1a_dataset.jld2
 !simulation2dataset.jld2
 !simulation3dataset.jld2
 !simulation4dataset.jld2

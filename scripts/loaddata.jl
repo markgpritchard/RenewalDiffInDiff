@@ -1,13 +1,17 @@
-    #=
-coviddf = let 
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# UK-wide data for dates that masking started 
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+maskcoviddf = let 
     df = CSV.read(
         datadir("exp_raw", "OxCGRT_GBR_differentiated_withnotes_2020.csv"), DataFrame
     )
-#=
+
     regioncodedf = DataFrame(
         :RegionCode => [ "UK_ENG", "UK_NIR", "UK_SCO", "UK_WAL" ],
         :RegionId => 1:4
-    )=#
+    )
 
     # Government Response Index includes C1, C2, C3, C4, C5, C6, C7, C8, E1, E2, H1, H2, H3,
     # H6, H7, H8 (NB H6 is face coverings)
@@ -165,15 +169,10 @@ coviddf = let
     #filter!(:Date => x -> x >= Date("2020-02-28"), df)
 
     # add numeric code for region 
-    leftjoin!(df, REGIONCODEDF; on=:RegionCode)
+    leftjoin!(df, regioncodedf; on=:RegionCode)
 
     df
 end
-
-=#
-
-
-
 
 
 coviddf = let 
@@ -243,14 +242,8 @@ coviddf = let
     insertcols!(joineddf, :day => Dates.value.(joineddf.date .- Date("2020-05-31")))
     leftjoin(joineddf, popdf; on=:LocalAuthority)
 end
-#=
-# universal testing was introduced in April 2021, so remove all rows after this 
-filter!(:date => x -> x < Date("2021-04-01"), coviddf)
-=#
 
 coviddf2 = deepcopy(coviddf)
 
 # universal testing was introduced in January 2021, so remove all rows after this 
 filter!(:date => x -> x < Date("2021-01-03"), coviddf)
-
-# for secondary analysis, keep longer data and set secondary intervention 3 January

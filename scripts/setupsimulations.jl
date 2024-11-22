@@ -56,8 +56,8 @@ sim2parameters(beta) = simparameters(beta, 0.5)
 beta2a(t) = 0.5 + 0.15 * cos(2π * (t - 80) / 365)
 beta2bcounterfactual(t) = 1.15 * beta2a(t)
 beta2b(t) = t <= 50 ? beta2bcounterfactual(t) : 0.8 * beta2bcounterfactual(t)
-beta2ccounterfactual(t) = t <= 30 ? 0.9 * beta2a(t) : 0.9 * 1.15 * beta2a(t)
-beta2c(t) = t <= 70 ? beta2ccounterfactual(t) : 0.8 * beta2ccounterfactual(t)
+beta2ccounterfactual(t) = t <= 70 ? 1.05 * beta2a(t) : 1.05 * 1.15 * beta2a(t)
+beta2c(t) = t <= 30 ? beta2ccounterfactual(t) : 0.8 * beta2ccounterfactual(t)
 
 sim3parameters(beta) = simparameters(beta, 0.3)
 beta3a(t) = 0.5 + 0.15 * cos(2π * (t - 80) / 365)
@@ -129,7 +129,7 @@ if isfile(datadir("sims", "simulation1a_dataset.jld2"))
     simulation1a_dataset = load(datadir("sims", "simulation1a_dataset.jld2"))
 else 
     simulation1a_dataset = let  
-        interventions = InterventionsMatrix([ nothing, 50, 70 ], 100)
+        interventions = InterventionsMatrix([ nothing, 50 ], 100)
         
         u01a_a = [ 300_000 - 50, 50, 0, 0, 0, 0 ]
         p1a_a = sim1a_parameters(beta1a_a)
@@ -184,7 +184,7 @@ if isfile(datadir("sims", "simulation2dataset.jld2"))
     simulation2dataset = load(datadir("sims", "simulation2dataset.jld2"))
 else 
     simulation2dataset = let  
-        interventions = InterventionsMatrix([ nothing, 50, 70 ], 100)
+        interventions = InterventionsMatrix([ nothing, 50, 30 ], 100)
         
         u02a = [ 350_000 - 50, 50, 0, 0, 0, 0 ]
         p2a = sim2parameters(beta2a)
@@ -204,7 +204,7 @@ else
             )
         )
 
-        u02c = [ 400_000 - 100, 100, 0, 0, 0, 0 ]
+        u02c = [ 400_000 - 2000, 2000, 0, 0, 0, 0 ]
         p2ccounterfactual = sim2parameters(beta2ccounterfactual)
         sim2ccounterfactual = stochasticmodel(
             seirrates, u02c, 1:100, p2ccounterfactual, seirtransitionmatrix
@@ -212,9 +212,9 @@ else
 
         p2c = sim2parameters(beta2c)
         sim2c = vcat(
-            sim2ccounterfactual[1:69, :],
+            sim2ccounterfactual[1:29, :],
             stochasticmodel(
-                seirrates, sim2ccounterfactual[70, :], 70:100, p2c, seirtransitionmatrix
+                seirrates, sim2ccounterfactual[30, :], 30:100, p2c, seirtransitionmatrix
             )
         )
 
