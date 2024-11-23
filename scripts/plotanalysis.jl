@@ -18,13 +18,13 @@ generationintervalplot = let
         fig = Figure(; size=( 500, 250 ))
         ax = Axis(fig[1, 1])
         scatter!(ax, 0:20, [ fseir(t) for t ∈ 0:20 ]; color=:black)
-        formataxis!(ax)
+        formataxis!(ax; trimspines=true, hidespines=( :t, :r ))
     
         Label(
-            fig[1, 0], L"generation interval, $g(\tau)$"; 
+            fig[1, 0], L"generation interval, $g(x)$"; 
             fontsize=11.84, rotation=π/2, tellheight=false
         )
-        Label(fig[2, 1], L"time, $\tau$"; fontsize=11.84, tellwidth=false)
+        Label(fig[2, 1], L"time, $x$"; fontsize=11.84, tellwidth=false)
     
         colgap!(fig.layout, 1, 5)
         rowgap!(fig.layout, 1, 5)
@@ -65,7 +65,8 @@ sim1fit1kvdiscrete = keyvalues(sim1chain1discrete, sim1fit1discrete)
 println(sim1fit1kvdiscrete)
 
 subsetsim1plot = with_theme(theme_latexfonts()) do 
-    fig = Figure(; size=( 587, 514 ))
+    fig = Figure(; size=( 500, 450 ))
+    g0 = GridLayout(fig[1, 0])
     ga = GridLayout(fig[1, 1])
     gb = GridLayout(fig[1, 2])
     
@@ -81,15 +82,16 @@ subsetsim1plot = with_theme(theme_latexfonts()) do
             ), 
             1;
             markersize=2,
-            hidex=true,
-            ytitle=L"~ \\ ~ \\ $w_{jt}$",
+            hidex=true, ytitle=L"$\ln\mathcal{R}_e$",
         )
         axs2 = plotrenewalequationsamples_r0!(
             ga, simulation1dataset["cases_counterfactual"], sim1fit0discrete, 2;
             betafunctions=[ beta1a, beta1bcounterfactual ], infectiousduration=2.5,
             plotcounterfactuals=true, 
-            ytitle=L"~ \\ ~ \\ $\mathcal{R}_0$",
+            yticks=[ 1.4, 1.8, 2.2 ], ytitle=L"$\mathcal{R}_0$",
         )
+        setvalue!(axs2[1], 1.4)
+        setvalue!(axs2[1], 2.2)
         axs3 = plotrenewalequationsamples_cases!(
             ga, 
             simulation1dataset["cases_counterfactual"], 
@@ -98,7 +100,7 @@ subsetsim1plot = with_theme(theme_latexfonts()) do
             3;
             markersize=2, fittedparameter=:y_matrix_det_vec_counterfactual,
             fittedcolour=( COLOURVECTOR[2], 0.75 ), 
-            ytitle=L"~ \\ ~ \\ Without \\ intervetion$$",
+            ytitle="No\nintervetion",
         )
         axs4 = plotrenewalequationsamples_cases!(
             ga, 
@@ -107,7 +109,7 @@ subsetsim1plot = with_theme(theme_latexfonts()) do
             sim1fit0discrete,
             4;
             markersize=2, fittedparameter=:y_matrix_det_vec,
-            ytitle=L"~ \\ ~ \\ With \\ intervetion$$",
+            ytitle="Intervention",
         )
         axs5 = plotrenewalequationsamples_causaleffect!(
             ga, simulation1dataset["cases_counterfactual"], simulation1dataset["cases_counterfactual"], simulation1dataset["Ns"], sim1fit0discrete, 5;
@@ -116,28 +118,51 @@ subsetsim1plot = with_theme(theme_latexfonts()) do
             counterfactualfittedparameter=:y_matrix_det_vec_counterfactual,
             ytickformat=(vs -> [ "$(round(Int, v))" for v ∈ vs ]),
             xtitle="Time, days",
-            ytitle=L"~ \\ ~ \\ Cumulative \\ difference$$",
+            ytitle="Cumulative\ndifference",
         )
+        for axs ∈ [ axs1, axs2, axs3, axs4, axs5 ]
+            if axs === axs5 
+                formataxis!(
+                    axs[1]; 
+                    hidespines=( :r, :t ), trimspines=true,
+                )
+                formataxis!(
+                    axs[2]; 
+                    hidey=true, hideyticks=true, 
+                    hidespines=( :l, :r, :t ), trimspines=true,
+                )
+            else
+                formataxis!(
+                    axs[1]; 
+                    hidex=true, hidexticks=true, 
+                    hidespines=( :r, :t, :b ), trimspines=true,
+                )
+                formataxis!(
+                    axs[2]; 
+                    hidex=true, hidexticks=true, hidey=true, hideyticks=true, 
+                    hidespines=( :l, :r, :t, :b ), trimspines=true,
+                )
+            end
+        end
     
+        interventionax = Axis(ga[1:5, 2])
+        vlines!(interventionax, 50; color=:red, linestyle=( :dot, :dense ), linewidth=1,)
+        formataxis!(
+            interventionax; 
+            hidex=true, hidexticks=true, hidey=true, hideyticks=true, 
+            hidespines=( :l, :r, :t, :b)
+        )
+
         linkaxes!(axs3..., axs4...)
-    
+        linkxaxes!(axs1[2], axs2[2], axs3[2], axs4[2], axs5[2], interventionax)
+
         for (i, ℓ) ∈ enumerate([ "Group 1", "Group 2" ])
             Label(
                 ga[0, i], ℓ; 
                 fontsize=10, halign=:left, tellwidth=false
             )
         end
-    
-        braceaxis = Axis(ga[3:5, 0])
-        bracket!(braceaxis, 0, 0, 0, 10; color=:black)
-        formataxis!(braceaxis; hidex=true, hidexticks=true, hidey=true, hideyticks=true)
-        hidespines!(braceaxis, :l, :r, :t, :b)
-        Label(
-            ga[3:5, -1], L"Diagnoses, per $100\,000$"; 
-            fontsize=11.84, rotation=π/2, tellheight=false
-        )
-        colgap!(ga, 1, -5)  
-        colgap!(ga, 2, 5)  
+   
         for r ∈ [ 1, 6 ] rowgap!(ga, r, 5) end
     end
     
@@ -191,9 +216,42 @@ subsetsim1plot = with_theme(theme_latexfonts()) do
             xtitle="Time, days",
             ytitle=nothing,
         )
+        for axs ∈ [ axs1, axs2, axs3, axs4, axs5 ]
+            if axs === axs5 
+                formataxis!(
+                    axs[1]; 
+                    hidespines=( :r, :t ), trimspines=true,
+                )
+                formataxis!(
+                    axs[2]; 
+                    hidey=true, hideyticks=true, 
+                    hidespines=( :l, :r, :t ), trimspines=true,
+                )
+            else
+                formataxis!(
+                    axs[1]; 
+                    hidex=true, hidexticks=true, 
+                    hidespines=( :r, :t, :b ), trimspines=true,
+                )
+                formataxis!(
+                    axs[2]; 
+                    hidex=true, hidexticks=true, hidey=true, hideyticks=true, 
+                    hidespines=( :l, :r, :t, :b ), trimspines=true,
+                )
+            end
+        end
     
+        interventionax = Axis(gb[1:5, 2])
+        vlines!(interventionax, 50; color=:red, linestyle=( :dot, :dense ), linewidth=1,)
+        formataxis!(
+            interventionax; 
+            hidex=true, hidexticks=true, hidey=true, hideyticks=true, 
+            hidespines=( :l, :r, :t, :b)
+        )
+
         linkaxes!(axs3..., axs4...)
-    
+        linkxaxes!(axs1[2], axs2[2], axs3[2], axs4[2], axs5[2], interventionax)
+
         for (i, ℓ) ∈ enumerate([ "Group 1", "Group 2" ])
             Label(
                 gb[0, i], ℓ; 
@@ -204,8 +262,17 @@ subsetsim1plot = with_theme(theme_latexfonts()) do
         for r ∈ [ 1, 6 ] rowgap!(gb, r, 5) end
     end
 
-    labelplots!([ "A", "B" ], [ ga, gb ]; cols=[ -1, 1])
-    colsize!(fig.layout, 1, Auto(1.5))
+    Label(
+        g0[3:5, 0], L"Diagnoses, per $100\,000$"; 
+        fontsize=11.84, rotation=π/2, tellheight=false
+    )
+    colgap!(ga, 1, 5) 
+
+    labelplots!([ "A", "B" ], [ ga, gb ]; cols=1,)
+
+    colgap!(fig.layout, 1, -5)
+    colsize!(fig.layout, 0, Auto(0.05))
+    colsize!(fig.layout, 2, Auto(0.75))
 
     fig
 end

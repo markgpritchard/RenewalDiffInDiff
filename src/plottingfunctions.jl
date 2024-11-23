@@ -44,7 +44,7 @@ function plotchains!(
     for (j, chainid) ∈ enumerate(unique(data.chain))
         inds = findall(x -> x == chainid, data.chain)
         for (i, k) ∈ enumerate(plotnames_ind) 
-            lines!(ax[i], getproperty(data, colnames[k])[inds]; color=COLOURVECTOR[j])
+            lines!(ax[i], getproperty(data, colnames[k])[inds]; color=COLOURVECTOR[j], linewidth=1,)
             if j == 1 
                 if ylabels == RenewalDiffInDiff.automatic
                     Label(gl[i, 0], "$(colnames[k])"; rotation=π/2, tellheight=false)
@@ -228,7 +228,7 @@ function plotrenewalequationsamples_w!(
     for i ∈ 1:nlocations
         ws = _modelquantiles(fittedws, i)     
         band!(axs[i], xs, ws[:, 1], ws[:, 3]; color=fittedbandcolour)
-        lines!(axs[i], xs, ws[:, 2]; color=fittedcolour)
+        lines!(axs[i], xs, ws[:, 2]; color=fittedcolour, linewidth=1,)
         scatter!(
             axs[i], [ RenewalDiffInDiff._skip(x) ? missing : x for x ∈ w[:, i] ];
             color=datacolour, markersize
@@ -270,6 +270,7 @@ function plotrenewalequationsamples_r0!(
     counterfactualcolour=( COLOURVECTOR[2], 0.75 ), 
     counterfactualbandcolour=( counterfactualcolour, 0.5 ),
     xticklabelrotation=0.0, xticks=Makie.automatic, xtitle="Time", ytitle=L"\mathcal{R}_0",
+    yticks=Makie.automatic, 
 )
     if locationinds isa RenewalDiffInDiff.Automatic
         nlocations = size(cases, 2)
@@ -282,13 +283,13 @@ function plotrenewalequationsamples_r0!(
     duration = size(cases, 1)
     xs = eachindex(fittedvaluesset.rho_matrix_vec[1][:, 1])
 
-    axs = [ Axis(gl[row, i]; xticklabelrotation, xticks) for i ∈ 1:nlocations ]
+    axs = [ Axis(gl[row, i]; xticklabelrotation, xticks, yticks) for i ∈ 1:nlocations ]
 
     for (i, ℓ) ∈ enumerate(_locinds)
         rhoqs = _modelquantiles(fittedvaluesset, :rho_matrix_vec, ℓ)
         inds = findall(x -> x <= rhoclip, rhoqs[:, 3])
         band!(axs[i], xs[inds], rhoqs[:, 1][inds], rhoqs[:, 3][inds]; color=fittedbandcolour)
-        lines!(axs[i], xs[inds], rhoqs[:, 2][inds]; color=fittedcolour)
+        lines!(axs[i], xs[inds], rhoqs[:, 2][inds]; color=fittedcolour, linewidth=1,)
         if plotcounterfactuals 
             crhoqs = _modelquantiles(fittedvaluesset, :rho_matrix_vec_counterfactual, ℓ)
             cinds = findall(x -> x <= rhoclip, crhoqs[:, 2])
@@ -298,7 +299,7 @@ function plotrenewalequationsamples_r0!(
             )  
             lines!(
                 axs[i], xs[cinds], crhoqs[:, 2][cinds]; 
-                color=counterfactualcolour
+                color=counterfactualcolour, linewidth=1,
             )    
         end
 
@@ -364,7 +365,7 @@ function plotrenewalequationsamples_cases!(
         )
         lines!(
             axs[i], xs, 100_000 .* yqs[:, 2] ./ Ns[ℓ]; 
-            color=fittedcolour
+            color=fittedcolour, linewidth=1,
         )
         scatter!(
             axs[i], 100_000 .* cases[:, ℓ] ./ Ns[ℓ]; 
@@ -436,7 +437,7 @@ function plotrenewalequationsamples_causaleffect!(
             )
             lines!(
                 axs[i], xs, 100_000 .* cumsum(yqs_cf[:, 2]) ./ Ns[ℓ]; 
-                color=fittedcolour
+                color=fittedcolour, linewidth=1,
             )
         else 
             band!(
@@ -448,7 +449,7 @@ function plotrenewalequationsamples_causaleffect!(
             )
             lines!(
                 axs[i], xs, 100_000 .* yqs_cf[:, 2] ./ Ns[ℓ]; 
-                color=fittedcolour
+                color=fittedcolour, linewidth=1,
             )
         end
         
