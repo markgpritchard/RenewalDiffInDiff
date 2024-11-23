@@ -957,8 +957,8 @@ subsetsim3plot0suppl = with_theme(theme_latexfonts()) do
         axs1 = plotrenewalequationsamples_w!(
             gb, 
             simulation3dataset["cases_counterfactual"], 
-            W_sim1, 
-            sim1fit1discrete, 
+            W_sim3_0, 
+            sim3fit0leadlag, 
             fitws(
                 simulation3dataset["cases_counterfactual"], 
                 simulation3dataset["Ns"], 
