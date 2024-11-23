@@ -323,9 +323,9 @@ sim2model3 = diffindiffparameters_splinetimes(
     simulation2dataset["Ns"];
     psiprior=0.5,
     secondaryinterventions=[
-        InterventionsMatrix([ nothing, nothing, 30 ], 100),
-        InterventionsMatrix([ nothing, 36, 56 ], 100),
-        InterventionsMatrix([ nothing, 64, 84 ], 100)
+        InterventionsMatrix([ nothing, nothing, 70 ], 100),
+        InterventionsMatrix([ nothing, 36, 16 ], 100),
+        InterventionsMatrix([ nothing, 64, 54 ], 100)
     ],
 )
 
@@ -586,7 +586,7 @@ datac3config = @ntuple modelname="datamodel3" model=datamodel3 n_rounds n_chains
 datachain3dict = produce_or_load(pol_fitparameter, datac3config, datadir("sims"))
 
 
-## Analysis 3
+## Analysis 5
 
 # Pillar 1 test results with lead and lag
 
