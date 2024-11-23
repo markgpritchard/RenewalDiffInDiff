@@ -181,13 +181,18 @@ subsetsim1plot = with_theme(theme_latexfonts()) do
             markersize=2,
             hidex=true,
             ytitle=nothing,
+            yticks=[ -1, 0, 1, 2 ], 
         )
+        setvalue!(axs1[1], -1)
         axs2 = plotrenewalequationsamples_r0!(
             gb, simulation1dataset["cases"], sim1fit1discrete, 2;
             betafunctions=[ beta1a, beta1b ], infectiousduration=2.5,
             plotcounterfactuals=true, 
             ytitle=nothing,
+            yticks=[ 1.4, 1.8, 2.2 ], 
         )
+        setvalue!(axs2[1], 1.4)
+        setvalue!(axs2[1], 2.2)
         axs3 = plotrenewalequationsamples_cases!(
             gb, 
             simulation1dataset["cases"], 

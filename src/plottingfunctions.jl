@@ -219,11 +219,12 @@ function plotrenewalequationsamples_w!(
     markersize=3,
     hidex=true,
     xticklabelrotation=0.0, xticks=Makie.automatic, xtitle="Time", ytitle=L"$w_{jt}$",
+    yticks=Makie.automatic, 
 )
     nlocations = size(cases, 2)
     xs = eachindex(fittedvaluesset.rho_matrix_vec[1][:, 1])
 
-    axs = [ Axis(gl[row, i]; xticklabelrotation, xticks) for i ∈ 1:nlocations ]
+    axs = [ Axis(gl[row, i]; xticklabelrotation, xticks, yticks) for i ∈ 1:nlocations ]
 
     for i ∈ 1:nlocations
         ws = _modelquantiles(fittedws, i)     
