@@ -1108,6 +1108,8 @@ sim3fit0 = samplerenewalequation_2sets(
     Ns=simulation3dataset["Ns"], 
     timeknots=[ [ 1 ]; collect(11:89/4:100) ],
 )
+sim3fit0kv = keyvalues(sim3chain0, sim3fit0)
+println(sim3fit0kv)
 
 sim3chain0leadlag = loadanalysisdictsasdf("sim3model0leadlag", 8, maxrounds, 305)
 plotchains(sim3chain0leadlag)
@@ -1121,6 +1123,8 @@ sim3fit0leadlag = samplerenewalequation_2sets(
         InterventionsMatrix([ nothing, 64 ], 100)
     ],
 )
+sim3fit0kvll = keyvalues(sim3chain0leadlag, sim3fit0leadlag)
+println(sim3fit0kvll)
 
 subsetsim3plot0suppl = with_theme(theme_latexfonts()) do 
     fig = Figure(; size=( 500, 450 ))
