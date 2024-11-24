@@ -691,89 +691,8 @@ sim2fit1 = samplerenewalequation_2sets(
 sim2fit1kv = keyvalues(sim2chain1, sim2fit1)
 println(sim2fit1kv)
 
-subsetsim2plot = with_theme(theme_latexfonts()) do 
-    fig = Figure(; size=( 500, 590 ))
-    ga = GridLayout(fig[1, 1])
-    gb = GridLayout(fig[2, 1])
-    
-    let
-        axs1 = plotrenewalequationsamples_r0!(
-            ga, simulation2dataset["cases"], sim2fit0, 1;
-            betafunctions=[ beta2a, beta2b, beta2c ], infectiousduration=2.5,
-            plotcounterfactuals=true, 
-            ytitle=L"$\mathcal{R}_0$",
-            rhoclip=3,
-        )
-        axs2 = plotrenewalequationsamples_causaleffect!(
-            ga, 
-            simulation2dataset["cases"], 
-            simulation2dataset["cases_counterfactual"], 
-            simulation2dataset["Ns"], 
-            sim2fit0, 
-            2;
-            cumulativedifference=true,
-            fittedparameter=:y_matrix_det_vec,
-            counterfactualfittedparameter=:y_matrix_det_vec_counterfactual,
-            ytickformat=(vs -> [ "$(round(Int, v))" for v ∈ vs ]),
-            xtitle="Time, days",
-            ytitle=L"Cumulative \\ incidence$$",
-        )
-        
-        for (i, ℓ) ∈ enumerate([ "Group 1", "Group 2", "Group 3" ])
-            Label(
-                ga[0, i], ℓ; 
-                fontsize=10, halign=:left, tellwidth=false
-            )
-        end
-     
-        colgap!(ga, 1, 5)  
-        for r ∈ [ 1, 3 ] rowgap!(ga, r, 5) end
-    end
-    
-    let
-        axs1 = plotrenewalequationsamples_r0!(
-            gb, simulation2dataset["cases"], sim2fit1, 1;
-            betafunctions=[ beta2a, beta2b, beta2c ], infectiousduration=2.5,
-            plotcounterfactuals=true, 
-            ytitle=L"$\mathcal{R}_0$",
-            rhoclip=3,
-        )
-        axs5 = plotrenewalequationsamples_causaleffect!(
-            gb, 
-            simulation2dataset["cases"], 
-            simulation2dataset["cases_counterfactual"], 
-            simulation2dataset["Ns"],
-            sim2fit1,
-            2;
-            cumulativedifference=true,
-            fittedparameter=:y_matrix_det_vec,
-            counterfactualfittedparameter=:y_matrix_det_vec_counterfactual,
-            ytickformat=(vs -> [ "$(round(Int, v))" for v ∈ vs ]),
-            xtitle="Time, days",
-            ytitle=L"Cumulative \\ incidence$$",
-        )
-        
-        for (i, ℓ) ∈ enumerate([ "Group 1", "Group 2", "Group 3" ])
-            Label(
-                gb[0, i], ℓ; 
-                fontsize=10, halign=:left, tellwidth=false
-            )
-        end
-    
-        colgap!(gb, 1, 5)  
-        for r ∈ [ 1, 3 ] rowgap!(gb, r, 5) end
-    end
-
-    labelplots!([ "A", "B" ], [ ga, gb ])
-    rowgap!(fig.layout, 1, 5) 
-
-    fig
-end
-
-safesave(plotsdir("subsetsim2plot.pdf"), subsetsim2plot)
-
 subsetsim2plotsuppl = with_theme(theme_latexfonts()) do 
-    fig = Figure(; size=( 500, 600 ))
+    fig = Figure(; size=( 500, 800 ))
     ga = GridLayout(fig[1, 1])
     gb = GridLayout(fig[2, 1])
     
@@ -789,42 +708,111 @@ subsetsim2plotsuppl = with_theme(theme_latexfonts()) do
             ), 
             1;
             markersize=2,
-            hidex=true,
-            ytitle=L"$w_{jt}$",
+            hidex=true, ytitle=L"$\ln\mathcal{R}_e$",
         )
-        axs2 = plotrenewalequationsamples_cases!(
+        axs2 = plotrenewalequationsamples_r0!(
+            ga, simulation2dataset["cases"], sim2fit0, 2;
+            betafunctions=[ beta2a, beta2b, beta2c ], infectiousduration=2.5,
+            plotcounterfactuals=true, 
+            rhoclip=3,
+            yticks=[ 1, 2, 3 ],
+            ytitle=L"$\mathcal{R}_0$",
+        )
+        setvalue!(axs2[1], 1)
+        axs3 = plotrenewalequationsamples_cases!(
             ga, 
             simulation2dataset["cases"], 
             simulation2dataset["Ns"], 
             sim2fit0, 
-            2;
+            3;
             markersize=2, fittedparameter=:y_matrix_det_vec_counterfactual,
             fittedcolour=( COLOURVECTOR[2], 0.75 ), 
-            ytitle=L"Without \\ intervetion$$",
+            ytitle="No\nintervetion",
         )
-        axs3 = plotrenewalequationsamples_cases!(
+        axs4 = plotrenewalequationsamples_cases!(
             ga, 
             simulation2dataset["cases"], 
             simulation2dataset["Ns"],
             sim2fit0,
-            3;
-            hidex=false,
+            4;
             markersize=2, fittedparameter=:y_matrix_det_vec,
+            ytitle="Intervention",
+        )
+        axs5 = plotrenewalequationsamples_causaleffect!(
+            ga, simulation2dataset["cases"], 
+            simulation2dataset["cases_counterfactual"], 
+            simulation2dataset["Ns"], 
+            sim2fit0, 
+            5;
+            cumulativedifference=true,
+            fittedparameter=:y_matrix_det_vec,
+            counterfactualfittedparameter=:y_matrix_det_vec_counterfactual,
+            ytickformat=(vs -> [ "$(round(Int, v))" for v ∈ vs ]),
             xtitle="Time, days",
-            ytitle=L"With \\ intervetion$$",
+            ytitle="Cumulative\ndifference",
+        )
+        for axs ∈ [ axs1, axs2, axs3, axs4, axs5 ]
+            if axs === axs5 
+                formataxis!(
+                    axs[1]; 
+                    hidespines=( :r, :t ), trimspines=true,
+                )
+                for i ∈ 2:3
+                    formataxis!(
+                        axs[i]; 
+                        hidey=true, hideyticks=true, 
+                        hidespines=( :l, :r, :t ), trimspines=true,
+                    )
+                end
+            else
+                formataxis!(
+                    axs[1]; 
+                    hidex=true, hidexticks=true, 
+                    hidespines=( :r, :t, :b ), trimspines=true,
+                )
+                for i ∈ 2:3
+                    formataxis!(
+                        axs[i]; 
+                        hidex=true, hidexticks=true, hidey=true, hideyticks=true, 
+                        hidespines=( :l, :r, :t, :b ), trimspines=true,
+                    )
+                end
+            end
+        end
+    
+        interventionax = Axis(ga[1:5, 2])
+        vlines!(interventionax, 50; color=:red, linestyle=( :dot, :dense ), linewidth=1,)
+        formataxis!(
+            interventionax; 
+            hidex=true, hidexticks=true, hidey=true, hideyticks=true, 
+            hidespines=( :l, :r, :t, :b )
+        )
+        interventionax2 = Axis(ga[1:5, 3])
+        vlines!(interventionax2, 30; color=:red, linestyle=( :dot, :dense ), linewidth=1,)
+        formataxis!(
+            interventionax2; 
+            hidex=true, hidexticks=true, hidey=true, hideyticks=true, 
+            hidespines=( :l, :r, :t, :b )
         )
 
-        linkaxes!(axs2..., axs3...)
-    
+        linkaxes!(axs3..., axs4...)
+        linkxaxes!(axs1[2], axs2[2], axs3[2], axs4[2], axs5[2], interventionax, interventionax2)
+
         for (i, ℓ) ∈ enumerate([ "Group 1", "Group 2", "Group 3" ])
             Label(
                 ga[0, i], ℓ; 
                 fontsize=10, halign=:left, tellwidth=false
             )
         end
-     
+        Label(
+            ga[3:5, -1], L"Diagnoses, per $100\,000$"; 
+            fontsize=11.84, rotation=π/2, tellheight=false
+        )
+
         colgap!(ga, 1, 5)  
-        for r ∈ [ 1, 4 ] rowgap!(ga, r, 5) end
+        colgap!(ga, 2, 5)  
+
+        for r ∈ [ 1, 6 ] rowgap!(ga, r, 5) end
     end
     
     let
@@ -841,50 +829,233 @@ subsetsim2plotsuppl = with_theme(theme_latexfonts()) do
             1;
             markersize=2,
             hidex=true,
-            ytitle=L"$w_{jt}$",
+            ytitle=L"$\ln\mathcal{R}_e$",
+            #yticks=[ -1, 0, 1, 2 ], 
         )
-        axs2 = plotrenewalequationsamples_cases!(
+        setvalue!(axs1[1], -1)
+        axs2 = plotrenewalequationsamples_r0!(
+            gb, simulation2dataset["cases"], sim2fit1, 2;
+            betafunctions=[ beta2a, beta2b, beta2c ], infectiousduration=2.5,
+            plotcounterfactuals=true, 
+            ytitle=L"$\mathcal{R}_0$",
+            rhoclip=3,
+            yticks=[ 1, 2, 3 ],
+        )
+        setvalue!(axs2[1], 1)
+        axs3 = plotrenewalequationsamples_cases!(
             gb, 
             simulation2dataset["cases"], 
             simulation2dataset["Ns"], 
             sim2fit1, 
-            2;
+            3;
             markersize=2, fittedparameter=:y_matrix_det_vec_counterfactual,
             fittedcolour=( COLOURVECTOR[2], 0.75 ), 
-            ytitle=L"Without \\ intervetion$$",
+            ytitle="No\nintervetion",
         )
-        axs3 = plotrenewalequationsamples_cases!(
+        axs4 = plotrenewalequationsamples_cases!(
             gb, 
             simulation2dataset["cases"], 
             simulation2dataset["Ns"],
             sim2fit1,
-            3;
-            hidex=false,
+            4;
             markersize=2, fittedparameter=:y_matrix_det_vec,
-            xtitle="Time, days",
-            ytitle=L"With \\ intervetion$$",
+            ytitle="Intervention",
         )
-
-        linkaxes!(axs2..., axs3...)
-    
-        for (i, ℓ) ∈ enumerate([ "Group 1", "Group 2", "Group 3" ])
-            Label(
-                gb[0, i], ℓ; 
-                fontsize=10, halign=:left, tellwidth=false
-            )
+        axs5 = plotrenewalequationsamples_causaleffect!(
+            gb, simulation2dataset["cases"], 
+            simulation2dataset["cases_counterfactual"], 
+            simulation2dataset["Ns"], 
+            sim2fit1, 
+            5;
+            cumulativedifference=true,
+            fittedparameter=:y_matrix_det_vec,
+            counterfactualfittedparameter=:y_matrix_det_vec_counterfactual,
+            ytickformat=(vs -> [ "$(round(Int, v))" for v ∈ vs ]),
+            xtitle="Time, days",
+            ytitle="Cumulative\ndifference",
+        )
+        for axs ∈ [ axs1, axs2, axs3, axs4, axs5 ]
+            if axs === axs5 
+                formataxis!(
+                    axs[1]; 
+                    hidespines=( :r, :t ), trimspines=true,
+                )
+                for i ∈ 2:3
+                    formataxis!(
+                        axs[i]; 
+                        hidey=true, hideyticks=true, 
+                        hidespines=( :l, :r, :t ), trimspines=true,
+                    )
+                end
+            else
+                formataxis!(
+                    axs[1]; 
+                    hidex=true, hidexticks=true, 
+                    hidespines=( :r, :t, :b ), trimspines=true,
+                )
+                for i ∈ 2:3
+                    formataxis!(
+                        axs[i]; 
+                        hidex=true, hidexticks=true, hidey=true, hideyticks=true, 
+                        hidespines=( :l, :r, :t, :b ), trimspines=true,
+                    )
+                end
+            end
         end
     
-        colgap!(gb, 1, 5)  
-        for r ∈ [ 1, 4 ] rowgap!(gb, r, 5) end    end
+        interventionax = Axis(gb[1:5, 2])
+        vlines!(interventionax, 50; color=:red, linestyle=( :dot, :dense ), linewidth=1,)
+        formataxis!(
+            interventionax; 
+            hidex=true, hidexticks=true, hidey=true, hideyticks=true, 
+            hidespines=( :l, :r, :t, :b)
+        )
+        interventionax2 = Axis(gb[1:5, 3])
+        vlines!(interventionax2, 30; color=:red, linestyle=( :dot, :dense ), linewidth=1,)
+        formataxis!(
+            interventionax2; 
+            hidex=true, hidexticks=true, hidey=true, hideyticks=true, 
+            hidespines=( :l, :r, :t, :b )
+        )
 
-    labelplots!([ "A", "B" ], [ ga, gb ])
-    rowgap!(fig.layout, 1, 5) 
+        linkaxes!(axs3..., axs4...)
+        linkxaxes!(axs1[2], axs2[2], axs3[2], axs4[2], axs5[2], interventionax, interventionax2)
+
+        Label(
+            gb[3:5, -1], L"Diagnoses, per $100\,000$"; 
+            fontsize=11.84, rotation=π/2, tellheight=false
+        )
+
+        colgap!(gb, 1, 5)  
+        colgap!(gb, 2, 5)  
+        rowgap!(gb, 5, 5) 
+    end
+
+    labelplots!([ "A", "B" ], [ ga, gb ]; cols=-1, rows=[0, 1])
 
     fig
 end
 
 safesave(plotsdir("subsetsim2plotsuppl.pdf"), subsetsim2plotsuppl)
 
+
+subsetsim2plot = with_theme(theme_latexfonts()) do 
+    fig = Figure(; size=( 500, 275 ))
+    ga = GridLayout(fig[1, 1])
+    gb = GridLayout(fig[2, 1])
+    
+    let
+        axs1 = plotrenewalequationsamples_causaleffect!(
+            ga, simulation2dataset["cases"], 
+            simulation2dataset["cases_counterfactual"], 
+            simulation2dataset["Ns"], 
+            sim2fit0, 
+            1;
+            cumulativedifference=true,
+            fittedparameter=:y_matrix_det_vec,
+            counterfactualfittedparameter=:y_matrix_det_vec_counterfactual,
+            ytickformat=(vs -> [ "$(round(Int, v))" for v ∈ vs ]),
+            xtitle="Time, days",
+            ytitle="Cumulative\ndifference",
+        )
+        formataxis!(
+            axs1[1]; 
+            hidespines=( :r, :t ), trimspines=true,
+        )
+        for i ∈ 2:3
+            formataxis!(
+                axs1[i]; 
+                hidey=true, hideyticks=true, 
+                hidespines=( :l, :r, :t ), trimspines=true,
+            )
+        end
+    
+        interventionax = Axis(ga[1, 2])
+        vlines!(interventionax, 50; color=:red, linestyle=( :dot, :dense ), linewidth=1,)
+        formataxis!(
+            interventionax; 
+            hidex=true, hidexticks=true, hidey=true, hideyticks=true, 
+            hidespines=( :l, :r, :t, :b )
+        )
+        interventionax2 = Axis(ga[1, 3])
+        vlines!(interventionax2, 30; color=:red, linestyle=( :dot, :dense ), linewidth=1,)
+        formataxis!(
+            interventionax2; 
+            hidex=true, hidexticks=true, hidey=true, hideyticks=true, 
+            hidespines=( :l, :r, :t, :b )
+        )
+
+        linkxaxes!(axs1[2], interventionax, interventionax2)
+
+        for (i, ℓ) ∈ enumerate([ "Group 1", "Group 2", "Group 3" ])
+            Label(
+                ga[0, i], ℓ; 
+                fontsize=10, halign=:left, tellwidth=false
+            )
+        end
+
+        colgap!(ga, 1, 5)  
+        colgap!(ga, 2, 5)  
+
+        for r ∈ [ 1, 2 ] rowgap!(ga, r, 5) end
+    end
+    
+    let
+        axs1 = plotrenewalequationsamples_causaleffect!(
+            gb, simulation2dataset["cases"], 
+            simulation2dataset["cases_counterfactual"], 
+            simulation2dataset["Ns"], 
+            sim2fit1, 
+            1;
+            cumulativedifference=true,
+            fittedparameter=:y_matrix_det_vec,
+            counterfactualfittedparameter=:y_matrix_det_vec_counterfactual,
+            ytickformat=(vs -> [ "$(round(Int, v))" for v ∈ vs ]),
+            xtitle="Time, days",
+            ytitle="Cumulative\ndifference",
+        )
+        formataxis!(
+            axs1[1]; 
+            hidespines=( :r, :t ), trimspines=true,
+        )
+        for i ∈ 2:3
+            formataxis!(
+                axs1[i]; 
+                hidey=true, hideyticks=true, 
+                hidespines=( :l, :r, :t ), trimspines=true,
+            )
+        end
+    
+        interventionax = Axis(gb[1, 2])
+        vlines!(interventionax, 50; color=:red, linestyle=( :dot, :dense ), linewidth=1,)
+        formataxis!(
+            interventionax; 
+            hidex=true, hidexticks=true, hidey=true, hideyticks=true, 
+            hidespines=( :l, :r, :t, :b)
+        )
+        interventionax2 = Axis(gb[1, 3])
+        vlines!(interventionax2, 30; color=:red, linestyle=( :dot, :dense ), linewidth=1,)
+        formataxis!(
+            interventionax2; 
+            hidex=true, hidexticks=true, hidey=true, hideyticks=true, 
+            hidespines=( :l, :r, :t, :b )
+        )
+
+        linkxaxes!(axs1[2], interventionax, interventionax2)
+
+        colgap!(gb, 1, 5)  
+        colgap!(gb, 2, 5)  
+        rowgap!(gb, 1, 5) 
+
+        rowsize!(fig.layout, 2, Auto(0.95))
+    end
+
+    labelplots!([ "A", "B" ], [ ga, gb ]; cols=0, rows=[0, 1])
+
+    fig
+end
+
+safesave(plotsdir("subsetsim2plot.pdf"), subsetsim2plot)
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
