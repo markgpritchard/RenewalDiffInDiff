@@ -344,6 +344,7 @@ end
 function plotrenewalequationsamples_cases!(
     gl::GridLayout, 
     cases::Matrix, Ns::Vector, fittedvaluesset, row;
+    counterfactualcases=nothing, simcolour=COLOURVECTOR[3], 
     fittedparameter=:y_matrix_poisson_vec,
     datacolour=:black, fittedcolour=COLOURVECTOR[1], fittedbandcolour=( fittedcolour, 0.5 ),
     markersize=3, 
@@ -375,10 +376,16 @@ function plotrenewalequationsamples_cases!(
             axs[i], xs, 100_000 .* yqs[:, 2] ./ Ns[ℓ]; 
             color=fittedcolour, linewidth=1,
         )
+        if !isnothing(counterfactualcases)
+            scatter!(
+                axs[i], 100_000 .* counterfactualcases[:, ℓ] ./ Ns[ℓ]; 
+                color=simcolour, markersize
+            )
+        end
         scatter!(
             axs[i], 100_000 .* cases[:, ℓ] ./ Ns[ℓ]; 
             color=datacolour, markersize
-        )
+        )        
     end
     linkyaxes!(axs...)
 
@@ -433,34 +440,22 @@ function plotrenewalequationsamples_causaleffect!(
 
     for (i, ℓ) ∈ enumerate(_locinds)
         yqs_cf = _modelquantiles(
-            fittedvaluesset, fittedparameter, counterfactualfittedparameter, ℓ
+            fittedvaluesset, fittedparameter, counterfactualfittedparameter, ℓ;
+            cumulativedifference
         )
-        if cumulativedifference 
-            band!(
-                axs[i], 
-                xs, 
-                100_000 .* cumsum(yqs_cf[:, 1]) ./ Ns[ℓ], 
-                100_000 .* cumsum(yqs_cf[:, 3]) ./ Ns[ℓ]; 
-                color=fittedbandcolour
-            )
-            lines!(
-                axs[i], xs, 100_000 .* cumsum(yqs_cf[:, 2]) ./ Ns[ℓ]; 
-                color=fittedcolour, linewidth=1,
-            )
-        else 
-            band!(
-                axs[i], 
-                xs, 
-                100_000 .* yqs_cf[:, 1] ./ Ns[ℓ], 
-                100_000 .* yqs_cf[:, 3] ./ Ns[ℓ]; 
-                color=fittedbandcolour
-            )
-            lines!(
-                axs[i], xs, 100_000 .* yqs_cf[:, 2] ./ Ns[ℓ]; 
-                color=fittedcolour, linewidth=1,
-            )
-        end
         
+        band!(
+            axs[i], 
+            xs, 
+            100_000 .* yqs_cf[:, 1] ./ Ns[ℓ], 
+            100_000 .* yqs_cf[:, 3] ./ Ns[ℓ]; 
+            color=fittedbandcolour
+        )
+        lines!(
+            axs[i], xs, 100_000 .* yqs_cf[:, 2] ./ Ns[ℓ]; 
+            color=fittedcolour, linewidth=1,
+        )
+                
         isnothing(cases_counterfactual) && continue
         if cumulativedifference 
             scatter!(
@@ -526,20 +521,37 @@ function _modelquantiles(dataset, var, col; quantiles=[ 0.05, 0.5, 0.95 ])
     return output
 end
 
-function _modelquantiles(dataset, var, var_counterfactual, col; quantiles=[ 0.05, 0.5, 0.95 ])
+function _modelquantiles(
+    dataset, var, var_counterfactual, col; 
+    quantiles=[ 0.05, 0.5, 0.95 ], cumulativedifference=false
+)
     output = Matrix{Float64}(
         undef, length(getproperty(dataset, var)[1][:, col]), length(quantiles)
     )
-    for i ∈ axes(output, 1)
-        output[i, :] = quantile(
-            [ 
-                getproperty(dataset, var)[x][i, col] - 
-                    getproperty(dataset, var_counterfactual)[x][i, col] 
-                for x ∈ eachindex(getproperty(dataset, var)) 
-            ],
-            quantiles
-        )
+    if cumulativedifference 
+        for i ∈ axes(output, 1)
+            output[i, :] = quantile(
+                [ 
+                    sum(@view getproperty(dataset, var)[x][1:i, col]) - 
+                        sum(@view getproperty(dataset, var_counterfactual)[x][1:i, col]) 
+                    for x ∈ eachindex(getproperty(dataset, var)) 
+                ],
+                quantiles
+            )
+        end
+    else 
+        for i ∈ axes(output, 1)
+            output[i, :] = quantile(
+                [ 
+                    getproperty(dataset, var)[x][i, col] - 
+                        getproperty(dataset, var_counterfactual)[x][i, col] 
+                    for x ∈ eachindex(getproperty(dataset, var)) 
+                ],
+                quantiles
+            )
+        end
     end
+
     return output
 end
 
