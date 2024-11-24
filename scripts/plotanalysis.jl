@@ -1044,7 +1044,6 @@ subsetsim2plot = with_theme(theme_latexfonts()) do
         linkxaxes!(axs1[2], interventionax, interventionax2)
 
         colgap!(gb, 1, 5)  
-        colgap!(gb, 2, 5)  
         rowgap!(gb, 1, 5) 
 
         rowsize!(fig.layout, 2, Auto(0.95))
