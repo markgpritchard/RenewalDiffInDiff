@@ -1162,6 +1162,7 @@ subsetsim3plot0suppl = with_theme(theme_latexfonts()) do
             simulation3dataset["Ns"], 
             sim3fit0, 
             3;
+            counterfactualcases=simulation3dataset["cases_counterfactual"], 
             markersize=2, fittedparameter=:y_matrix_det_vec_counterfactual,
             fittedcolour=( COLOURVECTOR[2], 0.75 ), 
             ytitle="No\nintervetion",
@@ -1267,6 +1268,7 @@ subsetsim3plot0suppl = with_theme(theme_latexfonts()) do
             simulation3dataset["Ns"], 
             sim3fit0leadlag, 
             3;
+            counterfactualcases=simulation3dataset["cases_counterfactual"], 
             markersize=2, fittedparameter=:y_matrix_det_vec_counterfactual,
             fittedcolour=( COLOURVECTOR[2], 0.75 ), 
             ytitle=nothing,
@@ -1383,6 +1385,8 @@ sim3fit2 = samplerenewalequation_2sets(
         InterventionsMatrix([ nothing, 64 ], 100)
     ],
 )
+sim3fit2kv = keyvalues(sim3chain2, sim3fit2)
+println(sim3fit2kv)
 
 subsetsim3plotsuppl = with_theme(theme_latexfonts()) do 
     fig = Figure(; size=( 500, 450 ))
@@ -1419,6 +1423,7 @@ subsetsim3plotsuppl = with_theme(theme_latexfonts()) do
             simulation3dataset["Ns"], 
             sim3fit1, 
             3;
+            counterfactualcases=simulation3dataset["cases_counterfactual"], 
             markersize=2, fittedparameter=:y_matrix_det_vec_counterfactual,
             fittedcolour=( COLOURVECTOR[2], 0.75 ), 
             ytitle="No\nintervetion",
@@ -1524,6 +1529,7 @@ subsetsim3plotsuppl = with_theme(theme_latexfonts()) do
             simulation3dataset["Ns"], 
             sim3fit2, 
             3;
+            counterfactualcases=simulation3dataset["cases_counterfactual"], 
             markersize=2, fittedparameter=:y_matrix_det_vec_counterfactual,
             fittedcolour=( COLOURVECTOR[2], 0.75 ), 
             ytitle=nothing,
@@ -1818,6 +1824,8 @@ sim4fit0 = samplerenewalequation_2sets(
     Ns=simulation4dataset["Ns"], 
     timeknots=[ [ 1 ]; collect(11:89/4:100) ],
 )
+sim4fit0kv = keyvalues(sim4chain0, sim4fit0)
+println(sim4fit0kv)
 
 sim4chain1 = loadanalysisdictsasdf("sim4model1", 8, maxrounds, 410)
 plotchains(sim4chain1)
@@ -1827,6 +1835,8 @@ sim4fit1 = samplerenewalequation_2sets(
     Ns=simulation4dataset["Ns"], 
     timeknots=[ [ 1 ]; collect(11:89/4:100) ],
 )
+sim4fit1kv = keyvalues(sim4chain1, sim4fit1)
+println(sim4fit1kv)
 
 sim4chain2 = loadanalysisdictsasdf("sim4model2", 8, maxrounds, 420)
 plotchains(sim4chain2)
@@ -1840,6 +1850,8 @@ sim4fit2 = samplerenewalequation_2sets(
         InterventionsMatrix([ nothing, 64 ], 100)
     ],
 )
+sim4fit2kv = keyvalues(sim4chain2, sim4fit2)
+println(sim4fit2kv)
 
 subsetsim4plotsuppl0 = with_theme(theme_latexfonts()) do 
     fig = Figure(; size=( 500, 450 ))
@@ -1874,6 +1886,7 @@ subsetsim4plotsuppl0 = with_theme(theme_latexfonts()) do
             simulation4dataset["Ns"], 
             sim4fit0, 
             3;
+            counterfactualcases=simulation4dataset["cases_counterfactual"], 
             markersize=2, fittedparameter=:y_matrix_det_vec_counterfactual,
             fittedcolour=( COLOURVECTOR[2], 0.75 ), 
             ytitle="No\nintervetion",
@@ -1994,6 +2007,7 @@ subsetsim4plotsuppl = with_theme(theme_latexfonts()) do
             simulation4dataset["Ns"], 
             sim4fit1, 
             3;
+            counterfactualcases=simulation4dataset["cases_counterfactual"], 
             markersize=2, fittedparameter=:y_matrix_det_vec_counterfactual,
             fittedcolour=( COLOURVECTOR[2], 0.75 ), 
             ytitle="No\nintervetion",
