@@ -1125,6 +1125,8 @@ sim3fit0leadlag = samplerenewalequation_2sets(
 )
 sim3fit0kvll = keyvalues(sim3chain0leadlag, sim3fit0leadlag)
 println(sim3fit0kvll)
+exp.(quantile(getproperty(sim3chain0leadlag, "logsecondarydelta1.logsecondarydelta"), [ 0.05, 0.5, 0.95 ]))
+exp.(quantile(getproperty(sim3chain0leadlag, "logsecondarydelta2.logsecondarydelta"), [ 0.05, 0.5, 0.95 ]))
 
 subsetsim3plot0suppl = with_theme(theme_latexfonts()) do 
     fig = Figure(; size=( 500, 450 ))
