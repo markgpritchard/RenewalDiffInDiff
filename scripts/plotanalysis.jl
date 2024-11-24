@@ -2472,29 +2472,123 @@ datafit2 = samplerenewalequation_2sets(
     timeknots=[ collect(1.0:28:216); [216] ],
 )
 datafit2plot = with_theme(theme_latexfonts()) do 
-    fig = Figure(; size=( 587, 411 ))
+    fig = Figure(; size=( 500, 450 ))
     ga = GridLayout(fig[1, 1])
-    plotrenewalequationsamples!(
-        ga, pil1covidcases, W_pil1coviddata, selectpops, datafit2;
-        columntitles=[ 
-            "Halton", 
-            "Knowsley", 
-            "Liverpool", 
-            "Sefton", 
-            "St Helens", 
-            "Warrington", 
-            "W. Lancs", 
-            "Wigan", 
-            "Wirral" 
-        ],
-        columntitlefontsize=10,
+    axs1 = plotrenewalequationsamples_w!(
+        ga, 
+        pil1covidcases, 
+        W_allcoviddata, datafit2, 
+        fitws(
+            pil1covidcases, 
+            selectpops, 
+            datafit2
+        ), 
+        1;
+        locationinds=[ 1:5; [ 9 ] ],
         markersize=2,
+        xticks=( [ 1, 93, 215 ], [ "June", "Sept.", "Jan." ] ), 
+        hidex=true, ytitle=L"$\ln\mathcal{R}_e$",
+    )
+    axs2 = plotrenewalequationsamples_r0!(
+        ga, pil1covidcases, datafit2, 2;
+        locationinds=[ 1:5; [ 9 ] ],
+        plotcounterfactuals=true, 
+        xticks=( [ 1, 93, 215 ], [ "June", "Sept.", "Jan." ] ), 
+        ytitle=L"$\mathcal{R}_0$",
+    )
+    axs3 = plotrenewalequationsamples_cases!(
+        ga, pil1covidcases, selectpops, datafit2, 3;
+        locationinds=[ 1:5; [ 9 ] ],
+        markersize=2, fittedparameter=:y_matrix_det_vec_counterfactual,
+        fittedcolour=( COLOURVECTOR[2], 0.75 ), 
+        xticks=( [ 1, 93, 215 ], [ "June", "Sept.", "Jan." ] ), 
+        ytitle=L"Without \\ intervetion$$",
+    )
+    axs4 = plotrenewalequationsamples_cases!(
+        ga, pil1covidcases, selectpops, datafit2, 4;
+        locationinds=[ 1:5; [ 9 ] ],
+        markersize=2, fittedparameter=:y_matrix_det_vec,
+        xticks=( [ 1, 93, 215 ], [ "June", "Sept.", "Jan." ] ), 
+        ytitle=L"With \\ intervetion$$",
+    )
+    axs5 = plotrenewalequationsamples_causaleffect!(
+        ga, pil1covidcases, nothing, selectpops, datafit2, 5;
+        cumulativedifference=true,
+        fittedparameter=:y_matrix_det_vec,
+        counterfactualfittedparameter=:y_matrix_det_vec_counterfactual,
+        locationinds=[ 1:5; [ 9 ] ],
         xticklabelrotation=-π/4,
         xticks=( [ 1, 93, 215 ], [ "June", "Sept.", "Jan." ] ),
         xtitle="Date, 2020–2021",
+        ytitle=L"Cumulative \\ difference$$",
     )
-    
-    fig 
+
+    linkaxes!(axs3..., axs4...)
+
+    for (i, ℓ) ∈ enumerate([ 
+        "Halton", 
+        "Knowsley", 
+        "Liverpool", 
+        "Sefton", 
+        "St Helens",  
+        "Wirral" 
+    ])
+        Label(
+        ga[0, i], ℓ; 
+        fontsize=10, halign=:left, tellwidth=false
+    )
+    end
+
+    colgap!(ga, 1, 5)  
+    for r ∈ [ 1, 6 ] rowgap!(ga, r, 5) end
+    for axs ∈ [ axs1, axs2, axs3, axs4, axs5 ]
+        if axs === axs5 
+            formataxis!(
+                axs[1]; 
+                hidespines=( :r, :t ), trimspines=true,
+            )
+            for i ∈ 2:6
+                formataxis!(
+                    axs[i]; 
+                    hidey=true, hideyticks=true, 
+                    hidespines=( :l, :r, :t ), trimspines=true,
+                )
+            end
+        else
+            formataxis!(
+                axs[1]; 
+                hidex=true, hidexticks=true, 
+                hidespines=( :r, :t, :b ), trimspines=true,
+            )
+            for i ∈ 2:6 
+                formataxis!(
+                    axs[i]; 
+                    hidex=true, hidexticks=true, hidey=true, hideyticks=true, 
+                    hidespines=( :l, :r, :t, :b ), trimspines=true,
+                )
+            end
+        end
+    end
+
+    for i ∈ 1:6 
+        iax = Axis(ga[1:5, i]; xticks=( [ 1, 93, 215 ], [ "June", "Sept.", "Jan." ] ))
+        if i == 3
+            vlines!(iax, 160; color=:red, linestyle=( :dot, :dense ), linewidth=1,)
+        else
+            vlines!(iax, 186; color=:red, linestyle=( :dot, :dense ), linewidth=1,)
+        end
+        formataxis!(
+            iax; 
+            hidex=true, hidexticks=true, hidey=true, hideyticks=true, 
+            hidespines=( :l, :r, :t, :b)
+        )
+        iax.xgridstyle=( :dot, :dense ) 
+        iax.xgridwidth = 1
+        iax.xgridvisible = true
+        linkxaxes!(iax, axs1[i])
+    end
+
+    fig
 end
 
 safesave(plotsdir("datafit2plot.pdf"), datafit2plot)
