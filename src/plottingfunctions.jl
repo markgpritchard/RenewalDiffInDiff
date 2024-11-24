@@ -215,33 +215,40 @@ end
 function plotrenewalequationsamples_w!(
     gl::GridLayout, 
     cases::Matrix, w, fittedvaluesset, fittedws, row;
+    locationinds=RenewalDiffInDiff.automatic,
     datacolour=:black, fittedcolour=COLOURVECTOR[1], fittedbandcolour=( fittedcolour, 0.5 ),
     markersize=3,
     hidex=true,
     xticklabelrotation=0.0, xticks=Makie.automatic, xtitle="Time", ytitle=L"$w_{jt}$",
     yticks=Makie.automatic, 
 )
-    nlocations = size(cases, 2)
+    if locationinds isa RenewalDiffInDiff.Automatic
+        nlocations = size(cases, 2)
+        _locinds = 1:nlocations
+    else
+        nlocations = length(locationinds)
+        _locinds = locationinds
+    end
     xs = eachindex(fittedvaluesset.rho_matrix_vec[1][:, 1])
 
     axs = [ Axis(gl[row, i]; xticklabelrotation, xticks, yticks) for i ∈ 1:nlocations ]
 
-    for i ∈ 1:nlocations
-        ws = _modelquantiles(fittedws, i)     
+    for (i, ℓ) ∈ enumerate(_locinds)
+        ws = _modelquantiles(fittedws, ℓ)     
         band!(axs[i], xs, ws[:, 1], ws[:, 3]; color=fittedbandcolour)
         lines!(axs[i], xs, ws[:, 2]; color=fittedcolour, linewidth=1,)
         scatter!(
-            axs[i], [ RenewalDiffInDiff._skip(x) ? missing : x for x ∈ w[:, i] ];
+            axs[i], [ RenewalDiffInDiff._skip(x) ? missing : x for x ∈ w[:, ℓ] ];
             color=datacolour, markersize
         )
     end
     linkyaxes!(axs...)
 
-    for col ∈ 1:nlocations
-        if col == 1 
-            formataxis!(axs[col]; hidex)
+    for (i, ℓ) ∈ enumerate(_locinds)
+        if i == 1 
+            formataxis!(axs[i]; hidex)
         else
-            formataxis!(axs[col]; hidex, hidey=true,)
+            formataxis!(axs[i]; hidex, hidey=true,)
         end
     end
 
