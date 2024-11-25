@@ -2363,75 +2363,123 @@ datapriors1df = DataFrame(datapriors1)
 plotchains(datapriors1df)
 datapriorsfit1 = samplerenewalequation_2sets(
     COVIDSERIALINTERVAL, datapriors1df, masstesting; 
-    initialvalues=allcovidcases[1:100, :], 
+    initialvalues=allcovidcases[1:56, :], 
     Ns=selectpops,
     timeknots=[ collect(1.0:28:216); [216] ],
 )
 
-datapriorsfit1plot = with_theme(theme_latexfonts()) do 
-    fig = Figure(; size=( 587, 411 ))
+for i ∈ 16000:-1:1
+    if isnan(maximum(datapriorsfit1[:y_matrix_det_vec][i])) || isnan(maximum(datapriorsfit1[:y_matrix_det_vec_counterfactual][i]))
+        popat!(datapriorsfit1[:y_matrix_det_vec], i)
+        popat!(datapriorsfit1[:y_matrix_det_vec_counterfactual], i)
+    end
+end
+
+
+datapriorsfit1plot =  with_theme(theme_latexfonts()) do 
+    fig = Figure(; size=( 500, 250 ))
     ga = GridLayout(fig[1, 1])
-    plotrenewalequationsamples!(
-        ga, allcovidcases, W_allcoviddata, selectpops, datapriorsfit1;
-        columntitles=[ 
-            "Halton", 
-            "Knowsley", 
-            "Liverpool", 
-            "Sefton", 
-            "St Helens", 
-            "Warrington", 
-            "W. Lancs", 
-            "Wigan", 
-            "Wirral" 
-        ],
-        columntitlefontsize=10,
+    axs1 = plotrenewalequationsamples_w!(
+        ga, 
+        allcovidcases, 
+        W_allcoviddata, datapriorsfit1, 
+        fitws(
+            allcovidcases, 
+            selectpops, 
+            datapriorsfit1
+        ), 
+        1;
+        locationinds=[ 1:5; [ 9 ] ],
         markersize=2,
-        xticklabelrotation=-π/4,
-        xticks=( [ 1, 93, 215 ], [ "June", "Sept.", "Jan." ] ),
-        xtitle="Date, 2020–2021",
+        xticks=( [ 1, 93, 215 ], [ "June", "Sept.", "Jan." ] ), 
+        hidex=true, ytitle=L"$\ln\mathcal{R}_e$",
     )
-    
+    axs2 = plotrenewalequationsamples_cases!(
+        ga, allcovidcases, selectpops, datapriorsfit1, 2;
+        locationinds=[ 1:5; [ 9 ] ],
+        markersize=2, fittedparameter=:y_matrix_det_vec,
+        hidex=false,
+        xticklabelrotation=-π/4,
+        xticks=( [ 1, 93, 215 ], [ "June", "Sept.", "Jan." ] ), 
+        xtitle="Date, 2020–2021",
+        ytitle=L"Incidence \\ per $100\,000$",
+    )
+
+    for (i, ℓ) ∈ enumerate([ 
+        "Halton", 
+        "Knowsley", 
+        "Liverpool", 
+        "Sefton", 
+        "St Helens",  
+        "Wirral" 
+    ])
+        Label(
+        ga[0, i], ℓ; 
+        fontsize=10, halign=:left, tellwidth=false
+    )
+    end
+
+    colgap!(ga, 1, 5)  
+    for r ∈ [ 1, 3 ] rowgap!(ga, r, 5) end
+    for axs ∈ [ axs1, axs2 ]
+        if axs === axs2 
+            formataxis!(
+                axs[1]; 
+                hidespines=( :r, :t ), trimspines=true,
+            )
+            for i ∈ 2:6
+                formataxis!(
+                    axs[i]; 
+                    hidey=true, hideyticks=true, 
+                    hidespines=( :l, :r, :t ), trimspines=true,
+                )
+            end
+        else
+            formataxis!(
+                axs[1]; 
+                hidex=true, hidexticks=true, 
+                hidespines=( :r, :t, :b ), trimspines=true,
+            )
+            for i ∈ 2:6 
+                formataxis!(
+                    axs[i]; 
+                    hidex=true, hidexticks=true, hidey=true, hideyticks=true, 
+                    hidespines=( :l, :r, :t, :b ), trimspines=true,
+                )
+            end
+        end
+    end
+
+    for i ∈ 1:6 
+        iax = Axis(ga[1:2, i]; xticks=( [ 1, 93, 215 ], [ "June", "Sept.", "Jan." ] ))
+        formataxis!(
+            iax; 
+            hidex=true, hidexticks=true, hidey=true, hideyticks=true, 
+            hidespines=( :l, :r, :t, :b)
+        )
+        iax.xgridstyle=( :dot, :dense ) 
+        iax.xgridwidth = 1
+        iax.xgridvisible = true
+        linkxaxes!(iax, axs1[i])
+    end
+
     fig
 end
+
+safesave(plotsdir("datapriorsfit1plot.pdf"), datapriorsfit1plot)
 
 
 datachain1 = loadanalysisdictsasdf("datamodel1", 8, maxrounds, 1010)
 plotchains(datachain1)
 datafit1 = samplerenewalequation_2sets(
     COVIDSERIALINTERVAL, datachain1, masstesting; 
-    initialvalues=allcovidcases[1:100, :], 
+    initialvalues=allcovidcases[1:56, :], 
     Ns=selectpops,
     timeknots=[ collect(1.0:28:216); [216] ],
 )
 datafit1kv = keyvalues(datachain1, datafit1)
 println(datafit1kv)
-datafit1plot = with_theme(theme_latexfonts()) do 
-    fig = Figure(; size=( 587, 411 ))
-    ga = GridLayout(fig[1, 1])
-    plotrenewalequationsamples!(
-        ga, allcovidcases, W_allcoviddata, selectpops, datafit1;
-        columntitles=[ 
-            "Halton", 
-            "Knowsley", 
-            "Liverpool", 
-            "Sefton", 
-            "St Helens", 
-            "Warrington", 
-            "W. Lancs", 
-            "Wigan", 
-            "Wirral" 
-        ],
-        columntitlefontsize=10,
-        markersize=2,
-        xticklabelrotation=-π/4,
-        xticks=( [ 1, 93, 215 ], [ "June", "Sept.", "Jan." ] ),
-        xtitle="Date, 2020–2021",
-    )
-    
-    fig
-end
 
-safesave(plotsdir("datafit1plot.pdf"), datafit1plot)
 
 subsetdatafit1plot = with_theme(theme_latexfonts()) do 
     fig = Figure(; size=( 500, 450 ))
@@ -2567,7 +2615,7 @@ datachain2 = loadanalysisdictsasdf("datamodel2", 8, maxrounds, 1020)
 plotchains(datachain2)
 datafit2 = samplerenewalequation_2sets(
     COVIDSERIALINTERVAL, datachain2, masstesting; 
-    initialvalues=pil1covidcases[1:124, :], 
+    initialvalues=pil1covidcases[1:56, :], 
     Ns=selectpops,
     timeknots=[ collect(1.0:28:216); [216] ],
 )
@@ -2775,7 +2823,7 @@ datachain3 = loadanalysisdictsasdf("datamodel3", 8, maxrounds, 1030)
 plotchains(datachain3)
 datafit3 = samplerenewalequation_2sets(
     COVIDSERIALINTERVAL, datachain3, masstesting; 
-    initialvalues=allcovidcases[1:100, :], 
+    initialvalues=allcovidcases[1:56, :], 
     Ns=selectpops,
     timeknots=[ collect(1.0:28:216); [216] ],
     secondaryinterventions=[ 
@@ -2783,6 +2831,11 @@ datafit3 = samplerenewalequation_2sets(
         InterventionsMatrix([ 200, 200, 174, 200, 200, 217, 217, 217, 200 ], 216), 
     ],
 )
+
+datafit3kv = keyvalues(datachain3, datafit3)
+println(datafit3kv)
+
+
 datafit3plot = with_theme(theme_latexfonts()) do 
     fig = Figure(; size=( 500, 450 ))
     ga = GridLayout(fig[1, 1])
@@ -2961,7 +3014,7 @@ datachain5 = loadanalysisdictsasdf("datamodel5", 8, maxrounds, 1050)
 plotchains(datachain5)
 datafit5 = samplerenewalequation_2sets(
     COVIDSERIALINTERVAL, datachain5, masstesting; 
-    initialvalues=pil1covidcases[1:124, :], 
+    initialvalues=pil1covidcases[1:56, :], 
     Ns=selectpops,
     timeknots=[ collect(1.0:28:216); [216] ],
     secondaryinterventions=[ 
@@ -2969,6 +3022,8 @@ datafit5 = samplerenewalequation_2sets(
         InterventionsMatrix([ 200, 200, 174, 200, 200, 217, 217, 217, 200 ], 216), 
     ],
 )
+
+
 datafit5plot = with_theme(theme_latexfonts()) do 
     fig = Figure(; size=( 587, 411 ))
     ga = GridLayout(fig[1, 1])
