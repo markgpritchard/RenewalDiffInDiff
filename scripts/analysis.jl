@@ -739,8 +739,40 @@ maskingdatamodel4 = diffindiffparameters_splinetimes(
 maskdatac4config = @ntuple modelname="maskingdatamodel4" model=maskingdatamodel4 n_rounds n_chains=8 seed=1140+id
 maskingdatamodel4 = produce_or_load(pol_fitparameter, maskdatac4config, datadir("sims"))
 
+## Analysis 5 
+# Effect of mask requirements with secondary interventions of end of stay-at-home and some
+# businesses reopening and mask recommendations
+
+maskingdatamodel5 = diffindiffparameters_splinetimes(
+    W_maskcoviddata, 
+    maskcovidcases,
+    facialcoveringsrequired, 
+    [ 1.0; collect(56.0:28:224); 257 ],
+    POPULATION2020;
+    psiprior=0.4,
+    secondaryinterventions=[ endstayathometimes, somebusinessreopen, facialcoveringsrecommended ],
+)
+
+maskdatac5config = @ntuple modelname="maskingdatamodel5" model=maskingdatamodel5 n_rounds n_chains=8 seed=1150+id
+maskingdatamodel5 = produce_or_load(pol_fitparameter, maskdatac5config, datadir("sims"))
 
 
+## Analysis 6 
+# Effect of mask requirements with secondary interventions of end of stay-at-home and some
+# businesses reopening and mask recommendations plus lead and lag
+
+maskingdatamodel6 = diffindiffparameters_splinetimes(
+    W_maskcoviddata, 
+    maskcovidcases,
+    facialcoveringsrequired, 
+    [ 1.0; collect(56.0:28:224); 257 ],
+    POPULATION2020;
+    psiprior=0.4,
+    secondaryinterventions=[ endstayathometimes, somebusinessreopen, facialcoveringsrecommended ],
+)
+
+maskdatac6config = @ntuple modelname="maskingdatamodel6" model=maskingdatamodel6 n_rounds n_chains=8 seed=1160+id
+maskingdatamodel6 = produce_or_load(pol_fitparameter, maskdatac6config, datadir("sims"))
 
 
 
