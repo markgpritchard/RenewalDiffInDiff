@@ -2356,6 +2356,45 @@ safesave(plotsdir("subsetsim4plot.pdf"), subsetsim4plot)
 # Covid data 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+## Priors 
+
+datapriors1 = sample(datamodel1, Prior(), MCMCThreads(), 4000, 4)
+datapriors1df = DataFrame(datapriors1)
+plotchains(datapriors1df)
+datapriorsfit1 = samplerenewalequation_2sets(
+    COVIDSERIALINTERVAL, datapriors1df, masstesting; 
+    initialvalues=allcovidcases[1:100, :], 
+    Ns=selectpops,
+    timeknots=[ collect(1.0:28:216); [216] ],
+)
+
+datapriorsfit1plot = with_theme(theme_latexfonts()) do 
+    fig = Figure(; size=( 587, 411 ))
+    ga = GridLayout(fig[1, 1])
+    plotrenewalequationsamples!(
+        ga, allcovidcases, W_allcoviddata, selectpops, datapriorsfit1;
+        columntitles=[ 
+            "Halton", 
+            "Knowsley", 
+            "Liverpool", 
+            "Sefton", 
+            "St Helens", 
+            "Warrington", 
+            "W. Lancs", 
+            "Wigan", 
+            "Wirral" 
+        ],
+        columntitlefontsize=10,
+        markersize=2,
+        xticklabelrotation=-π/4,
+        xticks=( [ 1, 93, 215 ], [ "June", "Sept.", "Jan." ] ),
+        xtitle="Date, 2020–2021",
+    )
+    
+    fig
+end
+
+
 datachain1 = loadanalysisdictsasdf("datamodel1", 8, maxrounds, 1010)
 plotchains(datachain1)
 datafit1 = samplerenewalequation_2sets(
@@ -2364,6 +2403,8 @@ datafit1 = samplerenewalequation_2sets(
     Ns=selectpops,
     timeknots=[ collect(1.0:28:216); [216] ],
 )
+datafit1kv = keyvalues(datachain1, datafit1)
+println(datafit1kv)
 datafit1plot = with_theme(theme_latexfonts()) do 
     fig = Figure(; size=( 587, 411 ))
     ga = GridLayout(fig[1, 1])
