@@ -3150,7 +3150,8 @@ maskingdatafit1 = samplerenewalequation_2sets(
     timeknots=[ 1.0; collect(56.0:28:191); 191 ],
 )
 
-#maskcovidcases[1:191, :], W_maskcoviddata[1:191, :], POPULATION2020, maskingdatafit1
+maskdata1kv = keyvalues(maskingdatachain1, maskingdatafit1)
+print(maskdata1kv)
 
 subsetmaskdatafit1plot = with_theme(theme_latexfonts()) do 
     fig = Figure(; size=( 500, 450 ))
@@ -3282,6 +3283,9 @@ maskingdatafit2 = samplerenewalequation_2sets(
     #psi=0.4, timeknots=collect(1:303/10:304),
     timeknots=[ 1.0; collect(56.0:28:224); 257 ],
 )
+
+maskdata2kv = keyvalues(maskingdatachain2, maskingdatafit2)
+print(maskdata2kv)
 
 subsetmaskdatafit2plot = with_theme(theme_latexfonts()) do 
     fig = Figure(; size=( 500, 450 ))
@@ -3683,6 +3687,9 @@ maskingdatafit5 = samplerenewalequation_2sets(
     timeknots=[ 1.0; collect(56.0:28:224); 257 ],
     secondaryinterventions=[ endstayathometimes, somebusinessreopen, facialcoveringsrecommended ],
 )
+
+maskdata5kv = keyvalues(maskingdatachain5, maskingdatafit5)
+print(maskdata5kv)
 
 subsetmaskdatafit5plot = with_theme(theme_latexfonts()) do 
     fig = Figure(; size=( 500, 450 ))
