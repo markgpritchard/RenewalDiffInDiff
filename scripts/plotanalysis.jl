@@ -21,7 +21,7 @@ generationintervalplot = let
         formataxis!(ax; trimspines=true, hidespines=( :t, :r ))
     
         Label(
-            fig[1, 0], L"generation interval, $g(x)$"; 
+            fig[1, 0], L"serial interval, days, $g(x)$"; 
             fontsize=11.84, rotation=π/2, tellheight=false
         )
         Label(fig[2, 1], L"time, $x$"; fontsize=11.84, tellwidth=false)
@@ -34,6 +34,28 @@ generationintervalplot = let
 end
 
 safesave(plotsdir("generationintervalplot.pdf"), generationintervalplot)
+
+datagenerationintervalplot = let
+    fig = with_theme(theme_latexfonts()) do
+        fig = Figure(; size=( 500, 250 ))
+        ax = Axis(fig[1, 1]; yticks=[ 0, 0.05, 0.1, 0.15 ])
+        scatter!(ax, 0:20, COVIDSERIALINTERVAL[1:21]; color=:black)
+        formataxis!(ax; trimspines=true, hidespines=( :t, :r ), setpoint=0.15)
+    
+        Label(
+            fig[1, 0], L"serial interval, $g(x)$"; 
+            fontsize=11.84, rotation=π/2, tellheight=false
+        )
+        Label(fig[2, 1], L"time, days, $x$"; fontsize=11.84, tellwidth=false)
+    
+        colgap!(fig.layout, 1, 5)
+        rowgap!(fig.layout, 1, 5)
+        fig
+    end
+    fig
+end
+
+safesave(plotsdir("datagenerationintervalplot.pdf"), datagenerationintervalplot)
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -3127,27 +3149,126 @@ maskingdatafit1 = samplerenewalequation_2sets(
     #psi=0.4, timeknots=collect(1:303/10:304),
     timeknots=[ 1.0; collect(56.0:28:191); 191 ],
 )
-maskingdatafit1plot = plotrenewalequationsamples(
-    maskcovidcases[1:191, :], W_maskcoviddata[1:191, :], POPULATION2020, maskingdatafit1;
-    #plotsize=( 600, 400 ),
-    #=columntitles=[ 
-        "Halton", 
-        "Knowsley", 
-        "Liverpool", 
-        "Sefton", 
-        "St Helens", 
-        "Warrington", 
-        "W. Lancs", 
-        "Wigan", 
-        "Wirral" 
-    ],
-    columntitlefontsize=10,
-    xticklabelrotation=-π/4,
-    xticks=( [ 1, 93, 215 ], [ "June", "Sept.", "Jan." ] ),
-    xtitle="Date, 2020–2021", =#
-)
 
-safesave(plotsdir("maskingdatafit1plot.pdf"), maskingdatafit1plot)
+#maskcovidcases[1:191, :], W_maskcoviddata[1:191, :], POPULATION2020, maskingdatafit1
+
+subsetmaskdatafit1plot = with_theme(theme_latexfonts()) do 
+    fig = Figure(; size=( 500, 450 ))
+    ga = GridLayout(fig[1, 1])
+    axs1 = plotrenewalequationsamples_w!(
+        ga, 
+        maskcovidcases[1:191, :], 
+        W_maskcoviddata[1:191, :], maskingdatafit1, 
+        fitws(
+            maskcovidcases[1:191, :], 
+            POPULATION2020, 
+            maskingdatafit1
+        ), 
+        1;
+        markersize=2,
+        xticks=( [ 1, 92, 183 ], [ "Jan.", "April", "July" ] ), 
+        hidex=true, ytitle=L"$\ln\mathcal{R}_e$",
+    )
+    axs2 = plotrenewalequationsamples_r0!(
+        ga, maskcovidcases[1:191, :], maskingdatafit1, 2;
+        plotcounterfactuals=true, 
+        xticks=( [ 1, 92, 183 ], [ "Jan.", "April", "July" ] ), 
+        ytitle=L"$\mathcal{R}_0$",
+    )
+    axs3 = plotrenewalequationsamples_cases!(
+        ga, maskcovidcases[1:191, :], POPULATION2020, maskingdatafit1, 3;
+        markersize=2, fittedparameter=:y_matrix_det_vec_counterfactual,
+        fittedcolour=( COLOURVECTOR[2], 0.75 ), 
+        xticks=( [ 1, 92, 183 ], [ "Jan.", "April", "July" ] ), 
+        ytitle=L"Without \\ intervetion$$",
+    )
+    axs4 = plotrenewalequationsamples_cases!(
+        ga, maskcovidcases[1:191, :], POPULATION2020, maskingdatafit1, 4;
+        markersize=2, fittedparameter=:y_matrix_det_vec,
+        xticks=( [ 1, 92, 183 ], [ "Jan.", "April", "July" ] ), 
+        ytitle=L"With \\ intervetion$$",
+    )
+    axs5 = plotrenewalequationsamples_causaleffect!(
+        ga, maskcovidcases[1:191, :], nothing, POPULATION2020, maskingdatafit1, 5;
+        cumulativedifference=true,
+        fittedparameter=:y_matrix_det_vec,
+        counterfactualfittedparameter=:y_matrix_det_vec_counterfactual,
+        xticklabelrotation=-π/4,
+        xticks=( [ 1, 92, 183 ], [ "Jan.", "April", "July" ] ), 
+        xtitle="Date, 2020–2021",
+        ytitle=L"Cumulative \\ difference$$",
+    )
+
+    linkaxes!(axs3..., axs4...)
+
+    for (i, ℓ) ∈ enumerate([ 
+        "England", 
+        "Northern Ireland", 
+        "Scotland",  
+        "Wales" 
+    ])
+        Label(
+        ga[0, i], ℓ; 
+        fontsize=10, halign=:left, tellwidth=false
+    )
+    end
+
+    colgap!(ga, 1, 5)  
+    for r ∈ [ 1, 6 ] rowgap!(ga, r, 5) end
+    for axs ∈ [ axs1, axs2, axs3, axs4, axs5 ]
+        if axs === axs5 
+            formataxis!(
+                axs[1]; 
+                hidespines=( :r, :t ), trimspines=true,
+            )
+            for i ∈ 2:4
+                formataxis!(
+                    axs[i]; 
+                    hidey=true, hideyticks=true, 
+                    hidespines=( :l, :r, :t ), trimspines=true,
+                )
+            end
+        else
+            formataxis!(
+                axs[1]; 
+                hidex=true, hidexticks=true, 
+                hidespines=( :r, :t, :b ), trimspines=true,
+            )
+            for i ∈ 2:4 
+                formataxis!(
+                    axs[i]; 
+                    hidex=true, hidexticks=true, hidey=true, hideyticks=true, 
+                    hidespines=( :l, :r, :t, :b ), trimspines=true,
+                )
+            end
+        end
+    end
+
+    for i ∈ 1:4 
+        iax = Axis(ga[1:5, i]; xticks=( [ 1, 92, 183 ], [ "Jan.", "April", "July" ] ),)
+        if i == 1
+            vlines!(iax, 133; color=:red, linestyle=( :dot, :dense ), linewidth=1,)
+        elseif i == 3
+            vlines!(iax, 119; color=:red, linestyle=( :dot, :dense ), linewidth=1,)
+        elseif i == 4
+            vlines!(iax, 161; color=:red, linestyle=( :dot, :dense ), linewidth=1,)
+        end
+        formataxis!(
+            iax; 
+            hidex=true, hidexticks=true, hidey=true, hideyticks=true, 
+            hidespines=( :l, :r, :t, :b)
+        )
+        iax.xgridstyle=( :dot, :dense ) 
+        iax.xgridwidth = 1
+        iax.xgridvisible = true
+        linkxaxes!(iax, axs1[i])
+    end
+
+    fig
+end
+
+safesave(plotsdir("subsetmaskdatafit1plot.pdf"), subsetmaskdatafit1plot)
+
 
 ## Analysis 2 
 # Effect of mask requirements. No other considerations of confounding 
