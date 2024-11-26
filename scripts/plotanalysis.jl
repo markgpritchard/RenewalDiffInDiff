@@ -3673,7 +3673,7 @@ safesave(plotsdir("subsetmaskdatafit4plot.pdf"), subsetmaskdatafit4plot)
 
 ## Analysis 5 
 
-maskingdatachain5 = loadanalysisdictsasdf("maskingdatamodel4", 8, maxrounds, 1150)
+maskingdatachain5 = loadanalysisdictsasdf("maskingdatamodel5", 8, maxrounds, 1150)
 plotchains(maskingdatachain5)
 maskingdatafit5 = samplerenewalequation_2sets(
     COVIDSERIALINTERVAL, maskingdatachain5, facialcoveringsrequired; 
