@@ -3691,6 +3691,13 @@ maskingdatafit5 = samplerenewalequation_2sets(
 maskdata5kv = keyvalues(maskingdatachain5, maskingdatafit5)
 print(maskdata5kv)
 
+quantile(exp.(getproperty(maskingdatachain5, "logsecondarydelta1.logsecondarydelta")), [ 0.05, 0.5, 0.95 ])
+
+quantile(exp.(getproperty(maskingdatachain5, "logsecondarydelta2.logsecondarydelta")), [ 0.05, 0.5, 0.95 ])
+
+quantile(exp.(getproperty(maskingdatachain5, "logsecondarydelta3.logsecondarydelta")), [ 0.05, 0.5, 0.95 ])
+
+
 subsetmaskdatafit5plot = with_theme(theme_latexfonts()) do 
     fig = Figure(; size=( 500, 450 ))
     ga = GridLayout(fig[1, 1])
