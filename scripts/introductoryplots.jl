@@ -133,8 +133,8 @@ paralleltrendsfig = let
                     color=bandcolour
                 )
                 lines!(axs[1], df1.timestamp[10:end], sol1cf; color=COLOURVECTOR[3], linestyle=:dash, linewidth=1,)
-                lines!(axs[1], df1.timestamp, df1.value2; color=:black, linewidth=1,)
-                lines!(axs[1], df2.timestamp, df2.value2; color=COLOURVECTOR[1], linewidth=1,)
+                lines!(axs[1], df1.timestamp, df1.value2; color=COLOURVECTOR[1], linewidth=1,)
+                lines!(axs[1], df2.timestamp, df2.value2; color=black, linewidth=1,)
                 arrows!(axs[1], df1.timestamp[10:10], df1.value2[10:10] .+ 40, [ 0 ], [ -20 ])
 
                 band!(
@@ -142,8 +142,8 @@ paralleltrendsfig = let
                     color=bandcolour
                 )
                 lines!(axs[2], df1.timestamp[10:end], incidencecf; color=COLOURVECTOR[3], linestyle=:dash, linewidth=1,)
-                lines!(axs[2], df1.timestamp[2:end], incidence1[2:end]; color=:black, linewidth=1,)
-                lines!(axs[2], df2.timestamp[2:end], incidence2[2:end]; color=COLOURVECTOR[1], linewidth=1,)
+                lines!(axs[2], df1.timestamp[2:end], incidence1[2:end]; color=:COLOURVECTOR[1], linewidth=1,)
+                lines!(axs[2], df2.timestamp[2:end], incidence2[2:end]; color=black, linewidth=1,)
                 arrows!(axs[2], df1.timestamp[10:10], incidence1[10:10] .+ 18, [ 0 ], [ -9 ])
             
                 formataxis!(axs[1]; hidex=true, hidexticks=true, trimspines=true, hidespines=( :r, :t, :b ))
@@ -172,8 +172,8 @@ paralleltrendsfig = let
                     color=bandcolour
                 )
                 lines!(axs[1], df1.timestamp[10:end], logsol1cf; color=COLOURVECTOR[3], linestyle=:dash, linewidth=1,)
-                lines!(axs[1], df1.timestamp, log.(df1.value2); color=:black, linewidth=1,)
-                lines!(axs[1], df2.timestamp, log.(df2.value2); color=COLOURVECTOR[1], linewidth=1,)
+                lines!(axs[1], df1.timestamp, log.(df1.value2); color=COLOURVECTOR[1], linewidth=1,)
+                lines!(axs[1], df2.timestamp, log.(df2.value2); color=:black, linewidth=1,)
                 arrows!(
                     axs[1], df1.timestamp[10:10], log.(df1.value2[10:10]) .+ 1.5, [ 0 ], [ -0.75 ]
                 )
@@ -183,8 +183,8 @@ paralleltrendsfig = let
                     color=bandcolour
                 )
                 lines!(axs[2], df1.timestamp[10:end], logincidencecf; color=COLOURVECTOR[3], linestyle=:dash, linewidth=1,)
-                lines!(axs[2], df1.timestamp[2:end], log.(incidence1[2:end]); color=:black, linewidth=1,)
-                lines!(axs[2], df2.timestamp[2:end], log.(incidence2[2:end]); color=COLOURVECTOR[1], linewidth=1,)
+                lines!(axs[2], df1.timestamp[2:end], log.(incidence1[2:end]); color=COLOURVECTOR[1], linewidth=1,)
+                lines!(axs[2], df2.timestamp[2:end], log.(incidence2[2:end]); color=black, linewidth=1,)
                 arrows!(axs[2], df1.timestamp[10:10], log.(incidence1[10:10]) .+ 1.2, [ 0 ], [ -0.6 ])
 
                 band!(
@@ -192,8 +192,8 @@ paralleltrendsfig = let
                     color=bandcolour
                 )
                 lines!(axs[3], df1.timestamp[10:end], cumulativelogsol1cf; color=COLOURVECTOR[3], linestyle=:dash, linewidth=1,)
-                lines!(axs[3], df1.timestamp[2:end], log.(df1.value4[2:end]); color=:black, linewidth=1,)
-                lines!(axs[3], df2.timestamp[2:end], log.(df2.value4[2:end]); color=COLOURVECTOR[1], linewidth=1,)
+                lines!(axs[3], df1.timestamp[2:end], log.(df1.value4[2:end]); color=COLOURVECTOR[1], linewidth=1,)
+                lines!(axs[3], df2.timestamp[2:end], log.(df2.value4[2:end]); color=black, linewidth=1,)
                 arrows!(
                     axs[3], df1.timestamp[10:10], log.(df1.value4[10:10]) .+ 1.125, [ 0 ], [ -0.6 ]
                 )
