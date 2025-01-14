@@ -506,8 +506,6 @@ let
     covidlength = sum(coviddf.location .== 1)
     #304
 
-    # limit analysis to those local authorities that were in the same tiers 
-    # (Halton, Knowsley, Liverpool, Sefton, St Helens, Wirral)
     global allcovidcases = Matrix{Int}(undef, covidlength, 9)
     global pil1covidcases = Matrix{Int}(undef, covidlength, 9)
     stv = [ 
@@ -682,7 +680,7 @@ maskingdatamodel1 = diffindiffparameters_splinetimes(
 )
 
 maskdatac1config = @ntuple modelname="maskingdatamodel1" model=maskingdatamodel1 n_rounds n_chains=8 seed=1110+id
-maskingdatamodel1 = produce_or_load(pol_fitparameter, maskdatac1config, datadir("sims"))
+maskingdatamodel1dict = produce_or_load(pol_fitparameter, maskdatac1config, datadir("sims"))
 
 ## Analysis 2 
 # Effect of mask requirements. No other considerations of confounding 
@@ -697,7 +695,7 @@ maskingdatamodel2 = diffindiffparameters_splinetimes(
 )
 
 maskdatac2config = @ntuple modelname="maskingdatamodel2" model=maskingdatamodel2 n_rounds n_chains=8 seed=1120+id
-maskingdatamodel2 = produce_or_load(pol_fitparameter, maskdatac2config, datadir("sims"))
+maskingdatamodel2dict = produce_or_load(pol_fitparameter, maskdatac2config, datadir("sims"))
 
 ## Analysis 3 
 # Effect of mask requirements with secondary interventions of end of stay-at-home and some
@@ -714,7 +712,7 @@ maskingdatamodel3 = diffindiffparameters_splinetimes(
 )
 
 maskdatac3config = @ntuple modelname="maskingdatamodel3" model=maskingdatamodel3 n_rounds n_chains=8 seed=1130+id
-maskingdatamodel3 = produce_or_load(pol_fitparameter, maskdatac3config, datadir("sims"))
+maskingdatamodel3dict = produce_or_load(pol_fitparameter, maskdatac3config, datadir("sims"))
 
 
 ## Analysis 4 
@@ -737,7 +735,7 @@ maskingdatamodel4 = diffindiffparameters_splinetimes(
 )
 
 maskdatac4config = @ntuple modelname="maskingdatamodel4" model=maskingdatamodel4 n_rounds n_chains=8 seed=1140+id
-maskingdatamodel4 = produce_or_load(pol_fitparameter, maskdatac4config, datadir("sims"))
+maskingdatamodel4dict = produce_or_load(pol_fitparameter, maskdatac4config, datadir("sims"))
 
 ## Analysis 5 
 # Effect of mask requirements with secondary interventions of end of stay-at-home and some
@@ -754,7 +752,7 @@ maskingdatamodel5 = diffindiffparameters_splinetimes(
 )
 
 maskdatac5config = @ntuple modelname="maskingdatamodel5" model=maskingdatamodel5 n_rounds n_chains=8 seed=1150+id
-maskingdatamodel5 = produce_or_load(pol_fitparameter, maskdatac5config, datadir("sims"))
+maskingdatamodel5dict = produce_or_load(pol_fitparameter, maskdatac5config, datadir("sims"))
 
 
 ## Analysis 6 
@@ -772,7 +770,7 @@ maskingdatamodel6 = diffindiffparameters_splinetimes(
 )
 
 maskdatac6config = @ntuple modelname="maskingdatamodel6" model=maskingdatamodel6 n_rounds n_chains=8 seed=1160+id
-maskingdatamodel6 = produce_or_load(pol_fitparameter, maskdatac6config, datadir("sims"))
+maskingdatamodel6dict = produce_or_load(pol_fitparameter, maskdatac6config, datadir("sims"))
 
 
 

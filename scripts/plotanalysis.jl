@@ -2380,6 +2380,11 @@ safesave(plotsdir("subsetsim4plot.pdf"), subsetsim4plot)
 
 ## Priors 
 
+### Mass testing
+
+#### All data
+
+Random.seed!(6)
 datapriors1 = sample(datamodel1, Prior(), MCMCThreads(), 4000, 4)
 datapriors1df = DataFrame(datapriors1)
 plotchains(datapriors1df)
@@ -2397,10 +2402,9 @@ for i ∈ 16000:-1:1
     end
 end
 
-
 datapriorsfit1plot =  with_theme(theme_latexfonts()) do 
-    fig = Figure(; size=( 500, 250 ))
-    ga = GridLayout(fig[1, 1])
+    fig = Figure(; size=( 500, 500 ))
+    ga = GridLayout(fig[1, 1:2])
     axs1 = plotrenewalequationsamples_w!(
         ga, 
         allcovidcases, 
@@ -2441,15 +2445,79 @@ datapriorsfit1plot =  with_theme(theme_latexfonts()) do
     )
     end
 
-    colgap!(ga, 1, 5)  
-    for r ∈ [ 1, 3 ] rowgap!(ga, r, 5) end
-    for axs ∈ [ axs1, axs2 ]
-        if axs === axs2 
+    gb = GridLayout(fig[2, 1])
+    axs3 = plotrenewalequationsamples_w!(
+        gb, 
+        allcovidcases, 
+        W_allcoviddata, datapriorsfit1, 
+        fitws(
+            allcovidcases, 
+            selectpops, 
+            datapriorsfit1
+        ), 
+        1;
+        locationinds=6:8,
+        markersize=2,
+        xticks=( [ 1, 93, 215 ], [ "June", "Sept.", "Jan." ] ), 
+        hidex=true, ytitle=L"$\ln\mathcal{R}_e$",
+    )
+    axs4 = plotrenewalequationsamples_cases!(
+        gb, allcovidcases, selectpops, datapriorsfit1, 2;
+        locationinds=6:8,
+        markersize=2, fittedparameter=:y_matrix_det_vec,
+        hidex=false,
+        xticklabelrotation=-π/4,
+        xticks=( [ 1, 93, 215 ], [ "June", "Sept.", "Jan." ] ), 
+        xtitle="Date, 2020–2021",
+        ytitle=L"Incidence \\ per $100\,000$",
+    )
+
+    for (i, ℓ) ∈ enumerate([ 
+        "Warrington", 
+        "W. Lancashire",  
+        "Wigan" 
+    ])
+        Label(
+        gb[0, i], ℓ; 
+        fontsize=10, halign=:left, tellwidth=false
+    )
+    end
+
+    for gl ∈ [ ga, gb ]
+        colgap!(gl, 1, 5)  
+        for r ∈ [ 1, 3 ] rowgap!(gl, r, 5) end
+
+        if gl === ga 
+            _imax = 6 
+        else 
+            _imax = 3 
+        end
+        for i ∈ 1:_imax 
+            iax = Axis(gl[1:2, i]; xticks=( [ 1, 93, 215 ], [ "June", "Sept.", "Jan." ] ))
+            formataxis!(
+                iax; 
+                hidex=true, hidexticks=true, hidey=true, hideyticks=true, 
+                hidespines=( :l, :r, :t, :b)
+            )
+            iax.xgridstyle = ( :dot, :dense ) 
+            iax.xgridwidth = 1
+            iax.xgridvisible = true
+            linkxaxes!(iax, axs1[i])
+        end
+    end
+    
+    for axs ∈ [ axs1, axs2, axs3, axs4 ]
+        if axs === axs2 || axs === axs4
             formataxis!(
                 axs[1]; 
                 hidespines=( :r, :t ), trimspines=true,
             )
-            for i ∈ 2:6
+            if axs === axs2 
+                _imax = 6 
+            else 
+                _imax = 3 
+            end
+            for i ∈ 2:_imax
                 formataxis!(
                     axs[i]; 
                     hidey=true, hideyticks=true, 
@@ -2462,7 +2530,12 @@ datapriorsfit1plot =  with_theme(theme_latexfonts()) do
                 hidex=true, hidexticks=true, 
                 hidespines=( :r, :t, :b ), trimspines=true,
             )
-            for i ∈ 2:6 
+            if axs === axs1 
+                _imax = 6 
+            else 
+                _imax = 3 
+            end
+            for i ∈ 2:_imax 
                 formataxis!(
                     axs[i]; 
                     hidex=true, hidexticks=true, hidey=true, hideyticks=true, 
@@ -2472,14 +2545,282 @@ datapriorsfit1plot =  with_theme(theme_latexfonts()) do
         end
     end
 
-    for i ∈ 1:6 
+    colsize!(fig.layout, 1, Auto(1.3))
+
+    fig
+end
+
+safesave(plotsdir("datapriorsfit1plot.pdf"), datapriorsfit1plot)
+
+#### Pillar 1 data
+
+Random.seed!(28)
+datapriors2 = sample(datamodel2, Prior(), MCMCThreads(), 4000, 4)
+datapriors2df = DataFrame(datapriors2)
+plotchains(datapriors2df)
+datapriorsfit2 = samplerenewalequation_2sets(
+    COVIDSERIALINTERVAL, datapriors2df, masstesting; 
+    initialvalues=pil1covidcases[1:56, :], 
+    Ns=selectpops,
+    timeknots=[ collect(1.0:28:216); [216] ],
+)
+
+for i ∈ 16000:-1:1
+    if isnan(maximum(datapriorsfit2[:y_matrix_det_vec][i])) || isnan(maximum(datapriorsfit2[:y_matrix_det_vec_counterfactual][i]))
+        popat!(datapriorsfit2[:y_matrix_det_vec], i)
+        popat!(datapriorsfit2[:y_matrix_det_vec_counterfactual], i)
+    end
+end
+
+datapriorsfit2plot =  with_theme(theme_latexfonts()) do 
+    fig = Figure(; size=( 500, 500 ))
+    ga = GridLayout(fig[1, 1:2])
+    axs1 = plotrenewalequationsamples_w!(
+        ga, 
+        pil1covidcases, 
+        W_pil1coviddata, datapriorsfit2, 
+        fitws(
+            pil1covidcases, 
+            selectpops, 
+            datapriorsfit2
+        ), 
+        1;
+        locationinds=[ 1:5; [ 9 ] ],
+        markersize=2,
+        xticks=( [ 1, 93, 215 ], [ "June", "Sept.", "Jan." ] ), 
+        hidex=true, ytitle=L"$\ln\mathcal{R}_e$",
+    )
+    axs2 = plotrenewalequationsamples_cases!(
+        ga, pil1covidcases, selectpops, datapriorsfit2, 2;
+        locationinds=[ 1:5; [ 9 ] ],
+        markersize=2, fittedparameter=:y_matrix_det_vec,
+        hidex=false,
+        xticklabelrotation=-π/4,
+        xticks=( [ 1, 93, 215 ], [ "June", "Sept.", "Jan." ] ), 
+        xtitle="Date, 2020–2021",
+        ytitle=L"Incidence \\ per $100\,000$",
+    )
+
+    for (i, ℓ) ∈ enumerate([ 
+        "Halton", 
+        "Knowsley", 
+        "Liverpool", 
+        "Sefton", 
+        "St Helens",  
+        "Wirral" 
+    ])
+        Label(
+        ga[0, i], ℓ; 
+        fontsize=10, halign=:left, tellwidth=false
+    )
+    end
+
+    gb = GridLayout(fig[2, 1])
+    axs3 = plotrenewalequationsamples_w!(
+        gb, 
+        pil1covidcases, 
+        W_pil1coviddata, datapriorsfit2, 
+        fitws(
+            pil1covidcases, 
+            selectpops, 
+            datapriorsfit2
+        ), 
+        1;
+        locationinds=6:8,
+        markersize=2,
+        xticks=( [ 1, 93, 215 ], [ "June", "Sept.", "Jan." ] ), 
+        hidex=true, ytitle=L"$\ln\mathcal{R}_e$",
+    )
+    axs4 = plotrenewalequationsamples_cases!(
+        gb, pil1covidcases, selectpops, datapriorsfit2, 2;
+        locationinds=6:8,
+        markersize=2, fittedparameter=:y_matrix_det_vec,
+        hidex=false,
+        xticklabelrotation=-π/4,
+        xticks=( [ 1, 93, 215 ], [ "June", "Sept.", "Jan." ] ), 
+        xtitle="Date, 2020–2021",
+        ytitle=L"Incidence \\ per $100\,000$",
+    )
+
+    for (i, ℓ) ∈ enumerate([ 
+        "Warrington", 
+        "W. Lancashire",  
+        "Wigan" 
+    ])
+        Label(
+        gb[0, i], ℓ; 
+        fontsize=10, halign=:left, tellwidth=false
+    )
+    end
+
+    for gl ∈ [ ga, gb ]
+        colgap!(gl, 1, 5)  
+        for r ∈ [ 1, 3 ] rowgap!(gl, r, 5) end
+
+        if gl === ga 
+            _imax = 6 
+        else 
+            _imax = 3 
+        end
+        for i ∈ 1:_imax 
+            iax = Axis(gl[1:2, i]; xticks=( [ 1, 93, 215 ], [ "June", "Sept.", "Jan." ] ))
+            formataxis!(
+                iax; 
+                hidex=true, hidexticks=true, hidey=true, hideyticks=true, 
+                hidespines=( :l, :r, :t, :b)
+            )
+            iax.xgridstyle = ( :dot, :dense ) 
+            iax.xgridwidth = 1
+            iax.xgridvisible = true
+            linkxaxes!(iax, axs1[i])
+        end
+    end
+    
+    for axs ∈ [ axs1, axs2, axs3, axs4 ]
+        if axs === axs2 || axs === axs4
+            formataxis!(
+                axs[1]; 
+                hidespines=( :r, :t ), trimspines=true,
+            )
+            if axs === axs2 
+                _imax = 6 
+            else 
+                _imax = 3 
+            end
+            for i ∈ 2:_imax
+                formataxis!(
+                    axs[i]; 
+                    hidey=true, hideyticks=true, 
+                    hidespines=( :l, :r, :t ), trimspines=true,
+                )
+            end
+        else
+            formataxis!(
+                axs[1]; 
+                hidex=true, hidexticks=true, 
+                hidespines=( :r, :t, :b ), trimspines=true,
+            )
+            if axs === axs1 
+                _imax = 6 
+            else 
+                _imax = 3 
+            end
+            for i ∈ 2:_imax 
+                formataxis!(
+                    axs[i]; 
+                    hidex=true, hidexticks=true, hidey=true, hideyticks=true, 
+                    hidespines=( :l, :r, :t, :b ), trimspines=true,
+                )
+            end
+        end
+    end
+
+    colsize!(fig.layout, 1, Auto(1.3))
+
+    fig
+end
+
+safesave(plotsdir("datapriorsfit2plot.pdf"), datapriorsfit2plot)
+
+
+### Mask use / requirements
+
+Random.seed!(496)
+maskingdatapriors1 = sample(maskingdatamodel2, Prior(), MCMCThreads(), 4000, 4)
+maskingdatapriors1df = DataFrame(maskingdatapriors1)
+plotchains(maskingdatapriors1df)
+maskingdatapriorsfit1 = samplerenewalequation_2sets(
+    COVIDSERIALINTERVAL, maskingdatapriors1df, facialcoveringsrequired; 
+    initialvalues=maskcovidcases[1:91, :], 
+    Ns=POPULATION2020,
+    timeknots=[ 1.0; collect(56.0:28:224); 257 ],
+)
+
+for i ∈ 16000:-1:1
+    if isnan(maximum(maskingdatapriorsfit1[:y_matrix_det_vec][i])) || isnan(maximum(maskingdatapriorsfit1[:y_matrix_det_vec_counterfactual][i]))
+        popat!(maskingdatapriorsfit1[:y_matrix_det_vec], i)
+        popat!(maskingdatapriorsfit1[:y_matrix_det_vec_counterfactual], i)
+    end
+end
+
+maskingdatapriorsfit1plot = with_theme(theme_latexfonts()) do 
+    fig = Figure(; size=( 500, 250 ))
+    ga = GridLayout(fig[1, 1])
+    axs1 = plotrenewalequationsamples_w!(
+        ga, 
+        maskcovidcases, 
+        W_maskcoviddata, maskingdatapriorsfit1, 
+        fitws(
+            maskcovidcases, 
+            POPULATION2020, 
+            maskingdatapriorsfit1
+        ), 
+        1;
+        markersize=2,
+        xticks=( [ 1, 92, 183, 245 ], [ "Jan.", "April", "July", "Sept." ] ), 
+        hidex=true, ytitle=L"$\ln\mathcal{R}_e$",
+    )
+    axs2 = plotrenewalequationsamples_cases!(
+        ga, maskcovidcases, POPULATION2020, maskingdatapriorsfit1, 2;
+        markersize=2, fittedparameter=:y_matrix_det_vec,
+        hidex=false,
+        xticklabelrotation=-π/4,
+        xticks=( [ 1, 92, 183, 245 ], [ "Jan.", "April", "July", "Sept." ] ), 
+        xtitle="Date, 2020",
+        ytitle=L"Incidence \\ per $100\,000$",
+    )
+
+    for (i, ℓ) ∈ enumerate([ 
+        "England", 
+        "Northern Ireland", 
+        "Scotland",  
+        "Wales" 
+    ])
+        Label(
+        ga[0, i], ℓ; 
+        fontsize=10, halign=:left, tellwidth=false
+    )
+    end
+
+    colgap!(ga, 1, 5)  
+    for r ∈ [ 1, 3 ] rowgap!(ga, r, 5) end
+    for axs ∈ [ axs1, axs2 ]
+        if axs === axs2 
+            formataxis!(
+                axs[1]; 
+                hidespines=( :r, :t ), trimspines=true,
+            )
+            for i ∈ 2:4
+                formataxis!(
+                    axs[i]; 
+                    hidey=true, hideyticks=true, 
+                    hidespines=( :l, :r, :t ), trimspines=true,
+                )
+            end
+        else
+            formataxis!(
+                axs[1]; 
+                hidex=true, hidexticks=true, 
+                hidespines=( :r, :t, :b ), trimspines=true,
+            )
+            for i ∈ 2:4 
+                formataxis!(
+                    axs[i]; 
+                    hidex=true, hidexticks=true, hidey=true, hideyticks=true, 
+                    hidespines=( :l, :r, :t, :b ), trimspines=true,
+                )
+            end
+        end
+    end
+
+    for i ∈ 1:4 
         iax = Axis(ga[1:2, i]; xticks=( [ 1, 93, 215 ], [ "June", "Sept.", "Jan." ] ))
         formataxis!(
             iax; 
             hidex=true, hidexticks=true, hidey=true, hideyticks=true, 
             hidespines=( :l, :r, :t, :b)
         )
-        iax.xgridstyle=( :dot, :dense ) 
+        iax.xgridstyle = ( :dot, :dense ) 
         iax.xgridwidth = 1
         iax.xgridvisible = true
         linkxaxes!(iax, axs1[i])
@@ -2488,20 +2829,119 @@ datapriorsfit1plot =  with_theme(theme_latexfonts()) do
     fig
 end
 
-safesave(plotsdir("datapriorsfit1plot.pdf"), datapriorsfit1plot)
+safesave(plotsdir("maskingdatapriorsfit1plot.pdf"), maskingdatapriorsfit1plot)
 
+
+## Fitted data
 
 datachain1 = loadanalysisdictsasdf("datamodel1", 8, maxrounds, 1010)
-plotchains(datachain1)
+
+datachain1plot = with_theme(theme_latexfonts()) do  
+    _names1 = [
+        "log density",
+        L"$\mu_{\zeta}$",
+        L"$\sigma_{\zeta}^2$",
+        L"$\ln\zeta_{1}$",
+        L"$\ln\zeta_{2}$",
+        L"$\ln\zeta_{3}$",
+        L"$\ln\zeta_{4}$",
+        L"$\ln\zeta_{5}$",
+        L"$\ln\zeta_{6}$",
+        L"$\ln\zeta_{7}$",
+        L"$\ln\zeta_{8}$",
+        L"$\ln\zeta_{9}$",
+        L"$\mu_{\eta}$",
+    ]
+    _names2 = [
+        L"$\sigma_{\eta}^2$",
+        L"$\ln\eta(1)$",
+        L"$\ln\eta(3)$",
+        L"$\ln\eta(4)$",
+        L"$\ln\eta(5)$",
+        L"$\ln\eta(6)$",
+        L"$\ln\eta(7)$",
+        L"$\ln\eta(8)$",
+        L"$\ln\eta(9)$",
+        L"$\ln\tau_{\mathrm{ATT}}$",
+        L"$\sigma^2$",
+        L"$\theta$",
+    ]
+
+    fig = Figure(; size=( 500, 800 ))
+    axs1 = [ 
+        Axis(fig[i, 2*j-1], xticks=WilkinsonTicks(3), yticks=WilkinsonTicks(3)) 
+        for i ∈ 1:13, j ∈ 1:2 
+    ]
+    axs2 = [ 
+        Axis(fig[i, 2*j+3], xticks=WilkinsonTicks(3), yticks=WilkinsonTicks(3)) 
+        for i ∈ 1:12, j ∈ 1:2 
+    ]
+
+    for i ∈ 4:-1:1
+        _tdf = filter(:chain => x -> x == i, datachain1)
+        lines!(
+            axs1[1, 1], _tdf.iteration, _tdf.log_density; 
+            color=COLOURVECTOR[i], linewidth=1,
+        )
+        density!(
+            axs1[1, 2], _tdf.log_density; 
+            color=( :white, 0 ), strokecolor=COLOURVECTOR[i], strokewidth=1,
+        )
+        for (j, v) ∈ enumerate(names(_tdf)[3:14])
+            lines!(
+                axs1[1+j, 1], _tdf.iteration, getproperty(_tdf, v); 
+                color=COLOURVECTOR[i], linewidth=1,
+            )
+            density!(
+                axs1[1+j, 2], getproperty(_tdf, v); 
+                color=( :white, 0 ), strokecolor=COLOURVECTOR[i], strokewidth=1,
+            )
+        end
+        for (j, v) ∈ enumerate(names(_tdf)[15:26])
+            lines!(
+                axs2[j, 1], _tdf.iteration, getproperty(_tdf, v); 
+                color=COLOURVECTOR[i], linewidth=1,
+            )
+            density!(
+                axs2[j, 2], getproperty(_tdf, v); 
+                color=( :white, 0 ), strokecolor=COLOURVECTOR[i], strokewidth=1,
+            )
+        end
+    end
+
+    for i ∈ 1:13, j ∈ 1:2
+        formataxis!(axs1[i, j]; hidespines=( :r, :t ), trimspines=true,)
+        #Label(fig[i, 1], "Iteration"; fontsize=11.84, tellwidth=false)
+        Label(fig[i, 2], "Density"; fontsize=11.84, rotation=π/2, tellheight=false,)
+        Label(fig[i, 0], _names1[i]; fontsize=11.84, rotation=π/2, tellheight=false,)
+        i == 13 && continue
+        formataxis!(axs2[i, j]; hidespines=( :r, :t ), trimspines=true,)
+        #Label(fig[i, 5], "Iteration"; fontsize=11.84, tellwidth=false)
+        Label(fig[i, 6], "Density"; fontsize=11.84, rotation=π/2, tellheight=false,)
+        Label(fig[i, 4], _names2[i]; fontsize=11.84, rotation=π/2, tellheight=false,)
+    end
+
+    Label(fig[14, 1], "Iteration"; fontsize=11.84, tellwidth=false,)
+    Label(
+        fig[13, 5], "Iteration"; 
+        fontsize=11.84, tellwidth=false, tellheight=false, valign=:top,
+    )
+    for c ∈ [ 1, 3, 5, 7 ] colgap!(fig.layout, c, 5) end
+    rowgap!(fig.layout, 13, 5)
+
+    fig
+end
+
+safesave(plotsdir("datachain1plot.pdf"), datachain1plot)
+
 datafit1 = samplerenewalequation_2sets(
     COVIDSERIALINTERVAL, datachain1, masstesting; 
     initialvalues=allcovidcases[1:56, :], 
     Ns=selectpops,
-    timeknots=[ collect(1.0:28:216); [216] ],
+    timeknots=[ collect(1.0:28:216); [ 216 ] ],
 )
 datafit1kv = keyvalues(datachain1, datafit1)
 println(datafit1kv)
-
 
 subsetdatafit1plot = with_theme(theme_latexfonts()) do 
     fig = Figure(; size=( 500, 450 ))
@@ -2625,6 +3065,119 @@ end
 
 safesave(plotsdir("subsetdatafit1plot.pdf"), subsetdatafit1plot)
 
+subsetdatafit1plotb = with_theme(theme_latexfonts()) do 
+    fig = Figure(; size=( 500, 450 ))
+    ga = GridLayout(fig[1, 1])
+    axs1 = plotrenewalequationsamples_w!(
+        ga, 
+        pil1covidcases, 
+        W_pil1coviddata, datafit2, 
+        fitws(
+            pil1covidcases, 
+            selectpops, 
+            datafit2
+        ), 
+        1;
+        locationinds=6:8,
+        markersize=2,
+        xticks=( [ 1, 93, 215 ], [ "June", "Sept.", "Jan." ] ), 
+        hidex=true, ytitle=L"$\ln\mathcal{R}_e$",
+    )
+    axs2 = plotrenewalequationsamples_r0!(
+        ga, pil1covidcases, datafit2, 2;
+        locationinds=6:8,
+        plotcounterfactuals=true, 
+        xticks=( [ 1, 93, 215 ], [ "June", "Sept.", "Jan." ] ), 
+        ytitle=L"$\mathcal{R}_0$",
+    )
+    axs3 = plotrenewalequationsamples_cases!(
+        ga, pil1covidcases, selectpops, datafit2, 3;
+        locationinds=6:8,
+        markersize=2, fittedparameter=:y_matrix_det_vec_counterfactual,
+        fittedcolour=( COLOURVECTOR[2], 0.75 ), 
+        xticks=( [ 1, 93, 215 ], [ "June", "Sept.", "Jan." ] ), 
+        ytitle=L"Without \\ intervetion$$",
+    )
+    axs4 = plotrenewalequationsamples_cases!(
+        ga, pil1covidcases, selectpops, datafit2, 4;
+        locationinds=6:8,
+        markersize=2, fittedparameter=:y_matrix_det_vec,
+        xticks=( [ 1, 93, 215 ], [ "June", "Sept.", "Jan." ] ), 
+        ytitle=L"With \\ intervetion$$",
+    )
+    axs5 = plotrenewalequationsamples_causaleffect!(
+        ga, pil1covidcases, nothing, selectpops, datafit2, 5;
+        cumulativedifference=true,
+        fittedparameter=:y_matrix_det_vec,
+        counterfactualfittedparameter=:y_matrix_det_vec_counterfactual,
+        locationinds=6:8,
+        xticklabelrotation=-π/4,
+        xticks=( [ 1, 93, 215 ], [ "June", "Sept.", "Jan." ] ),
+        xtitle="Date, 2020–2021",
+        ytitle=L"Cumulative \\ difference$$",
+    )
+
+    linkaxes!(axs3..., axs4...)
+
+    for (i, ℓ) ∈ enumerate([ 
+        "Warrington", 
+        "West Lancashire",  
+        "Wigan" 
+    ])
+        Label(
+        ga[0, i], ℓ; 
+        fontsize=10, halign=:left, tellwidth=false
+    )
+    end
+
+    colgap!(ga, 1, 5)  
+    for r ∈ [ 1, 6 ] rowgap!(ga, r, 5) end
+    for axs ∈ [ axs1, axs2, axs3, axs4, axs5 ]
+        if axs === axs5 
+            formataxis!(
+                axs[1]; 
+                hidespines=( :r, :t ), trimspines=true,
+            )
+            for i ∈ 2:3
+                formataxis!(
+                    axs[i]; 
+                    hidey=true, hideyticks=true, 
+                    hidespines=( :l, :r, :t ), trimspines=true,
+                )
+            end
+        else
+            formataxis!(
+                axs[1]; 
+                hidex=true, hidexticks=true, 
+                hidespines=( :r, :t, :b ), trimspines=true,
+            )
+            for i ∈ 2:3
+                formataxis!(
+                    axs[i]; 
+                    hidex=true, hidexticks=true, hidey=true, hideyticks=true, 
+                    hidespines=( :l, :r, :t, :b ), trimspines=true,
+                )
+            end
+        end
+    end
+
+    for i ∈ 1:3
+        iax = Axis(ga[1:5, i]; xticks=( [ 1, 93, 215 ], [ "June", "Sept.", "Jan." ] ))
+        formataxis!(
+            iax; 
+            hidex=true, hidexticks=true, hidey=true, hideyticks=true, 
+            hidespines=( :l, :r, :t, :b)
+        )
+        iax.xgridstyle=( :dot, :dense ) 
+        iax.xgridwidth = 1
+        iax.xgridvisible = true
+        linkxaxes!(iax, axs1[i])
+    end
+
+    fig
+end
+
+safesave(plotsdir("subsetdatafit1plotb.pdf"), subsetdatafit1plotb)
 
 datafit1kv = keyvalues(datachain1, datafit1)
 println(datafit1kv)
@@ -2634,20 +3187,120 @@ println(datafit1kv)
 # Pillar 1 test results 
 
 datachain2 = loadanalysisdictsasdf("datamodel2", 8, maxrounds, 1020)
-plotchains(datachain2)
+
+pillar1chainsplot = with_theme(theme_latexfonts()) do  
+    _names1 = [
+        "log density",
+        L"$\mu_{\zeta}$",
+        L"$\sigma_{\zeta}^2$",
+        L"$\ln\zeta_{1}$",
+        L"$\ln\zeta_{2}$",
+        L"$\ln\zeta_{3}$",
+        L"$\ln\zeta_{4}$",
+        L"$\ln\zeta_{5}$",
+        L"$\ln\zeta_{6}$",
+        L"$\ln\zeta_{7}$",
+        L"$\ln\zeta_{8}$",
+        L"$\ln\zeta_{9}$",
+        L"$\mu_{\eta}$",
+    ]
+    _names2 = [
+        L"$\sigma_{\eta}^2$",
+        L"$\ln\eta(1)$",
+        L"$\ln\eta(3)$",
+        L"$\ln\eta(4)$",
+        L"$\ln\eta(5)$",
+        L"$\ln\eta(6)$",
+        L"$\ln\eta(7)$",
+        L"$\ln\eta(8)$",
+        L"$\ln\eta(9)$",
+        L"$\ln\tau_{\mathrm{ATT}}$",
+        L"$\sigma^2$",
+        L"$\theta$",
+    ]
+
+    fig = Figure(; size=( 500, 800 ))
+    axs1 = [ 
+        Axis(fig[i, 2*j-1], xticks=WilkinsonTicks(3), yticks=WilkinsonTicks(3)) 
+        for i ∈ 1:13, j ∈ 1:2 
+    ]
+    axs2 = [ 
+        Axis(fig[i, 2*j+3], xticks=WilkinsonTicks(3), yticks=WilkinsonTicks(3)) 
+        for i ∈ 1:12, j ∈ 1:2 
+    ]
+
+    for i ∈ 4:-1:1
+        _tdf = filter(:chain => x -> x == i, datachain2)
+        lines!(
+            axs1[1, 1], _tdf.iteration, _tdf.log_density; 
+            color=COLOURVECTOR[i], linewidth=1,
+        )
+        density!(
+            axs1[1, 2], _tdf.log_density; 
+            color=( :white, 0 ), strokecolor=COLOURVECTOR[i], strokewidth=1,
+        )
+        for (j, v) ∈ enumerate(names(_tdf)[3:14])
+            lines!(
+                axs1[1+j, 1], _tdf.iteration, getproperty(_tdf, v); 
+                color=COLOURVECTOR[i], linewidth=1,
+            )
+            density!(
+                axs1[1+j, 2], getproperty(_tdf, v); 
+                color=( :white, 0 ), strokecolor=COLOURVECTOR[i], strokewidth=1,
+            )
+        end
+        for (j, v) ∈ enumerate(names(_tdf)[15:26])
+            lines!(
+                axs2[j, 1], _tdf.iteration, getproperty(_tdf, v); 
+                color=COLOURVECTOR[i], linewidth=1,
+            )
+            density!(
+                axs2[j, 2], getproperty(_tdf, v); 
+                color=( :white, 0 ), strokecolor=COLOURVECTOR[i], strokewidth=1,
+            )
+        end
+    end
+
+    for i ∈ 1:13, j ∈ 1:2
+        formataxis!(axs1[i, j]; hidespines=( :r, :t ), trimspines=true,)
+        #Label(fig[i, 1], "Iteration"; fontsize=11.84, tellwidth=false)
+        Label(fig[i, 2], "Density"; fontsize=11.84, rotation=π/2, tellheight=false,)
+        Label(fig[i, 0], _names1[i]; fontsize=11.84, rotation=π/2, tellheight=false,)
+        i == 13 && continue
+        formataxis!(axs2[i, j]; hidespines=( :r, :t ), trimspines=true,)
+        #Label(fig[i, 5], "Iteration"; fontsize=11.84, tellwidth=false)
+        Label(fig[i, 6], "Density"; fontsize=11.84, rotation=π/2, tellheight=false,)
+        Label(fig[i, 4], _names2[i]; fontsize=11.84, rotation=π/2, tellheight=false,)
+    end
+
+    Label(fig[14, 1], "Iteration"; fontsize=11.84, tellwidth=false,)
+    Label(
+        fig[13, 5], "Iteration"; 
+        fontsize=11.84, tellwidth=false, tellheight=false, valign=:top,
+    )
+    for c ∈ [ 1, 3, 5, 7 ] colgap!(fig.layout, c, 5) end
+    rowgap!(fig.layout, 13, 5)
+
+
+    fig
+end
+
+safesave(plotsdir("pillar1chainsplot.pdf"), pillar1chainsplot)
+
 datafit2 = samplerenewalequation_2sets(
     COVIDSERIALINTERVAL, datachain2, masstesting; 
     initialvalues=pil1covidcases[1:56, :], 
     Ns=selectpops,
     timeknots=[ collect(1.0:28:216); [216] ],
 )
+
 datafit2plot = with_theme(theme_latexfonts()) do 
     fig = Figure(; size=( 500, 450 ))
     ga = GridLayout(fig[1, 1])
     axs1 = plotrenewalequationsamples_w!(
         ga, 
         pil1covidcases, 
-        W_allcoviddata, datafit2, 
+        W_pil1coviddata, datafit2, 
         fitws(
             pil1covidcases, 
             selectpops, 
@@ -2762,6 +3415,120 @@ datafit2plot = with_theme(theme_latexfonts()) do
 end
 
 safesave(plotsdir("datafit2plot.pdf"), datafit2plot)
+
+datafit2plotb = with_theme(theme_latexfonts()) do 
+    fig = Figure(; size=( 500, 450 ))
+    ga = GridLayout(fig[1, 1])
+    axs1 = plotrenewalequationsamples_w!(
+        ga, 
+        pil1covidcases, 
+        W_pil1coviddata, datafit2, 
+        fitws(
+            pil1covidcases, 
+            selectpops, 
+            datafit2
+        ), 
+        1;
+        locationinds=6:8,
+        markersize=2,
+        xticks=( [ 1, 93, 215 ], [ "June", "Sept.", "Jan." ] ), 
+        hidex=true, ytitle=L"$\ln\mathcal{R}_e$",
+    )
+    axs2 = plotrenewalequationsamples_r0!(
+        ga, pil1covidcases, datafit2, 2;
+        locationinds=6:8,
+        plotcounterfactuals=true, 
+        xticks=( [ 1, 93, 215 ], [ "June", "Sept.", "Jan." ] ), 
+        ytitle=L"$\mathcal{R}_0$",
+    )
+    axs3 = plotrenewalequationsamples_cases!(
+        ga, pil1covidcases, selectpops, datafit2, 3;
+        locationinds=6:8,
+        markersize=2, fittedparameter=:y_matrix_det_vec_counterfactual,
+        fittedcolour=( COLOURVECTOR[2], 0.75 ), 
+        xticks=( [ 1, 93, 215 ], [ "June", "Sept.", "Jan." ] ), 
+        ytitle=L"Without \\ intervetion$$",
+    )
+    axs4 = plotrenewalequationsamples_cases!(
+        ga, pil1covidcases, selectpops, datafit2, 4;
+        locationinds=6:8,
+        markersize=2, fittedparameter=:y_matrix_det_vec,
+        xticks=( [ 1, 93, 215 ], [ "June", "Sept.", "Jan." ] ), 
+        ytitle=L"With \\ intervetion$$",
+    )
+    axs5 = plotrenewalequationsamples_causaleffect!(
+        ga, pil1covidcases, nothing, selectpops, datafit2, 5;
+        cumulativedifference=true,
+        fittedparameter=:y_matrix_det_vec,
+        counterfactualfittedparameter=:y_matrix_det_vec_counterfactual,
+        locationinds=6:8,
+        xticklabelrotation=-π/4,
+        xticks=( [ 1, 93, 215 ], [ "June", "Sept.", "Jan." ] ),
+        xtitle="Date, 2020–2021",
+        ytitle=L"Cumulative \\ difference$$",
+    )
+
+    linkaxes!(axs3..., axs4...)
+
+    for (i, ℓ) ∈ enumerate([ 
+        "Warrington", 
+        "West Lancashire",  
+        "Wigan" 
+    ])
+        Label(
+        ga[0, i], ℓ; 
+        fontsize=10, halign=:left, tellwidth=false
+    )
+    end
+
+    colgap!(ga, 1, 5)  
+    for r ∈ [ 1, 6 ] rowgap!(ga, r, 5) end
+    for axs ∈ [ axs1, axs2, axs3, axs4, axs5 ]
+        if axs === axs5 
+            formataxis!(
+                axs[1]; 
+                hidespines=( :r, :t ), trimspines=true,
+            )
+            for i ∈ 2:3
+                formataxis!(
+                    axs[i]; 
+                    hidey=true, hideyticks=true, 
+                    hidespines=( :l, :r, :t ), trimspines=true,
+                )
+            end
+        else
+            formataxis!(
+                axs[1]; 
+                hidex=true, hidexticks=true, 
+                hidespines=( :r, :t, :b ), trimspines=true,
+            )
+            for i ∈ 2:3
+                formataxis!(
+                    axs[i]; 
+                    hidex=true, hidexticks=true, hidey=true, hideyticks=true, 
+                    hidespines=( :l, :r, :t, :b ), trimspines=true,
+                )
+            end
+        end
+    end
+
+    for i ∈ 1:3
+        iax = Axis(ga[1:5, i]; xticks=( [ 1, 93, 215 ], [ "June", "Sept.", "Jan." ] ))
+        formataxis!(
+            iax; 
+            hidex=true, hidexticks=true, hidey=true, hideyticks=true, 
+            hidespines=( :l, :r, :t, :b)
+        )
+        iax.xgridstyle=( :dot, :dense ) 
+        iax.xgridwidth = 1
+        iax.xgridvisible = true
+        linkxaxes!(iax, axs1[i])
+    end
+
+    fig
+end
+
+safesave(plotsdir("datafit2plotb.pdf"), datafit2plotb)
 
 datafit2kv = keyvalues(datachain2, datafit2)
 println(datafit2kv)
@@ -2980,54 +3747,6 @@ end
 
 safesave(plotsdir("datafit3plot.pdf"), datafit3plot)
 
-#=
-## Analysis 4
-
-# with separate lead and lag for each area 
-
-datachain4 = loadanalysisdictsasdf("datamodel4", 8, maxrounds, 1040)
-plotchains(datachain4)
-datafit4 = samplerenewalequation_2sets(
-    COVIDSERIALINTERVAL, datachain4, masstesting; 
-    initialvalues=allcovidcases[1:100, :], 
-    Ns=selectpops,
-    #psi=0.4, timeknots=collect(1:303/10:304),
-    timeknots=[ collect(1.0:28:216); [216] ],
-    secondaryinterventions=[ 
-        InterventionsMatrix([ 172, 217, 217, 217, 217, 217, 217, 217, 217 ], 216), 
-        InterventionsMatrix([ 200, 217, 217, 217, 217, 217, 217, 217, 217 ], 216), 
-        InterventionsMatrix([ 217, 172, 217, 217, 217, 217, 217, 217, 217 ], 216), 
-        InterventionsMatrix([ 217, 200, 217, 217, 217, 217, 217, 217, 217 ], 216),
-        InterventionsMatrix([ 217, 217, 146, 217, 217, 217, 217, 217, 217 ], 216), 
-        InterventionsMatrix([ 217, 217, 174, 217, 217, 217, 217, 217, 217 ], 216),        
-        InterventionsMatrix([ 217, 217, 217, 172, 217, 217, 217, 217, 217 ], 216), 
-        InterventionsMatrix([ 217, 217, 217, 200, 172, 217, 217, 217, 217 ], 216),    
-        InterventionsMatrix([ 217, 217, 217, 217, 200, 217, 217, 217, 217 ], 216), 
-        InterventionsMatrix([ 217, 217, 217, 217, 217, 217, 217, 217, 217 ], 216),    
-        InterventionsMatrix([ 217, 217, 217, 217, 217, 217, 217, 217, 172 ], 216), 
-        InterventionsMatrix([ 217, 217, 217, 217, 217, 217, 217, 217, 200 ], 216),         
-    ],
-)
-datafit4plot = plotrenewalequationsamples(
-    allcovidcases, W_allcoviddata, selectpops, datafit4;
-    #plotsize=( 600, 400 ),
-    columntitles=[ 
-        "Halton", 
-        "Knowsley", 
-        "Liverpool", 
-        "Sefton", 
-        "St Helens", 
-        "Warrington", 
-        "W. Lancs", 
-        "Wigan", 
-        "Wirral" 
-    ],
-    columntitlefontsize=10,
-    xticklabelrotation=-π/4,
-    xticks=( [ 1, 93, 215 ], [ "June", "Sept.", "Jan." ] ),
-    xtitle="Date, 2020–2021",
-)
-=#
 
 ## Analysis 5 
 # Pillar 1 test results with lead and lag
@@ -3330,7 +4049,7 @@ subsetmaskdatafit2plot = with_theme(theme_latexfonts()) do
         counterfactualfittedparameter=:y_matrix_det_vec_counterfactual,
         xticklabelrotation=-π/4,
         xticks=( [ 1, 92, 183, 245 ], [ "Jan.", "April", "July", "Sept." ] ), 
-        xtitle="Date, 2020–2021",
+        xtitle="Date, 2020",
         ytitle=L"Cumulative \\ difference$$",
     )
 
@@ -3464,7 +4183,7 @@ subsetmaskdatafit3plot = with_theme(theme_latexfonts()) do
         counterfactualfittedparameter=:y_matrix_det_vec_counterfactual,
         xticklabelrotation=-π/4,
         xticks=( [ 1, 92, 183, 245 ], [ "Jan.", "April", "July", "Sept." ] ), 
-        xtitle="Date, 2020–2021",
+        xtitle="Date, 2020",
         ytitle=L"Cumulative \\ difference$$",
     )
 
@@ -3599,7 +4318,7 @@ subsetmaskdatafit4plot = with_theme(theme_latexfonts()) do
         counterfactualfittedparameter=:y_matrix_det_vec_counterfactual,
         xticklabelrotation=-π/4,
         xticks=( [ 1, 92, 183, 245 ], [ "Jan.", "April", "July", "Sept." ] ), 
-        xtitle="Date, 2020–2021",
+        xtitle="Date, 2020",
         ytitle=L"Cumulative \\ difference$$",
     )
 
@@ -3741,7 +4460,7 @@ subsetmaskdatafit5plot = with_theme(theme_latexfonts()) do
         counterfactualfittedparameter=:y_matrix_det_vec_counterfactual,
         xticklabelrotation=-π/4,
         xticks=( [ 1, 92, 183, 245 ], [ "Jan.", "April", "July", "Sept." ] ), 
-        xtitle="Date, 2020–2021",
+        xtitle="Date, 2020",
         ytitle=L"Cumulative \\ difference$$",
     )
 
