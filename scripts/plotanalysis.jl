@@ -3070,12 +3070,12 @@ subsetdatafit1plotb = with_theme(theme_latexfonts()) do
     ga = GridLayout(fig[1, 1])
     axs1 = plotrenewalequationsamples_w!(
         ga, 
-        pil1covidcases, 
-        W_pil1coviddata, datafit2, 
+        allcovidcases, 
+        W_allcoviddata, datafit1, 
         fitws(
-            pil1covidcases, 
+            allcovidcases, 
             selectpops, 
-            datafit2
+            datafit1
         ), 
         1;
         locationinds=6:8,
@@ -3084,14 +3084,14 @@ subsetdatafit1plotb = with_theme(theme_latexfonts()) do
         hidex=true, ytitle=L"$\ln\mathcal{R}_e$",
     )
     axs2 = plotrenewalequationsamples_r0!(
-        ga, pil1covidcases, datafit2, 2;
+        ga, allcovidcases, datafit1, 2;
         locationinds=6:8,
         plotcounterfactuals=true, 
         xticks=( [ 1, 93, 215 ], [ "June", "Sept.", "Jan." ] ), 
         ytitle=L"$\mathcal{R}_0$",
     )
     axs3 = plotrenewalequationsamples_cases!(
-        ga, pil1covidcases, selectpops, datafit2, 3;
+        ga, allcovidcases, selectpops, datafit1, 3;
         locationinds=6:8,
         markersize=2, fittedparameter=:y_matrix_det_vec_counterfactual,
         fittedcolour=( COLOURVECTOR[2], 0.75 ), 
@@ -3099,14 +3099,14 @@ subsetdatafit1plotb = with_theme(theme_latexfonts()) do
         ytitle=L"Without \\ intervetion$$",
     )
     axs4 = plotrenewalequationsamples_cases!(
-        ga, pil1covidcases, selectpops, datafit2, 4;
+        ga, allcovidcases, selectpops, datafit1, 4;
         locationinds=6:8,
         markersize=2, fittedparameter=:y_matrix_det_vec,
         xticks=( [ 1, 93, 215 ], [ "June", "Sept.", "Jan." ] ), 
         ytitle=L"With \\ intervetion$$",
     )
     axs5 = plotrenewalequationsamples_causaleffect!(
-        ga, pil1covidcases, nothing, selectpops, datafit2, 5;
+        ga, allcovidcases, nothing, selectpops, datafit1, 5;
         cumulativedifference=true,
         fittedparameter=:y_matrix_det_vec,
         counterfactualfittedparameter=:y_matrix_det_vec_counterfactual,
