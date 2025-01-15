@@ -3860,7 +3860,95 @@ safesave(plotsdir("chainplot3.pdf"), chainplot3)
 # Effect of mask recommendations. No other considerations of confounding 
 
 maskingdatachain1 = loadanalysisdictsasdf("maskingdatamodel1", 8, maxrounds, 1110)
-plotchains(maskingdatachain1)
+
+maskingdatachain1chainsplot = with_theme(theme_latexfonts()) do  
+    _names1 = [
+        "log density",
+        L"$\mu_{\zeta}$",
+        L"$\sigma_{\zeta}^2$",
+        L"$\ln\zeta_{1}$",
+        L"$\ln\zeta_{2}$",
+        L"$\ln\zeta_{3}$",
+        L"$\ln\zeta_{4}$",
+        L"$\mu_{\eta}$",
+        L"$\sigma_{\eta}^2$",
+    ]
+    _names2 = [
+        L"$\ln\eta(1)$",
+        L"$\ln\eta(3)$",
+        L"$\ln\eta(4)$",
+        L"$\ln\eta(5)$",
+        L"$\ln\eta(6)$",
+        L"$\ln\eta(7)$",
+        L"$\ln\tau_{\mathrm{ATT}}$",
+        L"$\sigma^2$",
+        L"$\theta$",
+    ]
+
+    fig = Figure(; size=( 500, 800 ))
+    axs1 = [ 
+        Axis(fig[i, 2*j-1], xticks=WilkinsonTicks(3), yticks=WilkinsonTicks(3)) 
+        for i ∈ 1:9, j ∈ 1:2 
+    ]
+    axs2 = [ 
+        Axis(fig[i, 2*j+3], xticks=WilkinsonTicks(3), yticks=WilkinsonTicks(3)) 
+        for i ∈ 1:9, j ∈ 1:2 
+    ]
+
+    for i ∈ 4:-1:1
+        _tdf = filter(:chain => x -> x == i, maskingdatachain1)
+        lines!(
+            axs1[1, 1], _tdf.iteration, _tdf.log_density; 
+            color=COLOURVECTOR[i], linewidth=1,
+        )
+        density!(
+            axs1[1, 2], _tdf.log_density; 
+            color=( :white, 0 ), strokecolor=COLOURVECTOR[i], strokewidth=1,
+        )
+        for (j, v) ∈ enumerate(names(_tdf)[3:10])
+            lines!(
+                axs1[1+j, 1], _tdf.iteration, getproperty(_tdf, v); 
+                color=COLOURVECTOR[i], linewidth=1,
+            )
+            density!(
+                axs1[1+j, 2], getproperty(_tdf, v); 
+                color=( :white, 0 ), strokecolor=COLOURVECTOR[i], strokewidth=1,
+            )
+        end
+        for (j, v) ∈ enumerate(names(_tdf)[11:19])
+            lines!(
+                axs2[j, 1], _tdf.iteration, getproperty(_tdf, v); 
+                color=COLOURVECTOR[i], linewidth=1,
+            )
+            density!(
+                axs2[j, 2], getproperty(_tdf, v); 
+                color=( :white, 0 ), strokecolor=COLOURVECTOR[i], strokewidth=1,
+            )
+        end
+    end
+
+    for i ∈ 1:9, j ∈ 1:2
+        formataxis!(axs1[i, j]; hidespines=( :r, :t ), trimspines=true,)
+        #Label(fig[i, 1], "Iteration"; fontsize=11.84, tellwidth=false)
+        Label(fig[i, 2], "Density"; fontsize=11.84, rotation=π/2, tellheight=false,)
+        Label(fig[i, 0], _names1[i]; fontsize=11.84, rotation=π/2, tellheight=false,)
+        i == 13 && continue
+        formataxis!(axs2[i, j]; hidespines=( :r, :t ), trimspines=true,)
+        #Label(fig[i, 5], "Iteration"; fontsize=11.84, tellwidth=false)
+        Label(fig[i, 6], "Density"; fontsize=11.84, rotation=π/2, tellheight=false,)
+        Label(fig[i, 4], _names2[i]; fontsize=11.84, rotation=π/2, tellheight=false,)
+    end
+
+    Label(fig[10, 1], "Iteration"; fontsize=11.84, tellwidth=false,)
+    Label(fig[10, 5], "Iteration"; fontsize=11.84, tellwidth=false, )
+    for c ∈ [ 1, 3, 5, 7 ] colgap!(fig.layout, c, 5) end
+    rowgap!(fig.layout, 9, 5)
+
+    fig
+end
+
+safesave(plotsdir("maskingdatachain1chainsplot.pdf"), maskingdatachain1chainsplot)
+
 maskingdatafit1 = samplerenewalequation_2sets(
     COVIDSERIALINTERVAL, maskingdatachain1, facialcoveringsrecommended[1:191, :]; 
     initialvalues=maskcovidcases[1:91, :], 
