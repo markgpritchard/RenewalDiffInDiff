@@ -4257,7 +4257,7 @@ safesave(plotsdir("simineffectiveplot.pdf"), simineffectiveplot)
 ## Analysis 1 
 # Effect of mask recommendations. No other considerations of confounding 
 
-datamodeluschain1 = loadanalysisdictsasdf("datamodelus1", 12, maxrounds, 100)
+datamodeluschain1 = loadanalysisdictsasdf("datamodelus1", 12, maxrounds, 101)
 
 datamodelusfit1 = samplerenewalequation_2sets(
     COVIDSERIALINTERVAL, datamodeluschain1, maskday; 
@@ -4394,8 +4394,8 @@ safesave(plotsdir("subsetmaskdatafit1plot.pdf"), subsetmaskdatafit1plot)
 #
 
 
-fn = RenewalDiffInDiff._findanalysisfilename("datamodelus1", 12, 7, 100 + 4)
-isnothing(fn) && continue
+fn = RenewalDiffInDiff._findanalysisfilename("datamodelus1", 12, 12, 101 + 4)
+#isnothing(fn) && continue
 chain = load(fn)["chain"]
 datamodeluschain1 = DataFrame(chain)
 _tdf.chain = [ i for _ ∈ axes(_tdf, 1) ]

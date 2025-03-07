@@ -491,6 +491,7 @@ datamodelus1 = diffindiffparameters_splinetimes(
     psiprior=0.8,
 )
 
-datac1config = @ntuple modelname="datamodelus1" model=datamodelus1 n_rounds n_chains=12 seed=100+id
+# chain with seed 101 repeatedly fails, so use chains 102 to 105
+datac1config = @ntuple modelname="datamodelus1" model=datamodelus1 n_rounds n_chains=12 seed=101+id
 datachain1dict = produce_or_load(pol_fitparameter, datac1config, datadir("sims"))
 
