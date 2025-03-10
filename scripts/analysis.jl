@@ -559,6 +559,10 @@ let
     end 
     global endstayathometimes = InterventionsMatrix(Int, endstayathometimesvec, covidlength)
     global somebusinessreopen = InterventionsMatrix(Int, somebusinessreopenvec, covidlength)
+    # constructed manually to allow leads and lags 
+    global facialcoveringsrequired_IM = InterventionsMatrix(
+        Int, [ 167, 192, 174, nothing ], 257
+    )
 end
 
 W_maskcoviddata = generatew_gt(COVIDSERIALINTERVAL, maskcovidcases, POPULATION2020)
@@ -593,7 +597,7 @@ maskingdatamodel2leadlag = diffindiffparameters_splinetimes(
     [ 1.0; collect(56.0:28:224); 257 ],
     POPULATION2020;
     psiprior=0.4,
-    secondaryinterventions=lagleadinterventionsmatrix(facialcoveringsrequired, -21:7:21),
+    secondaryinterventions=lagleadinterventionsmatrix(facialcoveringsrequired_IM, -21:7:21),
 )
 
 maskdatac2leadlagconfig = (
@@ -643,7 +647,7 @@ maskingdatamodel4 = diffindiffparameters_splinetimes(
     POPULATION2020;
     secondaryinterventions=[ 
         [ endstayathometimes, somebusinessreopen ]; 
-        lagleadinterventionsmatrix(facialcoveringsrequired, -21:7:21) 
+        lagleadinterventionsmatrix(facialcoveringsrequired_IM, -21:7:21) 
     ],
 )
 
@@ -695,7 +699,7 @@ maskingdatamodel6 = diffindiffparameters_splinetimes(
     psiprior=0.4,
     secondaryinterventions=[
         [ endstayathometimes, somebusinessreopen, facialcoveringsrecommended ];
-        lagleadinterventionsmatrix(facialcoveringsrequired, -21:7:21) 
+        lagleadinterventionsmatrix(facialcoveringsrequired_IM, -21:7:21) 
     ],
 )
 
