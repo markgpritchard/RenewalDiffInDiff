@@ -4402,3 +4402,17 @@ _tdf.chain = [ i for _ ∈ axes(_tdf, 1) ]
 df = vcat(df, _tdf) 
 
 
+
+#
+#
+#
+#
+
+fig = Figure()
+ax = Axis(fig[1, 1])
+scatter!(ax, 1:7, exp.(median.([ getproperty(asdf, "tau$x") for x ∈ 1:7 ])))
+rangebars!(ax, 1:7, exp.(quantile.([ getproperty(asdf, "tau$x") for x ∈ 1:7 ], 0.05)), exp.(quantile.([ getproperty(asdf, "tau$x") for x ∈ 1:7 ], 0.95)))
+
+
+fig 
+

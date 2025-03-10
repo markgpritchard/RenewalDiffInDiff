@@ -1,3 +1,4 @@
+# Data used by Wei Lyu and George L. Wehby, https://doi.org/10.1377/hlthaff.2020.00818
 
 casesdf = CSV.read(
     datadir("exp_raw", "us-states.csv"), DataFrame
@@ -23,7 +24,9 @@ facemasksdf = CSV.read(
 )
 
 # different numbers of states 
-filter!(:fips => x -> x ∈ getproperty(statepopulationsdf, Symbol("State FIPS Code")), casesdf)
+filter!(:fips => x -> x ∈ getproperty(
+    statepopulationsdf, Symbol("State FIPS Code")), casesdf
+)
 
 states = select(casesdf, :state, :fips)
 unique!(states)
@@ -59,3 +62,93 @@ maskday = (
     InterventionsMatrix{Int}(starttimes, 123)
 )
 
+relaxshelterinplace = (
+    df = CSV.read(
+        datadir("exp_raw", "COVID-19 US state policy database (CUSP) - Stay at Home.csv"), 
+        DataFrame;
+        footerskip=1,
+    );
+    datestrings = getproperty(df, Symbol("End stay at home/shelter in place "));
+    dates = [
+        x == "0" ? 
+            Date("2099-12-31") : 
+            Date(x, "m/d/yyyy")
+        for x ∈ datestrings 
+    ];
+    starttimeperiods = dates .- Date("2020-01-21");
+    starttimes = Dates.value.(starttimeperiods);
+    InterventionsMatrix{Int}(starttimes, 123)
+)
+
+_openandclosedf = CSV.read(
+    datadir(
+        "exp_raw", 
+        "COVID-19 US state policy database (CUSP) - Closures & Reopening.csv"
+    ), 
+    DataFrame;
+    footerskip=1,
+);
+
+reopenbusiness = (
+    datestrings = getproperty(
+        _openandclosedf, 
+        Symbol("Began to reopen businesses statewide")
+    );
+    dates = [
+        x == "0" ? 
+            Date("2099-12-31") : 
+            Date(x, "m/d/yyyy")
+        for x ∈ datestrings 
+    ];
+    starttimeperiods = dates .- Date("2020-01-21");
+    starttimes = Dates.value.(starttimeperiods);
+    InterventionsMatrix{Int}(starttimes, 123)
+)
+
+reopenrestaurants = (
+    datestrings = getproperty(
+        _openandclosedf, 
+        Symbol("Reopened restaurants")
+    );
+    dates = [
+        x == "0" ? 
+            Date("2099-12-31") : 
+            Date(x, "m/d/yyyy")
+        for x ∈ datestrings 
+    ];
+    starttimeperiods = dates .- Date("2020-01-21");
+    starttimes = Dates.value.(starttimeperiods);
+    InterventionsMatrix{Int}(starttimes, 123)
+)
+
+reopengyms = (
+    datestrings = getproperty(
+        _openandclosedf, 
+        Symbol("Reopened gyms")
+    );
+    dates = [
+        x == "0" ? 
+            Date("2099-12-31") : 
+            Date(x, "m/d/yyyy")
+        for x ∈ datestrings 
+    ];
+    starttimeperiods = dates .- Date("2020-01-21");
+    starttimes = Dates.value.(starttimeperiods);
+    InterventionsMatrix{Int}(starttimes, 123)
+)
+
+reopencinemas = (
+    datestrings = getproperty(
+        _openandclosedf, 
+        Symbol("Reopened movie theaters")
+    );
+    dates = [
+        x == "0" ? 
+            Date("2099-12-31") : 
+            Date(x, "m/d/yyyy")
+        for x ∈ datestrings 
+    ];
+    starttimeperiods = dates .- Date("2020-01-21");
+    starttimes = Dates.value.(starttimeperiods);
+    InterventionsMatrix{Int}(starttimes, 123)
+)

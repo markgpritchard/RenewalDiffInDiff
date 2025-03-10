@@ -47,11 +47,6 @@ beta1a(t) = t <= 50 ? 0.6 : 0.66
 beta1bcounterfactual(t) = 1.15 * beta1a(t)
 beta1b(t) = t <= 50 ? beta1bcounterfactual(t) : 0.8 * beta1bcounterfactual(t)
 
-sim1a_parameters(beta) = simparameters(beta, 0.6)
-beta1a_a(t) = 0.5 + 0.1 * cos(2π * (t - 20) / 365)
-beta1a_bcounterfactual(t) = 1.15 * beta1a_a(t)
-beta1a_b(t) = t <= 50 ? beta1a_bcounterfactual(t) : 0.8 * beta1a_bcounterfactual(t)
-
 sim2parameters(beta) = simparameters(beta, 0.5)
 beta2a(t) = 0.5 + 0.15 * cos(2π * (t - 80) / 365)
 beta2bcounterfactual(t) = 1.15 * beta2a(t)

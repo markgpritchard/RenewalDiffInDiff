@@ -92,3 +92,41 @@ function seir_deterministic(u0, p, tvec::AbstractVector{<:Number})
     end 
     return outputs 
 end
+
+function lagleadinterventionsmatrix(
+    M::InterventionsMatrix{T}, diff::Int; 
+    warn=true, kwargs...
+) where T
+    newstarttimes = zeros(Int, size(M, 2))
+    _needwarning = false 
+    for (i, t) ∈ enumerate(M.starttimes)
+        if t > M.duration  # do not modify if never having intervention
+            newstarttimes[i] = t 
+        elseif t + diff <= 0 
+            _needwarning = true
+        else
+            newstarttimes[i] = t + diff 
+        end
+    end
+    if warn && _needwarning 
+        @warn "Some start times fixed at zero: $newstarttimes"
+    end
+    return InterventionsMatrix(T, newstarttimes, M.duration)
+end
+
+function lagleadinterventionsmatrix(M::InterventionsMatrix, diffs::AbstractVector; kwargs...) 
+    return [ lagleadinterventionsmatrix(M, diff; kwargs...) for diff ∈ diffs ]
+end
+
+function lagleadinterventionsmatrix(M::InterventionsMatrix, diffs::StepRange; skipzero=true, kwargs...) 
+    if skipzero 
+        return lagleadinterventionsmatrix(
+            M, diffs[findall(_notzero, diffs)]; 
+            skipzero=false, kwargs...
+        )
+    else 
+        return [ lagleadinterventionsmatrix(M, diff; kwargs...) for diff ∈ diffs ]
+    end
+end
+
+_notzero(x) = x != 0
