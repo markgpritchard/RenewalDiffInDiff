@@ -9,6 +9,7 @@ include("types.jl")
 include("consts.jl")
 include("renewalequation.jl")
 include("parameterfitting.jl")
+include("processoutputs.jl")
 include("extras.jl")
 
 export 
@@ -48,6 +49,16 @@ export
     generatez_gtminus1,
     keyvalues, 
     loadanalysisdictsasdf,
+    ## processoutputs.jl
+    insertcumulativeeffects!,
+    logbasicreproductionratios,
+    logeffectivereproductionratios,
+    predictcases,
+    quantilelogeffectivereproductionratios,
+    quantilepredictcases,
+    quantilepredictcumulativedifferenceincases,
+    quantilepredictdifferenceincases,
+    tauquantiles,
     ## extras.jl
     getindex, 
     interventionsoffset, 

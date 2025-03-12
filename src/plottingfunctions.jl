@@ -5,12 +5,23 @@ using CairoMakie, DataFrames, Pigeons, PlotFormatting, Turing
 # Constants  
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-# outputs from MCMC that are not plotted 
-const _NOPLOTNAMES = [ 
-    "iteration", "chain", "lp", "n_steps", "is_accept", "acceptance_rate", "log_density", 
-    "hamiltonian_energy", "hamiltonian_energy_error", "max_hamiltonian_energy_error", 
-    "tree_depth", "numerical_error", "step_size", "nom_step_size"
+const _NOPLOTNAMES = [  # outputs from MCMC that are not plotted 
+    "iteration", 
+    "chain", 
+    "lp", 
+    "n_steps", 
+    "is_accept", 
+    "acceptance_rate", 
+    "log_density", 
+    "hamiltonian_energy", 
+    "hamiltonian_energy_error", 
+    "max_hamiltonian_energy_error", 
+    "tree_depth", 
+    "numerical_error", 
+    "step_size", 
+    "nom_step_size"
 ]
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Plotting functions 
@@ -212,6 +223,15 @@ function plotrenewalequationsamples!(
     end
 end
 
+function _plotlocinds(::RenewalDiffInDiff.Automatic, cases)
+    nlocations = _plotnlocations(RenewalDiffInDiff.automatic, cases)
+    return 1:nlocations
+end 
+
+_plotlocinds(locationinds, ::Any) = locationinds
+_plotnlocations(::RenewalDiffInDiff.Automatic, cases) = size(cases, 2)
+_plotnlocations(locationinds, ::Any) = length(locationinds)
+
 function plotrenewalequationsamples_w!(
     gl::GridLayout, 
     cases::Matrix, w, fittedvaluesset, fittedws, row;
@@ -222,29 +242,15 @@ function plotrenewalequationsamples_w!(
     xticklabelrotation=0.0, xticks=Makie.automatic, xtitle="Time", ytitle=L"$w_{jt}$",
     yticks=Makie.automatic, 
 )
-    if locationinds isa RenewalDiffInDiff.Automatic
-        nlocations = size(cases, 2)
-        _locinds = 1:nlocations
-    else
-        nlocations = length(locationinds)
-        _locinds = locationinds
-    end
-    xs = eachindex(fittedvaluesset.rho_matrix_vec[1][:, 1])
-
+    nlocations = _plotnlocations(locationinds, cases)
     axs = [ Axis(gl[row, i]; xticklabelrotation, xticks, yticks) for i ∈ 1:nlocations ]
 
-    for (i, ℓ) ∈ enumerate(_locinds)
-        ws = _modelquantiles(fittedws, ℓ)     
-        band!(axs[i], xs, ws[:, 1], ws[:, 3]; color=fittedbandcolour)
-        lines!(axs[i], xs, ws[:, 2]; color=fittedcolour, linewidth=1,)
-        scatter!(
-            axs[i], [ RenewalDiffInDiff._skip(x) ? missing : x for x ∈ w[:, ℓ] ];
-            color=datacolour, markersize
-        )
-    end
-    linkyaxes!(axs...)
+    plotrenewalequationsamples_w!(
+        axs, cases, w, fittedvaluesset, fittedws;
+        locationinds, datacolour, fittedcolour, fittedbandcolour, markersize,
+    )
 
-    for (i, ℓ) ∈ enumerate(_locinds)
+    for (i, ℓ) ∈ enumerate(_plotlocinds(locationinds, cases))
         if i == 1 
             formataxis!(axs[i]; hidex)
         else
@@ -265,6 +271,28 @@ function plotrenewalequationsamples_w!(
     return axs
 end
 
+function plotrenewalequationsamples_w!(
+    axs::VecOrMat{<:Axis}, 
+    cases::Matrix, w, fittedvaluesset, fittedws;
+    locationinds=RenewalDiffInDiff.automatic,
+    datacolour=:black, fittedcolour=COLOURVECTOR[1], fittedbandcolour=( fittedcolour, 0.5 ),
+    markersize=3,
+    kwargs...
+)
+    xs = eachindex(fittedvaluesset.rho_matrix_vec[1][:, 1])
+
+    for (i, ℓ) ∈ enumerate(_plotlocinds(locationinds, cases))
+        ws = _modelquantiles(fittedws, ℓ)     
+        band!(axs[i], xs, ws[:, 1], ws[:, 3]; color=fittedbandcolour)
+        lines!(axs[i], xs, ws[:, 2]; color=fittedcolour, linewidth=1,)
+        scatter!(
+            axs[i], [ RenewalDiffInDiff._skip(x) ? missing : x for x ∈ w[:, ℓ] ];
+            color=datacolour, markersize
+        )
+    end
+    linkyaxes!(axs...)
+end
+
 function plotrenewalequationsamples_r0!(
     gl::GridLayout, 
     cases::Matrix, fittedvaluesset, row;
@@ -282,10 +310,8 @@ function plotrenewalequationsamples_r0!(
 )
     if locationinds isa RenewalDiffInDiff.Automatic
         nlocations = size(cases, 2)
-        _locinds = 1:nlocations
     else
         nlocations = length(locationinds)
-        _locinds = locationinds
     end
 
     duration = size(cases, 1)
@@ -293,7 +319,7 @@ function plotrenewalequationsamples_r0!(
 
     axs = [ Axis(gl[row, i]; xticklabelrotation, xticks, yticks) for i ∈ 1:nlocations ]
 
-    for (i, ℓ) ∈ enumerate(_locinds)
+    for (i, ℓ) ∈ enumerate(_plotlocinds(locationinds, cases))
         rhoqs = _modelquantiles(fittedvaluesset, :rho_matrix_vec, ℓ)
         inds = findall(x -> x <= rhoclip, rhoqs[:, 3])
         band!(axs[i], xs[inds], rhoqs[:, 1][inds], rhoqs[:, 3][inds]; color=fittedbandcolour)
@@ -354,10 +380,8 @@ function plotrenewalequationsamples_cases!(
 )
     if locationinds isa RenewalDiffInDiff.Automatic
         nlocations = size(cases, 2)
-        _locinds = 1:nlocations
     else
         nlocations = length(locationinds)
-        _locinds = locationinds
     end
 
     duration = size(cases, 1)
@@ -365,7 +389,7 @@ function plotrenewalequationsamples_cases!(
 
     axs = [ Axis(gl[row, i]; xticklabelrotation, xticks) for i ∈ 1:nlocations ]
 
-    for (i, ℓ) ∈ enumerate(_locinds)
+    for (i, ℓ) ∈ enumerate(_plotlocinds(locationinds, cases))
         yqs = _modelquantiles(fittedvaluesset, fittedparameter, ℓ)
 
         band!(
@@ -414,62 +438,26 @@ end
 function plotrenewalequationsamples_causaleffect!(
     gl::GridLayout, 
     cases::Matrix, cases_counterfactual, Ns::Vector, fittedvaluesset, row;
-    fittedparameter=:y_matrix_poisson_vec,
-    counterfactualfittedparameter=:y_matrix_poisson_vec_counterfactual,
-    cumulativedifference=false,
-    simcolour=COLOURVECTOR[3], 
-    fittedcolour=COLOURVECTOR[1], fittedbandcolour=( fittedcolour, 0.5 ),
-    markersize=3, rhoclip=Inf,
     locationinds=RenewalDiffInDiff.automatic,
     hidex=false,
     xticklabelrotation=0.0, xticks=Makie.automatic, xtitle="Time", ytitle="Difference",
     ytickformat=Makie.automatic,
+    kwargs...
 )
-    if locationinds isa RenewalDiffInDiff.Automatic
-        nlocations = size(cases, 2)
-        _locinds = 1:nlocations
-    else
-        nlocations = length(locationinds)
-        _locinds = locationinds
-    end
-
+    nlocations = _plotnlocations(locationinds, cases)
     duration = size(cases, 1)
-    xs = eachindex(fittedvaluesset.rho_matrix_vec[1][:, 1])
-
     axs = [ Axis(gl[row, i]; xticklabelrotation, xticks, ytickformat) for i ∈ 1:nlocations ]
 
-    for (i, ℓ) ∈ enumerate(_locinds)
-        yqs_cf = _modelquantiles(
-            fittedvaluesset, fittedparameter, counterfactualfittedparameter, ℓ;
-            cumulativedifference
-        )
-        
-        band!(
+    for (i, ℓ) ∈ enumerate(_plotlocinds(locationinds, cases))
+        plotrenewalequationsamples_causaleffect!(
             axs[i], 
-            xs, 
-            100_000 .* yqs_cf[:, 1] ./ Ns[ℓ], 
-            100_000 .* yqs_cf[:, 3] ./ Ns[ℓ]; 
-            color=fittedbandcolour
+            cases, cases_counterfactual, Ns, fittedvaluesset, ℓ;
+            locationinds,
+            hidex,
+            xticklabelrotation, xticks, xtitle, ytitle,
+            ytickformat,
+            kwargs...
         )
-        lines!(
-            axs[i], xs, 100_000 .* yqs_cf[:, 2] ./ Ns[ℓ]; 
-            color=fittedcolour, linewidth=1,
-        )
-                
-        isnothing(cases_counterfactual) && continue
-        if cumulativedifference 
-            scatter!(
-                axs[i], 
-                100_000 .* cumsum(cases[:, ℓ] .- cases_counterfactual[:, ℓ]) ./ Ns[ℓ]; 
-                color=simcolour, markersize
-            )
-        else 
-            scatter!(
-                axs[i], 
-                100_000 .* (cases[:, ℓ] .- cases_counterfactual[:, ℓ]) ./ Ns[ℓ]; 
-                color=simcolour, markersize
-            )
-        end
     end
     linkyaxes!(axs...)
 
@@ -492,6 +480,73 @@ function plotrenewalequationsamples_causaleffect!(
     end
 
     return axs
+end
+
+function plotrenewalequationsamples_causaleffect!(
+    ax::Axis, 
+    cases::Matrix, cases_counterfactual, Ns::Vector, fittedvaluesset, index;
+    fittedparameter=:y_matrix_poisson_vec,
+    counterfactualfittedparameter=:y_matrix_poisson_vec_counterfactual,
+    cumulativedifference=false,
+    simcolour=COLOURVECTOR[3], 
+    fittedcolour=COLOURVECTOR[1], fittedbandcolour=( fittedcolour, 0.5 ),
+    markersize=3, rhoclip=Inf,
+    locationinds=RenewalDiffInDiff.automatic,
+    hidex=false,
+    xticklabelrotation=0.0, xticks=Makie.automatic, xtitle="Time", ytitle="Difference",
+    ytickformat=Makie.automatic,
+)
+    yqs_cf = _modelquantiles(
+        fittedvaluesset, fittedparameter, counterfactualfittedparameter, index;
+        cumulativedifference
+    )
+    xs = eachindex(fittedvaluesset.rho_matrix_vec[1][:, 1])
+    
+    band!(
+        ax, 
+        xs, 
+        100_000 .* yqs_cf[:, 1] ./ Ns[index], 
+        100_000 .* yqs_cf[:, 3] ./ Ns[index]; 
+        color=fittedbandcolour
+    )
+    lines!(
+        ax, xs, 100_000 .* yqs_cf[:, 2] ./ Ns[index]; 
+        color=fittedcolour, linewidth=1,
+    )
+            
+    _plotrenewalequationsamples_causaleffect_counterfactual!(
+        ax, cases, cases_counterfactual, Ns, fittedvaluesset, index;
+        cumulativedifference, simcolour, markersize,
+    )
+end
+
+function _plotrenewalequationsamples_causaleffect_counterfactual!(
+    ::Axis, ::Matrix, ::Nothing, ::Vector, ::Any, ::Any;
+    kwargs...
+)
+    nothing
+end
+
+function _plotrenewalequationsamples_causaleffect_counterfactual!(
+    ax::Axis, 
+    cases::Matrix, cases_counterfactual, Ns::Vector, fittedvaluesset, index;
+    cumulativedifference=false,
+    simcolour=COLOURVECTOR[3], 
+    markersize=3, 
+)
+    if cumulativedifference 
+        scatter!(
+            ax, 
+            100_000 .* cumsum(cases[:, index] .- cases_counterfactual[:, index]) ./ Ns[index]; 
+            color=simcolour, markersize
+        )
+    else 
+        scatter!(
+            ax, 
+            100_000 .* (cases[:, index] .- cases_counterfactual[:, index]) ./ Ns[index]; 
+            color=simcolour, markersize
+        )
+    end
 end
 
 function _modelquantiles(vec, col; quantiles=[ 0.05, 0.5, 0.95 ])
@@ -586,4 +641,66 @@ function fitws(cases::Matrix, Ns::Vector, fittedvaluesset)
         end
     end
     return w_vec
+end
+
+function plottwotau_att!(gl, df1, df2, leadlagtimes; kwargs...)
+    plottau_att!(gl, df1, df2, leadlagtimes; kwargs...)
+end
+
+function plottau_att!(gl::GridLayout, df::DataFrame, leadlagtimes; row=1, kwargs...)
+    ax = Axis(gl[row, 1])
+    _plotonetau_att!(ax, df, leadlagtimes; kwargs...)
+    _labelplottau_att!(gl, row, 1; kwargs...)
+end
+
+function plottau_att!(gl::GridLayout, df1::DataFrame, df2::DataFrame, leadlagtimes; kwargs...)
+    plottau_att!(gl::GridLayout, [ df1, df2 ], leadlagtimes; kwargs...)
+end
+
+function plottau_att!(gl::GridLayout, dfs::Vector{<:DataFrame}, leadlagtimes; row=1, kwargs...)
+    axs = [ Axis(gl[row, i]) for i ∈ eachindex(dfs) ]
+    for (i, df) ∈ enumerate(dfs)
+        _plotonetau_att!(axs[i], df, leadlagtimes; hidey=(i != 1), kwargs...)
+    end
+    linkaxes!(axs...)
+    _labelplottau_att!(gl, row, 2; kwargs...)
+end
+
+function plottau_att!(ax::Axis, df::DataFrame, leadlagtimes; kwargs...)
+    _plotonetau_att!(ax, df, leadlagtimes; kwargs...)
+end
+
+function _plotonetau_att!(ax, df, leadlagtimes; hidey=false, kwargs...)
+    tq = tauquantiles(df, leadlagtimes; kwargs...)
+    scatter!(ax, leadlagtimes, exp.(tq.med); color=COLOURVECTOR[1], marker=:x, markersize=5,)
+    rangebars!(
+        ax, leadlagtimes, exp.(tq.lci), exp.(tq.uci); 
+        color=COLOURVECTOR[1], linewidth=1,
+    )
+    hlines!(
+        ax, 1; 
+        color=RGBAf(0, 0, 0, 0.12), linestyle=( :dot, :dense ), linewidth=1,
+    )
+    formataxis!(
+        ax; 
+        hidespines=( :r, :t ), hidey, hideyticks=hidey, trimspines=true,
+    )
+    if hidey
+        hidespines!(ax, :l)
+    end
+end
+
+labelplottau_att!(gl, row, width; kwargs...) = _labelplottau_att!(gl, row, width; kwargs...)
+
+function _labelplottau_att!(gl, row, width; kwargs...)
+    Label(
+        gl[row, 0], L"$\tau_{\mathrm{ATT}}$"; 
+        fontsize=11.84, rotation=π/2, tellheight=false,
+    )
+    Label(
+        gl[row+1, 1:width], "Time, relative to intervention"; 
+        fontsize=11.84, tellwidth=false,
+    )
+    colgap!(gl, 1, 5)  
+    rowgap!(gl, row, 5)
 end

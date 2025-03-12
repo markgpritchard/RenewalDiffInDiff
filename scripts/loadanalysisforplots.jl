@@ -1,0 +1,175 @@
+
+using DrWatson
+@quickactivate :RenewalDiffInDiff
+
+using StatsBase
+include("analysis.jl")  # will run analyses if they are not already available 
+
+const maxrounds = 12  # the greatest number of rounds that the analysis may have run 
+
+sim1nointerventiondf = loadanalysisdictsasdf("sim1model0", 8, maxrounds, 100)
+sim1leadlagnointerventiondf = loadanalysisdictsasdf("sim1model0laglead", 8, maxrounds, 105)
+insertcumulativeeffects!(sim1leadlagnointerventiondf, -21:7:21)
+sim1nointerventionlogeffectivereproductionratios = quantilelogeffectivereproductionratios(
+    sim1leadlagnointerventiondf,
+    2,
+    simulation1dataset["cases_counterfactual"],
+    simulation1dataset["Ns"],
+    [ [ 1 ]; collect(11:89/4:100) ],
+    simulation1dataset["interventions"],
+    lagleadinterventionsmatrix(simulation1dataset["interventions"], -21:7:21);
+    logdelta=0, 
+    logsecondarydelta1=0,
+    logsecondarydelta2=0, 
+    logsecondarydelta3=0, 
+    logsecondarydelta4=0, 
+    logsecondarydelta5=0, 
+    logsecondarydelta6=0, 
+)
+sim1nointerventioncasesdiff = let 
+    logr0a = logbasicreproductionratios(
+        sim1leadlagnointerventiondf, 
+        2, 
+        [ [ 1 ]; collect(11:89/4:100) ], 
+        simulation1dataset["interventions"], 
+        lagleadinterventionsmatrix(simulation1dataset["interventions"], -21:7:21);
+        logdelta=0, 
+        logsecondarydelta1=0,
+        logsecondarydelta2=0, 
+        logsecondarydelta3=0, 
+        logsecondarydelta4=0, 
+        logsecondarydelta5=0, 
+        logsecondarydelta6=0,
+    )
+    logr0b = logbasicreproductionratios(
+        sim1leadlagnointerventiondf, 
+        2, 
+        [ [ 1 ]; collect(11:89/4:100) ], 
+        simulation1dataset["interventions"], 
+        lagleadinterventionsmatrix(simulation1dataset["interventions"], -21:7:21);
+    )
+    quantilepredictcumulativedifferenceincases(
+        fseir, 
+        sim1leadlagnointerventiondf, 
+        logr0a, 
+        logr0b,
+        simulation1dataset["cases_counterfactual"][1:29, :], 
+        simulation1dataset["Ns"]
+    )
+end
+sim1model1df = loadanalysisdictsasdf("sim1model1", 8, maxrounds, 110)
+sim1model1lagleaddf = loadanalysisdictsasdf("sim1model1laglead", 8, maxrounds, 115)
+insertcumulativeeffects!(sim1model1lagleaddf, -21:7:21)
+sim1logeffectivereproductionratios = quantilelogeffectivereproductionratios(
+    sim1model1lagleaddf,
+    2,
+    simulation1dataset["cases"],
+    simulation1dataset["Ns"],
+    [ [ 1 ]; collect(11:89/4:100) ],
+    simulation1dataset["interventions"],
+    lagleadinterventionsmatrix(simulation1dataset["interventions"], -21:7:21)
+)
+sim1casesdiff = let 
+    logr0a = logbasicreproductionratios(
+        sim1model1lagleaddf, 
+        2, 
+        [ [ 1 ]; collect(11:89/4:100) ], 
+        simulation1dataset["interventions"], 
+        lagleadinterventionsmatrix(simulation1dataset["interventions"], -21:7:21);
+        logdelta=0, 
+        logsecondarydelta1=0,
+        logsecondarydelta2=0, 
+        logsecondarydelta3=0, 
+        logsecondarydelta4=0, 
+        logsecondarydelta5=0, 
+        logsecondarydelta6=0,
+    )
+    logr0b = logbasicreproductionratios(
+        sim1model1lagleaddf, 
+        2, 
+        [ [ 1 ]; collect(11:89/4:100) ], 
+        simulation1dataset["interventions"], 
+        lagleadinterventionsmatrix(simulation1dataset["interventions"], -21:7:21);
+    )
+    quantilepredictcumulativedifferenceincases(
+        fseir, 
+        sim1model1lagleaddf, 
+        logr0a, 
+        logr0b,
+        simulation1dataset["cases"][1:29, :], 
+        simulation1dataset["Ns"]
+    )
+end
+sim2nointerventiondf = loadanalysisdictsasdf("sim2model1_0", 8, maxrounds, 250)
+sim2leadlagnointerventiondf = loadanalysisdictsasdf("sim2model1_0laglead", 8, maxrounds, 255)
+insertcumulativeeffects!(sim2leadlagnointerventiondf, -21:7:21)
+sim2confoundernointerventiondf = loadanalysisdictsasdf("sim2model2_0", 8, maxrounds, 260)
+sim2leadlagconfoundernointerventiondf = loadanalysisdictsasdf(
+    "sim2model2_0laglead", 8, maxrounds, 265
+)
+insertcumulativeeffects!(sim2leadlagconfoundernointerventiondf, -21:7:21; deltaindex=2:7)
+sim2modeldf = loadanalysisdictsasdf("sim2model0", 8, maxrounds, 200)
+sim2modelleadlagdf = loadanalysisdictsasdf("sim2model0laglead", 8, maxrounds, 205)
+insertcumulativeeffects!(sim2modelleadlagdf, -21:7:21)
+sim2model1df = loadanalysisdictsasdf("sim2model1", 8, maxrounds, 210)
+sim2model1leadlagdf = loadanalysisdictsasdf("sim2model1laglead", 8, maxrounds, 215)
+insertcumulativeeffects!(sim2model1leadlagdf, -21:7:21; deltaindex=2:7)
+sim3nointerventiondf = loadanalysisdictsasdf("sim3model0", 8, maxrounds, 300)
+sim3leadlagnointerventiondf = loadanalysisdictsasdf("sim3model0leadlag", 8, maxrounds, 355)
+insertcumulativeeffects!(sim3leadlagnointerventiondf, -21:7:21)
+sim3model1df = loadanalysisdictsasdf("sim3model1", 8, maxrounds, 310)
+sim3model1leadlagdf = loadanalysisdictsasdf("sim3model2", 8, maxrounds, 315)
+insertcumulativeeffects!(sim3model1leadlagdf, -21:7:21)
+sim4nointerventiondf = loadanalysisdictsasdf("sim4model0", 8, maxrounds, 400)
+sim4leadlagnointerventiondf = loadanalysisdictsasdf("sim4model0leadlag", 8, maxrounds, 405)
+insertcumulativeeffects!(sim4leadlagnointerventiondf, -21:7:21)
+sim4model1df = loadanalysisdictsasdf("sim4model1", 8, maxrounds, 410)
+sim4model1leadlagdf = loadanalysisdictsasdf("sim4model2", 8, maxrounds, 415)
+insertcumulativeeffects!(sim4model1leadlagdf, -21:7:21)
+ukdatadf = loadanalysisdictsasdf("maskingdatamodel2", 8, maxrounds, 1120)
+ukdataleadlagdf = loadanalysisdictsasdf("maskingdatamodel2leadlag", 8, maxrounds, 1125)
+insertcumulativeeffects!(ukdataleadlagdf, -21:7:21)
+ukdataleadlagfittedoutput = samplerenewalequation_2sets(
+    COVIDSERIALINTERVAL, ukdataleadlagdf, facialcoveringsrequired; 
+    initialvalues=maskcovidcases[1:56, :], 
+    Ns=POPULATION2020,
+    timeknots=[ 1.0; collect(56.0:28:224); 257 ],
+    secondaryinterventions=lagleadinterventionsmatrix(facialcoveringsrequired_IM, -21:7:21),
+)
+ukdataleadlagfittedoutput_167 = samplerenewalequation_2sets(
+    COVIDSERIALINTERVAL, ukdataleadlagdf, facialcoveringsrequired; 
+    initialvalues=maskcovidcases[1:167, :], 
+    Ns=POPULATION2020,
+    timeknots=[ 1.0; collect(56.0:28:224); 257 ],
+    secondaryinterventions=lagleadinterventionsmatrix(facialcoveringsrequired_IM, -21:7:21),
+)
+ukdataleadlagfittedoutput_192 = samplerenewalequation_2sets(
+    COVIDSERIALINTERVAL, ukdataleadlagdf, facialcoveringsrequired; 
+    initialvalues=maskcovidcases[1:192, :], 
+    Ns=POPULATION2020,
+    timeknots=[ 1.0; collect(56.0:28:224); 257 ],
+    secondaryinterventions=lagleadinterventionsmatrix(facialcoveringsrequired_IM, -21:7:21),
+)
+ukdataleadlagfittedoutput_174 = samplerenewalequation_2sets(
+    COVIDSERIALINTERVAL, ukdataleadlagdf, facialcoveringsrequired; 
+    initialvalues=maskcovidcases[1:174, :], 
+    Ns=POPULATION2020,
+    timeknots=[ 1.0; collect(56.0:28:224); 257 ],
+    secondaryinterventions=lagleadinterventionsmatrix(facialcoveringsrequired_IM, -21:7:21),
+)
+
+
+
+
+ukdataconfounders1df = loadanalysisdictsasdf("maskingdatamodel3", 8, maxrounds, 1130)
+ukdataconfounders1leadlagdf = loadanalysisdictsasdf("maskingdatamodel4", 8, maxrounds, 1135)
+insertcumulativeeffects!(ukdataconfounders1leadlagdf, -21:7:21; deltaindex=3:8)
+ukdataconfounders2df = loadanalysisdictsasdf("maskingdatamodel5", 8, maxrounds, 1150)
+ukdataconfounders2leadlagdf = loadanalysisdictsasdf("maskingdatamodel6", 8, maxrounds, 1155)
+insertcumulativeeffects!(ukdataconfounders2leadlagdf, -21:7:21; deltaindex=4:9)
+usdatadf = loadanalysisdictsasdf("datamodelus1", 12, maxrounds, 101)
+usdataleadlagdf = loadanalysisdictsasdf("datamodelus1leadlag", 12, maxrounds, 105)
+insertcumulativeeffects!(usdataleadlagdf, -21:7:21)
+usdataconfoundersdf = loadanalysisdictsasdf("datamodelus2", 8, maxrounds, 110)
+usdataconfoundersleadlagdf = loadanalysisdictsasdf("datamodelus2leadlag", 8, maxrounds, 115)
+insertcumulativeeffects!(usdataconfoundersleadlagdf, -21:7:21)
