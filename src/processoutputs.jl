@@ -2,18 +2,7 @@
 function insertcumulativeeffects!(df; leadlagtimes, kwargs...)
     insertcumulativeeffects!(df, leadlagtimes; kwargs...)
 end
-#=
-function insertcumulativeeffects!(df, leadlagtimes::StepRange; skipzero=true)
-    if skipzero 
-        insertcumulativeeffects!(
-            df, leadlagtimes[findall(_notzero, leadlagtimes)]; 
-            skipzero=false
-        )
-    else 
-        insertcumulativeeffects!(df, collect(leadlagtimes))
-    end
-end
-=#
+
 function insertcumulativeeffects!(df, leadlagtimes; deltaindex=automatic, kwargs...)
     insertcumulativeeffects!(df, leadlagtimes, deltaindex; kwargs...)
 end

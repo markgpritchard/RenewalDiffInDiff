@@ -7,7 +7,6 @@ include("analysis.jl")  # will run analyses if they are not already available
 
 const maxrounds = 12  # the greatest number of rounds that the analysis may have run 
 
-sim1nointerventiondf = loadanalysisdictsasdf("sim1model0", 8, maxrounds, 100)
 sim1leadlagnointerventiondf = loadanalysisdictsasdf("sim1model0laglead", 8, maxrounds, 105)
 insertcumulativeeffects!(sim1leadlagnointerventiondf, -21:7:21)
 sim1nointerventionlogeffectivereproductionratios = quantilelogeffectivereproductionratios(
@@ -57,7 +56,6 @@ sim1nointerventioncasesdiff = let
         simulation1dataset["Ns"]
     )
 end
-sim1model1df = loadanalysisdictsasdf("sim1model1", 8, maxrounds, 110)
 sim1model1lagleaddf = loadanalysisdictsasdf("sim1model1laglead", 8, maxrounds, 115)
 insertcumulativeeffects!(sim1model1lagleaddf, -21:7:21)
 sim1logeffectivereproductionratios = quantilelogeffectivereproductionratios(
@@ -100,7 +98,6 @@ sim1casesdiff = let
         simulation1dataset["Ns"]
     )
 end
-sim2nointerventiondf = loadanalysisdictsasdf("sim2model1_0", 8, maxrounds, 250)
 sim2leadlagnointerventiondf = loadanalysisdictsasdf("sim2model1_0laglead", 8, maxrounds, 255)
 insertcumulativeeffects!(sim2leadlagnointerventiondf, -21:7:21)
 sim2confoundernointerventiondf = loadanalysisdictsasdf("sim2model2_0", 8, maxrounds, 260)
@@ -108,25 +105,18 @@ sim2leadlagconfoundernointerventiondf = loadanalysisdictsasdf(
     "sim2model2_0laglead", 8, maxrounds, 265
 )
 insertcumulativeeffects!(sim2leadlagconfoundernointerventiondf, -21:7:21; deltaindex=2:7)
-sim2modeldf = loadanalysisdictsasdf("sim2model0", 8, maxrounds, 200)
 sim2modelleadlagdf = loadanalysisdictsasdf("sim2model0laglead", 8, maxrounds, 205)
 insertcumulativeeffects!(sim2modelleadlagdf, -21:7:21)
-sim2model1df = loadanalysisdictsasdf("sim2model1", 8, maxrounds, 210)
 sim2model1leadlagdf = loadanalysisdictsasdf("sim2model1laglead", 8, maxrounds, 215)
 insertcumulativeeffects!(sim2model1leadlagdf, -21:7:21; deltaindex=2:7)
-sim3nointerventiondf = loadanalysisdictsasdf("sim3model0", 8, maxrounds, 300)
 sim3leadlagnointerventiondf = loadanalysisdictsasdf("sim3model0leadlag", 8, maxrounds, 355)
 insertcumulativeeffects!(sim3leadlagnointerventiondf, -21:7:21)
-sim3model1df = loadanalysisdictsasdf("sim3model1", 8, maxrounds, 310)
 sim3model1leadlagdf = loadanalysisdictsasdf("sim3model2", 8, maxrounds, 315)
 insertcumulativeeffects!(sim3model1leadlagdf, -21:7:21)
-sim4nointerventiondf = loadanalysisdictsasdf("sim4model0", 8, maxrounds, 400)
 sim4leadlagnointerventiondf = loadanalysisdictsasdf("sim4model0leadlag", 8, maxrounds, 405)
 insertcumulativeeffects!(sim4leadlagnointerventiondf, -21:7:21)
-sim4model1df = loadanalysisdictsasdf("sim4model1", 8, maxrounds, 410)
 sim4model1leadlagdf = loadanalysisdictsasdf("sim4model2", 8, maxrounds, 415)
 insertcumulativeeffects!(sim4model1leadlagdf, -21:7:21)
-ukdatadf = loadanalysisdictsasdf("maskingdatamodel2", 8, maxrounds, 1120)
 ukdataleadlagdf = loadanalysisdictsasdf("maskingdatamodel2leadlag", 8, maxrounds, 1125)
 insertcumulativeeffects!(ukdataleadlagdf, -21:7:21)
 ukdatalogeffectivereproductionratios = quantilelogeffectivereproductionratios(
@@ -185,10 +175,8 @@ let
         POPULATION2020
     )
 end
-ukdataconfounders1df = loadanalysisdictsasdf("maskingdatamodel3", 8, maxrounds, 1130)
 ukdataconfounders1leadlagdf = loadanalysisdictsasdf("maskingdatamodel4", 8, maxrounds, 1135)
 insertcumulativeeffects!(ukdataconfounders1leadlagdf, -21:7:21; deltaindex=3:8)
-ukdataconfounders2df = loadanalysisdictsasdf("maskingdatamodel5", 8, maxrounds, 1150)
 ukdataconfounders2leadlagdf = loadanalysisdictsasdf("maskingdatamodel6", 8, maxrounds, 1155)
 insertcumulativeeffects!(ukdataconfounders2leadlagdf, -21:7:21; deltaindex=4:9)
 ukdataconfounderslogeffectivereproductionratios = quantilelogeffectivereproductionratios(
@@ -256,7 +244,6 @@ let
         POPULATION2020
     )
 end
-usdatadf = loadanalysisdictsasdf("datamodelus1", 12, maxrounds, 101)
 usdataleadlagdf = loadanalysisdictsasdf("datamodelus1leadlag", 12, maxrounds, 105)
 insertcumulativeeffects!(usdataleadlagdf, -21:7:21)
 usdatalogeffectivereproductionratios = quantilelogeffectivereproductionratios(
@@ -268,7 +255,6 @@ usdatalogeffectivereproductionratios = quantilelogeffectivereproductionratios(
     maskday,
     secondaryinterventions=lagleadinterventionsmatrix(maskday, -21:7:21)
 )
-usdataconfoundersdf = loadanalysisdictsasdf("datamodelus2", 12, maxrounds, 110)
 usdataconfoundersleadlagdf = loadanalysisdictsasdf(
     "datamodelus2leadlag", 12, maxrounds, 115; 
     deltaindex=6:11

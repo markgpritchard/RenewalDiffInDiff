@@ -98,20 +98,6 @@ W_sim1 = generatew_gt(fseir, simulation1dataset["cases"], simulation1dataset["Ns
 
 ## No effect of interventions 
 
-sim1model0 = diffindiffparameters_splinetimes(
-    W_sim1_0, 
-    simulation1dataset["cases_counterfactual"],
-    simulation1dataset["interventions"], 
-    [ [ 1 ]; collect(11:89/4:100) ],
-    simulation1dataset["Ns"];
-    psiprior=0.8,
-)
-
-s1c0config = @ntuple modelname="sim1model0" model=sim1model0 n_rounds n_chains=8 seed=100+id
-sim1chain0dict = produce_or_load(pol_fitparameter, s1c0config, datadir("sims"))
-
-### with lag and lead times 
-
 sim1model0laglead = diffindiffparameters_splinetimes(
     W_sim1_0, 
     simulation1dataset["cases_counterfactual"],
@@ -134,20 +120,6 @@ s1c0lagleadconfig = (
 sim1chain0lagleaddict = produce_or_load(pol_fitparameter, s1c0lagleadconfig, datadir("sims"))
 
 ## Effective intervention
-
-sim1model1 = diffindiffparameters_splinetimes(
-    W_sim1, 
-    simulation1dataset["cases"],
-    simulation1dataset["interventions"], 
-    [ [ 1 ]; collect(11:89/4:100) ],
-    simulation1dataset["Ns"];
-    psiprior=0.8,
-)
-
-s1c1config = @ntuple modelname="sim1model1" model=sim1model1 n_rounds n_chains=8 seed=110+id
-sim1chain1dict = produce_or_load(pol_fitparameter, s1c1config, datadir("sims"))
-
-### with lag and lead times 
 
 sim1model1laglead = diffindiffparameters_splinetimes(
     W_sim1, 
@@ -184,20 +156,6 @@ W_sim2 = generatew_gt(fseir, simulation2dataset["cases"], simulation2dataset["Ns
 
 ### Do not account for known confounder
 
-sim2model1_0 = diffindiffparameters_splinetimes(
-    W_sim2_0, 
-    simulation2dataset["cases_counterfactual"],
-    simulation2dataset["interventions"], 
-    [ [ 1 ]; collect(11:89/4:100) ],
-    simulation2dataset["Ns"];
-    psiprior=0.5,
-)
-
-s2c1_0config = @ntuple modelname="sim2model1_0" model=sim2model1_0 n_rounds n_chains=8 seed=250+id
-sim2chain1_0dict = produce_or_load(pol_fitparameter, s2c1_0config, datadir("sims"))
-
-### with lag and lead times 
-
 sim2model1_0laglead = diffindiffparameters_splinetimes(
     W_sim2_0, 
     simulation2dataset["cases_counterfactual"],
@@ -222,21 +180,6 @@ sim2chain1_0lagleaddict = produce_or_load(
 )
 
 ### with the known confounder
-
-sim2model2_0 = diffindiffparameters_splinetimes(
-    W_sim2_0, 
-    simulation2dataset["cases_counterfactual"],
-    simulation2dataset["interventions"], 
-    [ [ 1 ]; collect(11:89/4:100) ],
-    simulation2dataset["Ns"];
-    psiprior=0.5,
-    secondaryinterventions=InterventionsMatrix([ nothing, nothing, 70 ], 100),
-)
-
-s2c2_0config = @ntuple modelname="sim2model2_0" model=sim2model2_0 n_rounds n_chains=8 seed=260+id
-sim2chain2_0dict = produce_or_load(pol_fitparameter, s2c2_0config, datadir("sims"))
-
-### with the known confounder, and lag and lead times 
 
 sim2model2_0laglead = diffindiffparameters_splinetimes(
     W_sim2_0, 
@@ -265,21 +208,7 @@ sim2chain2_0lagleaddict = produce_or_load(
 
 ## With effective intervention
 
-### Do not account for known confounder
-
-sim2model0 = diffindiffparameters_splinetimes(
-    W_sim2, 
-    simulation2dataset["cases"],
-    simulation2dataset["interventions"], 
-    [ [ 1 ]; collect(11:89/4:100) ],
-    simulation2dataset["Ns"];
-    psiprior=0.5,
-)
-
-s2c0config = @ntuple modelname="sim2model0" model=sim2model0 n_rounds n_chains=8 seed=200+id
-sim2chain0dict = produce_or_load(pol_fitparameter, s2c0config, datadir("sims"))
-
-### with lag and lead times 
+### Do not account for known confounder 
 
 sim2model0laglead = diffindiffparameters_splinetimes(
     W_sim2, 
@@ -302,22 +231,7 @@ s2c0lagleadconfig = (
 )
 sim2lagleadchain0dict = produce_or_load(pol_fitparameter, s2c0lagleadconfig, datadir("sims"))
 
-### with the known confounder
-
-sim2model1 = diffindiffparameters_splinetimes(
-    W_sim2, 
-    simulation2dataset["cases"],
-    simulation2dataset["interventions"], 
-    [ [ 1 ]; collect(11:89/4:100) ],
-    simulation2dataset["Ns"];
-    psiprior=0.5,
-    secondaryinterventions=InterventionsMatrix([ nothing, nothing, 70 ], 100),
-)
-
-s2c1config = @ntuple modelname="sim2model1" model=sim2model1 n_rounds n_chains=8 seed=210+id
-sim2chain1dict = produce_or_load(pol_fitparameter, s2c1config, datadir("sims"))
-
-### with the known confounder, and lag and lead times 
+### with the known confounder 
 
 sim2model1laglead = diffindiffparameters_splinetimes(
     W_sim2, 
@@ -351,21 +265,7 @@ W_sim3_0 = generatew_gt(
 W_sim3 = generatew_gt(fseir, simulation3dataset["cases"], simulation3dataset["Ns"])
 
 
-## No effect of interventions 
-
-sim3model0 = diffindiffparameters_splinetimes(
-    W_sim3_0, 
-    simulation3dataset["cases_counterfactual"],
-    simulation3dataset["interventions"], 
-    [ [ 1 ]; collect(11:89/4:100) ],
-    simulation3dataset["Ns"];
-    psiprior=0.3,
-)
-
-s3c0config = @ntuple modelname="sim3model0" model=sim3model0 n_rounds n_chains=8 seed=300+id
-sim3chain0dict = produce_or_load(pol_fitparameter, s3c0config, datadir("sims"))
-
-### with lag and lead times 
+## No effect of interventions  
 
 sim3model0leadlag = diffindiffparameters_splinetimes(
     W_sim3_0, 
@@ -387,21 +287,6 @@ s3c0configleadlag = (
     seed=355+id
 )
 sim3chain0dictleadlag = produce_or_load(pol_fitparameter, s3c0configleadlag, datadir("sims"))
-
-
-## Analysis 1 
-
-sim3model1 = diffindiffparameters_splinetimes(
-    W_sim3, 
-    simulation3dataset["cases"],
-    simulation3dataset["interventions"], 
-    [ [ 1 ]; collect(11:89/4:100) ],
-    simulation3dataset["Ns"];
-    psiprior=0.3,
-)
-
-s3c1config = @ntuple modelname="sim3model1" model=sim3model1 n_rounds n_chains=8 seed=310+id
-sim3chain1dict = produce_or_load(pol_fitparameter, s3c1config, datadir("sims"))
 
 
 ## Analysis 2
@@ -434,20 +319,6 @@ W_sim4 = generatew_gt(fseir, simulation4dataset["cases"], simulation4dataset["Ns
 
 ## No effect of interventions 
 
-sim4model0 = diffindiffparameters_splinetimes(
-    W_sim4_0, 
-    simulation4dataset["cases_counterfactual"],
-    simulation4dataset["interventions"], 
-    [ [ 1 ]; collect(11:89/4:100) ],
-    simulation4dataset["Ns"];
-    psiprior=0.5,
-)
-
-s4c0config = @ntuple modelname="sim4model0" model=sim4model0 n_rounds n_chains=8 seed=400+id
-sim4chain0dict = produce_or_load(pol_fitparameter, s4c0config, datadir("sims"))
-
-### with lag and lead times 
-
 sim4model0leadlag = diffindiffparameters_splinetimes(
     W_sim4_0, 
     simulation4dataset["cases_counterfactual"],
@@ -468,21 +339,6 @@ s4c0leadlagconfig = (
     seed=405+id
 )
 sim4chain0leadlagdict = produce_or_load(pol_fitparameter, s4c0leadlagconfig, datadir("sims"))
-
-
-## Analysis 1 
-
-sim4model1 = diffindiffparameters_splinetimes(
-    W_sim4, 
-    simulation4dataset["cases"],
-    simulation4dataset["interventions"], 
-    [ [ 1 ]; collect(11:89/4:100) ],
-    simulation4dataset["Ns"];
-    psiprior=0.5,
-)
-
-s4c1config = @ntuple modelname="sim4model1" model=sim4model1 n_rounds n_chains=8 seed=410+id
-sim4chain1dict = produce_or_load(pol_fitparameter, s4c1config, datadir("sims"))
 
 
 ## Analysis 2
@@ -570,26 +426,6 @@ W_maskcoviddata = generatew_gt(COVIDSERIALINTERVAL, maskcovidcases, POPULATION20
 ## Analysis 2 
 # Effect of mask requirements. No other considerations of confounding 
 
-maskingdatamodel2 = diffindiffparameters_splinetimes(
-    W_maskcoviddata, 
-    maskcovidcases,
-    facialcoveringsrequired, 
-    [ 1.0; collect(56.0:28:224); 257 ],
-    POPULATION2020;
-    psiprior=0.4,
-)
-
-maskdatac2config = (
-    modelname="maskingdatamodel2", 
-    model=maskingdatamodel2, 
-    n_rounds=n_rounds, 
-    n_chains=8, 
-    seed=1120+id
-)
-maskingdatamodel2dict = produce_or_load(pol_fitparameter, maskdatac2config, datadir("sims"))
-
-### with lag and lead times 
-
 maskingdatamodel2leadlag = diffindiffparameters_splinetimes(
     W_maskcoviddata, 
     maskcovidcases,
@@ -612,32 +448,9 @@ maskingdatamodel2leadlagdict = produce_or_load(
 )
 
 
-## Analysis 3 
+## Analysis 4 
 # Effect of mask requirements with secondary interventions of end of stay-at-home and some
 # businesses reopening
-
-maskingdatamodel3 = diffindiffparameters_splinetimes(
-    W_maskcoviddata, 
-    maskcovidcases,
-    facialcoveringsrequired, 
-    [ 1.0; collect(56.0:28:224); 257 ],
-    POPULATION2020;
-    psiprior=0.4,
-    secondaryinterventions=[ endstayathometimes, somebusinessreopen ],
-)
-
-maskdatac3config = (
-    modelname="maskingdatamodel3", 
-    model=maskingdatamodel3, 
-    n_rounds=n_rounds, 
-    n_chains=8, 
-    seed=1130+id
-)
-maskingdatamodel3dict = produce_or_load(pol_fitparameter, maskdatac3config, datadir("sims"))
-
-
-## Analysis 4 
-# with lead and lag times  
 
 maskingdatamodel4 = diffindiffparameters_splinetimes(
     W_maskcoviddata, 
@@ -659,31 +472,6 @@ maskdatac4config = (
     seed=1135+id
 )
 maskingdatamodel4dict = produce_or_load(pol_fitparameter, maskdatac4config, datadir("sims"))
-
-## Analysis 5 
-# Effect of mask requirements with secondary interventions of end of stay-at-home and some
-# businesses reopening and mask recommendations
-
-maskingdatamodel5 = diffindiffparameters_splinetimes(
-    W_maskcoviddata, 
-    maskcovidcases,
-    facialcoveringsrequired, 
-    [ 1.0; collect(56.0:28:224); 257 ],
-    POPULATION2020;
-    psiprior=0.4,
-    secondaryinterventions=[ 
-        endstayathometimes, somebusinessreopen, facialcoveringsrecommended 
-    ],
-)
-
-maskdatac5config = (
-    modelname="maskingdatamodel5", 
-    model=maskingdatamodel5, 
-    n_rounds=n_rounds, 
-    n_chains=8, 
-    seed=1150+id
-)
-maskingdatamodel5dict = produce_or_load(pol_fitparameter, maskdatac5config, datadir("sims"))
 
 
 ## Analysis 6 
@@ -719,26 +507,6 @@ maskingdatamodel6dict = produce_or_load(pol_fitparameter, maskdatac6config, data
 
 const usnrounds = n_rounds > 8 ? 8 : n_rounds
 
-datamodelus1 = diffindiffparameters_splinetimes(
-    W_uscoviddata, 
-    incidence,
-    maskday, 
-    [ collect(1.0:28:113); [ 123 ] ],
-    populations;
-    psiprior=0.8,
-)
-
-datac1config = (
-    modelname="datamodelus1", 
-    model=datamodelus1, 
-    n_rounds=usnrounds, 
-    n_chains=12,
-    seed=101+id
-)
-datachain1dict = produce_or_load(pol_fitparameter, datac1config, datadir("sims"))
-
-### with lag and lead times 
-
 datamodelus1leadlag = diffindiffparameters_splinetimes(
     W_uscoviddata, 
     incidence,
@@ -761,29 +529,6 @@ datachain1leadlagdict = produce_or_load(
 )
 
 ## With confounding interventions 
-
-datamodelus2 = diffindiffparameters_splinetimes(
-    W_uscoviddata, 
-    incidence,
-    maskday, 
-    [ collect(1.0:28:113); [ 123 ] ],
-    populations;
-    psiprior=0.8,
-    secondaryinterventions = [
-        relaxshelterinplace, reopenbusiness, reopenrestaurants, reopengyms, reopencinemas 
-    ]
-)
-
-datac2config = (
-    modelname="datamodelus2", 
-    model=datamodelus2, 
-    n_rounds=usnrounds, 
-    n_chains=12,
-    seed=110+id
-)
-datachain2dict = produce_or_load(pol_fitparameter, datac2config, datadir("sims"))
-
-### with confounding interventions, and lag and lead times 
 
 datamodelus2leadlag = diffindiffparameters_splinetimes(
     W_uscoviddata, 
