@@ -494,7 +494,7 @@ function _logeffectivereproductionratio_value(df, symbol, i; kwargs...)
     end
 end
 
-function predictcases(g, df, logR0, initialcases, ns; kwargs...)
+function predictcases(g::Function, df, logR0, initialcases, ns; kwargs...)
     ninitialcases = size(initialcases, 1)
     predictedcases = similar(logR0)
     Threads.@threads for k ∈ axes(predictedcases, 1)
@@ -518,4 +518,9 @@ function predictcases(g, df, logR0, initialcases, ns; kwargs...)
         end
     end
     return predictedcases
+end
+
+function predictcases(g::Vector, df, logR0, initialcases, ns; kwargs...)
+    ℓ = length(g) 
+    return predictcases(x -> x > ℓ ? 0 : g[x], df, logR0, initialcases, ns; kwargs...)
 end

@@ -129,47 +129,148 @@ insertcumulativeeffects!(sim4model1leadlagdf, -21:7:21)
 ukdatadf = loadanalysisdictsasdf("maskingdatamodel2", 8, maxrounds, 1120)
 ukdataleadlagdf = loadanalysisdictsasdf("maskingdatamodel2leadlag", 8, maxrounds, 1125)
 insertcumulativeeffects!(ukdataleadlagdf, -21:7:21)
-ukdataleadlagfittedoutput = samplerenewalequation_2sets(
-    COVIDSERIALINTERVAL, ukdataleadlagdf, facialcoveringsrequired; 
-    initialvalues=maskcovidcases[1:56, :], 
-    Ns=POPULATION2020,
-    timeknots=[ 1.0; collect(56.0:28:224); 257 ],
-    secondaryinterventions=lagleadinterventionsmatrix(facialcoveringsrequired_IM, -21:7:21),
+ukdatalogeffectivereproductionratios = quantilelogeffectivereproductionratios(
+    ukdataleadlagdf,
+    4,
+    maskcovidcases,
+    POPULATION2020,
+    [ 1.0; collect(56.0:28:224); 257 ],
+    facialcoveringsrequired,
+    lagleadinterventionsmatrix(facialcoveringsrequired_IM, -21:7:21)
 )
-ukdataleadlagfittedoutput_167 = samplerenewalequation_2sets(
-    COVIDSERIALINTERVAL, ukdataleadlagdf, facialcoveringsrequired; 
-    initialvalues=maskcovidcases[1:167, :], 
-    Ns=POPULATION2020,
-    timeknots=[ 1.0; collect(56.0:28:224); 257 ],
-    secondaryinterventions=lagleadinterventionsmatrix(facialcoveringsrequired_IM, -21:7:21),
-)
-ukdataleadlagfittedoutput_192 = samplerenewalequation_2sets(
-    COVIDSERIALINTERVAL, ukdataleadlagdf, facialcoveringsrequired; 
-    initialvalues=maskcovidcases[1:192, :], 
-    Ns=POPULATION2020,
-    timeknots=[ 1.0; collect(56.0:28:224); 257 ],
-    secondaryinterventions=lagleadinterventionsmatrix(facialcoveringsrequired_IM, -21:7:21),
-)
-ukdataleadlagfittedoutput_174 = samplerenewalequation_2sets(
-    COVIDSERIALINTERVAL, ukdataleadlagdf, facialcoveringsrequired; 
-    initialvalues=maskcovidcases[1:174, :], 
-    Ns=POPULATION2020,
-    timeknots=[ 1.0; collect(56.0:28:224); 257 ],
-    secondaryinterventions=lagleadinterventionsmatrix(facialcoveringsrequired_IM, -21:7:21),
-)
-
-
-
-
+let 
+    logr0a = logbasicreproductionratios(
+        ukdataleadlagdf, 
+        4, 
+        [ 1.0; collect(56.0:28:224); 257 ], 
+        facialcoveringsrequired, 
+        lagleadinterventionsmatrix(facialcoveringsrequired_IM, -21:7:21);
+        logdelta=0, 
+        logsecondarydelta1=0,
+        logsecondarydelta2=0, 
+        logsecondarydelta3=0, 
+        logsecondarydelta4=0, 
+        logsecondarydelta5=0, 
+        logsecondarydelta6=0,
+    )
+    logr0b = logbasicreproductionratios(
+        ukdataleadlagdf, 
+        4, 
+        [ 1.0; collect(56.0:28:224); 257 ], 
+        facialcoveringsrequired, 
+        lagleadinterventionsmatrix(facialcoveringsrequired_IM, -21:7:21);
+    )
+    global ukdatacasesdiff_167 = quantilepredictcumulativedifferenceincases(
+        COVIDSERIALINTERVAL, 
+        ukdataleadlagdf, 
+        logr0a, 
+        logr0b,
+        maskcovidcases[1:146, :], 
+        POPULATION2020
+    )
+    global ukdatacasesdiff_192 = quantilepredictcumulativedifferenceincases(
+        COVIDSERIALINTERVAL, 
+        ukdataleadlagdf, 
+        logr0a, 
+        logr0b,
+        maskcovidcases[1:171, :], 
+        POPULATION2020
+    )
+    global ukdatacasesdiff_174 = quantilepredictcumulativedifferenceincases(
+        COVIDSERIALINTERVAL, 
+        ukdataleadlagdf, 
+        logr0a, 
+        logr0b,
+        maskcovidcases[1:153, :], 
+        POPULATION2020
+    )
+end
 ukdataconfounders1df = loadanalysisdictsasdf("maskingdatamodel3", 8, maxrounds, 1130)
 ukdataconfounders1leadlagdf = loadanalysisdictsasdf("maskingdatamodel4", 8, maxrounds, 1135)
 insertcumulativeeffects!(ukdataconfounders1leadlagdf, -21:7:21; deltaindex=3:8)
 ukdataconfounders2df = loadanalysisdictsasdf("maskingdatamodel5", 8, maxrounds, 1150)
 ukdataconfounders2leadlagdf = loadanalysisdictsasdf("maskingdatamodel6", 8, maxrounds, 1155)
 insertcumulativeeffects!(ukdataconfounders2leadlagdf, -21:7:21; deltaindex=4:9)
+ukdataconfounderslogeffectivereproductionratios = quantilelogeffectivereproductionratios(
+    ukdataconfounders2leadlagdf,
+    4,
+    maskcovidcases,
+    POPULATION2020,
+    [ 1.0; collect(56.0:28:224); 257 ],
+    facialcoveringsrequired,
+    [
+        [ endstayathometimes, somebusinessreopen, facialcoveringsrecommended ];
+        lagleadinterventionsmatrix(facialcoveringsrequired_IM, -21:7:21) 
+    ]
+)
+let 
+    logr0a = logbasicreproductionratios(
+        ukdataconfounders2leadlagdf, 
+        4, 
+        [ 1.0; collect(56.0:28:224); 257 ], 
+        facialcoveringsrequired, 
+        [
+            [ endstayathometimes, somebusinessreopen, facialcoveringsrecommended ];
+            lagleadinterventionsmatrix(facialcoveringsrequired_IM, -21:7:21) 
+        ];
+        logdelta=0, 
+        logsecondarydelta4=0, 
+        logsecondarydelta5=0, 
+        logsecondarydelta6=0,
+        logsecondarydelta7=0,
+        logsecondarydelta8=0, 
+        logsecondarydelta9=0, 
+    )
+    logr0b = logbasicreproductionratios(
+        ukdataconfounders2leadlagdf, 
+        4, 
+        [ 1.0; collect(56.0:28:224); 257 ], 
+        facialcoveringsrequired, 
+        [
+            [ endstayathometimes, somebusinessreopen, facialcoveringsrecommended ];
+            lagleadinterventionsmatrix(facialcoveringsrequired_IM, -21:7:21) 
+        ];
+    )
+    global ukdataconfounderscasesdiff_167 = quantilepredictcumulativedifferenceincases(
+        COVIDSERIALINTERVAL, 
+        ukdataconfounders2leadlagdf, 
+        logr0a, 
+        logr0b,
+        maskcovidcases[1:146, :], 
+        POPULATION2020
+    )
+    global ukdataconfounderscasesdiff_192 = quantilepredictcumulativedifferenceincases(
+        COVIDSERIALINTERVAL, 
+        ukdataconfounders2leadlagdf, 
+        logr0a, 
+        logr0b,
+        maskcovidcases[1:171, :], 
+        POPULATION2020
+    )
+    global ukdataconfounderscasesdiff_174 = quantilepredictcumulativedifferenceincases(
+        COVIDSERIALINTERVAL, 
+        ukdataconfounders2leadlagdf, 
+        logr0a, 
+        logr0b,
+        maskcovidcases[1:153, :], 
+        POPULATION2020
+    )
+end
 usdatadf = loadanalysisdictsasdf("datamodelus1", 12, maxrounds, 101)
 usdataleadlagdf = loadanalysisdictsasdf("datamodelus1leadlag", 12, maxrounds, 105)
 insertcumulativeeffects!(usdataleadlagdf, -21:7:21)
-usdataconfoundersdf = loadanalysisdictsasdf("datamodelus2", 8, maxrounds, 110)
-usdataconfoundersleadlagdf = loadanalysisdictsasdf("datamodelus2leadlag", 8, maxrounds, 115)
+usdatalogeffectivereproductionratios = quantilelogeffectivereproductionratios(
+    usdataleadlagdf,
+    51,
+    incidence,
+    populations,
+    [ collect(1.0:28:113); [ 123 ] ],
+    maskday,
+    secondaryinterventions=lagleadinterventionsmatrix(maskday, -21:7:21)
+)
+usdataconfoundersdf = loadanalysisdictsasdf("datamodelus2", 12, maxrounds, 110)
+usdataconfoundersleadlagdf = loadanalysisdictsasdf(
+    "datamodelus2leadlag", 12, maxrounds, 115; 
+    deltaindex=6:11
+)
 insertcumulativeeffects!(usdataconfoundersleadlagdf, -21:7:21)

@@ -61,14 +61,17 @@ safesave(plotsdir("datagenerationintervalplot.pdf"), datagenerationintervalplot)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 sim1_0_fitzfig = with_theme(theme_latexfonts()) do 
-    fig = Figure(; size=( 500, 350 ))
+    fig = Figure(; size=( 500, 500 ))
     ga = GridLayout(fig[1, 1])
-    gb = GridLayout(fig[2, 1])
+    gb = GridLayout(fig[1, 2])
+
+    attax1 = Axis(ga[3, 1:2])
+    attax2 = Axis(gb[3, 1:2])
+    casesax1 = Axis(ga[5, 1:2])
+    casesax2 = Axis(gb[5, 1:2])
 
     let 
         axs = [ Axis(ga[1, i]) for i ∈ 1:2 ]
-        attax = Axis(ga[1, 4])
-        casesax = Axis(ga[1, 6])
 
         for i ∈ 1:2 
             lines!(
@@ -87,7 +90,7 @@ sim1_0_fitzfig = with_theme(theme_latexfonts()) do
                 axs[i], collect(1:100)[noninfindex], W_sim1_0[noninfindex, i];
                 color=:black, markersize=2,
             )
-
+            linkaxes!(axs...)
             formataxis!(
                 axs[i]; 
                 hidespines=( :r, :t ), hidey=(i != 1), hideyticks=(i != 1), trimspines=true,
@@ -95,31 +98,29 @@ sim1_0_fitzfig = with_theme(theme_latexfonts()) do
             if i == 2 hidespines!(axs[i], :l) end
         end
 
-        plottau_att!(attax, sim1leadlagnointerventiondf, -21:7:21; )
+        plottau_att!(attax1, sim1leadlagnointerventiondf, -21:7:21; )
 
         lines!(
-            casesax, 1:100, sim1nointerventioncasesdiff.med[:, 2] ./ 10_000;
+            casesax1, 1:100, sim1nointerventioncasesdiff.med[:, 2] ./ 10_000;
             color=COLOURVECTOR[1], linewidth=1,
         )
         band!(
-            casesax, 
+            casesax1, 
             1:100, 
             sim1nointerventioncasesdiff.lci[:, 2] ./ 10_000,
             sim1nointerventioncasesdiff.uci[:, 2] ./ 10_000;
             color=( COLOURVECTOR[1], 0.5 ), 
         )
         hlines!(
-            casesax, 0; 
+            casesax1, 0; 
             color=RGBAf(0, 0, 0, 0.12), linestyle=( :dot, :dense ), linewidth=1,
         )
 
-        formataxis!(casesax; hidespines=( :r, :t ), trimspines=true,)
+        formataxis!(casesax1; hidespines=( :r, :t ), trimspines=true,)
     end
 
     let 
         axs = [ Axis(gb[1, i]) for i ∈ 1:2 ]
-        attax = Axis(gb[1, 4])
-        casesax = Axis(gb[1, 6])
 
         for i ∈ 1:2 
             lines!(
@@ -146,46 +147,49 @@ sim1_0_fitzfig = with_theme(theme_latexfonts()) do
             if i == 2 hidespines!(axs[i], :l) end
         end
 
-        plottau_att!(attax, sim1model1lagleaddf, -21:7:21; )
+        plottau_att!(attax2, sim1model1lagleaddf, -21:7:21; )
 
         lines!(
-            casesax, 1:100, sim1casesdiff.med[:, 2] ./ 10_000;
+            casesax2, 1:100, sim1casesdiff.med[:, 2] ./ 10_000;
             color=COLOURVECTOR[1], linewidth=1,
         )
         band!(
-            casesax, 
+            casesax2, 
             1:100, 
             sim1casesdiff.lci[:, 2] ./ 10_000,
             sim1casesdiff.uci[:, 2] ./ 10_000;
             color=( COLOURVECTOR[1], 0.5 ), 
         )
         hlines!(
-            casesax, 0; 
+            casesax2, 0; 
             color=RGBAf(0, 0, 0, 0.12), linestyle=( :dot, :dense ), linewidth=1,
         )
 
-        formataxis!(casesax; hidespines=( :r, :t ), trimspines=true,)
+        formataxis!(casesax2; hidespines=( :r, :t ), trimspines=true,)
     end
 
     for gl ∈ [ ga, gb ]
         Label(
-            gl[1, 0], "log effective\nreproduction ratio"; 
+            gl[1, 0], L"log $\mathcal{R}_{e}$"; 
             fontsize=11.84, rotation=π/2, tellheight=false
         )
         Label(
-            gl[1, 3], L"$\tau_{\mathrm{ATT}}$"; 
+            gl[3, 0], L"$\tau_{\mathrm{ATT}}$"; 
             fontsize=11.84, rotation=π/2, tellheight=false
         )
         Label(
-            gl[1, 5], L"cumulative difference \\ in incidence, per $10\,000$"; 
+            gl[5, 0], L"cumulative difference \\ in diagnoses, $\times 10\,000$"; 
             fontsize=11.84, rotation=π/2, tellheight=false
         )
         Label(gl[2, 1:2], "Time"; fontsize=11.84, tellwidth=false)
-        Label(gl[2, 4], "Time, relative\nto intervention"; fontsize=11.84, tellwidth=false)
-        Label(gl[2, 6], "Time"; fontsize=11.84, tellwidth=false)
-        for c ∈ [ 1, 4, 6 ] colgap!(gl, c, 5) end
-        rowgap!(gl, 1, 5)
+        Label(gl[4, 1:2], "Time from intervention"; fontsize=11.84, tellwidth=false)
+        Label(gl[6, 1:2], "Time"; fontsize=11.84, tellwidth=false)
+        colgap!(gl, 1, 5) 
+        for r ∈ [ 1, 3, 5 ] rowgap!(gl, r, 5) end
     end
+    
+    linkaxes!(attax1, attax2)
+    linkaxes!(casesax1, casesax2)
 
     labelplots!([ "A", "B" ], [ ga, gb ]; rows=1)
     fig
@@ -219,154 +223,206 @@ safesave(plotsdir("simfig.pdf"), simfig)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ukdatafig = with_theme(theme_latexfonts()) do 
-    fig = Figure(; size=( 500, 800 ))
+    fig = Figure(; size=( 500, 500 ))
     ga = GridLayout(fig[1, 1])
+    gb = GridLayout(fig[1, 2])
+    ga1 = GridLayout(ga[5, 0:4])
+    gb1 = GridLayout(gb[5, 0:4])
+
+    attax1 = Axis(ga[3, 1:4])
+    attax2 = Axis(gb[3, 1:4])
+
+    casesaxs1 = [ 
+        Axis(
+            ga1[1, i]; 
+            xticks=( [ 1, 92, 183, 245 ], [ "Jan.", "April", "July", "Sept." ] ),
+            xticklabelrotation=-π/4,
+        ) 
+        for i ∈ 1:3
+    ]
+    casesaxs2 = [ 
+        Axis(
+            gb1[1, i]; 
+            xticks=( [ 1, 92, 183, 245 ], [ "Jan.", "April", "July", "Sept." ] ),
+            xticklabelrotation=-π/4,
+        ) 
+        for i ∈ 1:3
+    ]
 
     let 
         axs = [ 
             Axis(
-                ga[j, i]; 
-                xticks=( [ 1, 92, 183, 245 ], [ "Jan.", "April", "July", "Sept." ] )
+                ga[1, i]; 
+                xticks=( [ 1, 92, 183, 245 ], [ "Jan.", "April", "July", "Sept." ] ),
+                xticklabelrotation=-π/4,
             ) 
-            for i ∈ 1:2, j ∈ [ 1, 3 ] 
+            for i ∈ 1:4 
         ]
-        plotrenewalequationsamples_w!(
-            axs, 
-            maskcovidcases, W_maskcoviddata, ukdataleadlagfittedoutput, fitws(
-                maskcovidcases, 
-                POPULATION2020, 
-                ukdataleadlagfittedoutput
-            );
-            markersize=2,
-        )
 
-        vlines!(axs[1], 167; color=:red, linestyle=( :dot, :dense ), linewidth=1,)
-        vlines!(axs[2], 192; color=:red, linestyle=( :dot, :dense ), linewidth=1,)
-        vlines!(axs[3], 174; color=:red, linestyle=( :dot, :dense ), linewidth=1,)
+        for i ∈ 1:4
+            lines!(
+                axs[i], 1:257, ukdatalogeffectivereproductionratios.med[:, i];
+                color=COLOURVECTOR[1], linewidth=1,
+            )
+            band!(
+                axs[i], 
+                1:257, 
+                ukdatalogeffectivereproductionratios.lci[:, i],
+                ukdatalogeffectivereproductionratios.uci[:, i];
+                color=( COLOURVECTOR[1], 0.5 ), 
+            )
+            noninfindex = findall(x -> -Inf < x < Inf, W_maskcoviddata[:, i])
+            scatter!(
+                axs[i], collect(1:257)[noninfindex], W_maskcoviddata[noninfindex, i];
+                color=:black, markersize=2,
+            )
+
+            linkaxes!(axs...)
+            formataxis!(
+                axs[i]; 
+                hidespines=( :r, :t ), hidey=(i != 1), hideyticks=(i != 1), trimspines=true,
+            )
+            if i != 1 hidespines!(axs[i], :l) end
+        end
+
+        plottau_att!(attax1, ukdataleadlagdf, -21:7:21; )
+
+        for (i, cases) ∈ enumerate(
+                [ 
+                ukdatacasesdiff_167, ukdatacasesdiff_192, ukdatacasesdiff_174 
+                ]
+            )
+            lines!(
+                casesaxs1[i], 1:257, cases.med[:, 2] ./ 10_000;
+                color=COLOURVECTOR[1], linewidth=1,
+            )
+            band!(
+                casesaxs1[i], 
+                1:257, 
+                cases.lci[:, 2] ./ 10_000,
+                cases.uci[:, 2] ./ 10_000;
+                color=( COLOURVECTOR[1], 0.5 ), 
+            )
+            hlines!(
+                casesaxs1[i], 0; 
+                color=RGBAf(0, 0, 0, 0.12), linestyle=( :dot, :dense ), linewidth=1,
+            )
+
+            formataxis!(
+                casesaxs1[i]; 
+                hidespines=( :r, :t ), hidey=(i != 1), hideyticks=(i != 1), trimspines=true,
+            )
+            if i != 1 hidespines!(casesaxs1[i], :l) end
+        end
+    end
+
+    let 
+        axs = [ 
+            Axis(
+                gb[1, i]; 
+                xticks=( [ 1, 92, 183, 245 ], [ "Jan.", "April", "July", "Sept." ] ),
+                xticklabelrotation=-π/4,
+            ) 
+            for i ∈ 1:4 
+        ]
+
+        for i ∈ 1:4
+            lines!(
+                axs[i], 1:257, ukdataconfounderslogeffectivereproductionratios.med[:, i];
+                color=COLOURVECTOR[1], linewidth=1,
+            )
+            band!(
+                axs[i], 
+                1:257, 
+                ukdataconfounderslogeffectivereproductionratios.lci[:, i],
+                ukdataconfounderslogeffectivereproductionratios.uci[:, i];
+                color=( COLOURVECTOR[1], 0.5 ), 
+            )
+            noninfindex = findall(x -> -Inf < x < Inf, W_maskcoviddata[:, i])
+            scatter!(
+                axs[i], collect(1:257)[noninfindex], W_maskcoviddata[noninfindex, i];
+                color=:black, markersize=2,
+            )
+
+            linkaxes!(axs...)
+            formataxis!(
+                axs[i]; 
+                hidespines=( :r, :t ), hidey=(i != 1), hideyticks=(i != 1), trimspines=true,
+            )
+            if i != 1 hidespines!(axs[i], :l) end
+        end
+
+        plottau_att!(attax2, ukdataconfounders2leadlagdf, -21:7:21; )
+
+        for (i, cases) ∈ enumerate(
+            [ 
+                ukdataconfounderscasesdiff_167, 
+                ukdataconfounderscasesdiff_192, 
+                ukdataconfounderscasesdiff_174 
+            ]
+        )
+            lines!(
+                casesaxs2[i], 1:257, cases.med[:, 2] ./ 10_000;
+                color=COLOURVECTOR[1], linewidth=1,
+            )
+            band!(
+                casesaxs2[i], 
+                1:257, 
+                cases.lci[:, 2] ./ 10_000,
+                cases.uci[:, 2] ./ 10_000;
+                color=( COLOURVECTOR[1], 0.5 ), 
+            )
+            hlines!(
+                casesaxs2[i], 0; 
+                color=RGBAf(0, 0, 0, 0.12), linestyle=( :dot, :dense ), linewidth=1,
+            )
+
+            formataxis!(
+                casesaxs2[i]; 
+                hidespines=( :r, :t ), hidey=(i != 1), hideyticks=(i != 1), trimspines=true,
+            )
+            if i != 1 hidespines!(casesaxs2[i], :l) end
+        end
+    end
+
+    for gl ∈ [ ga, gb ]
+        for (i, c) ∈ enumerate([ "England", "N. Ireland", "Scotland", "Wales"])
+            Label(gl[0, i], c; fontsize=10, halign=:left, tellwidth=false)
+        end
 
         Label(
-            ga[0, 1], "England"; 
-            fontsize=10, halign=:left, tellwidth=false
-        )
-        formataxis!(
-            axs[1]; 
-            hidespines=( :r, :t, :b ), hidex=true, hidexticks=true, trimspines=true
-        )
-        Label(
-            ga[0, 2], "Northern Ireland"; 
-            fontsize=10, halign=:left, tellwidth=false
-        )
-        formataxis!(
-            axs[2]; 
-            hidespines=( :r, :t, :b, :l ), 
-            hidex=true, hidexticks=true, hidey=true, hideyticks=true, trimspines=true
-        )
-        Label(
-            ga[2, 1], "Scotland"; 
-            fontsize=10, halign=:left, tellwidth=false
-        )
-        formataxis!(axs[3]; hidespines=( :r, :t, ), trimspines=true)
-        Label(
-            ga[2, 2], "Wales"; 
-            fontsize=10, halign=:left, tellwidth=false
-        )
-        formataxis!(
-            axs[4]; 
-            hidespines=( :r, :t, :l ), hidey=true, hideyticks=true, trimspines=true
-        )
-        Label(
-            ga[1:3, 0], L"$\ln\mathcal{R}_e$"; 
+            gl[1, 0], L"log $\mathcal{R}_{e}$"; 
             fontsize=11.84, rotation=π/2, tellheight=false
         )
-        Label(ga[4, 1:2], "Date, 2020"; fontsize=11.84, tellwidth=false)
+        Label(
+            gl[3, 0], L"$\tau_{\mathrm{ATT}}$"; 
+            fontsize=11.84, rotation=π/2, tellheight=false
+        )
+        Label(gl[2, 1:4], "Date, 2020"; fontsize=11.84, tellwidth=false)
+        Label(gl[4, 1:4], "Time from intervention"; fontsize=11.84, tellwidth=false)
+        colgap!(gl, 1, 5) 
+        for c ∈ 2:4 colgap!(gl, c, 7) end
+        for r ∈ [ 1, 2, 4 ] rowgap!(gl, r, 5) end
+        rowsize!(gl, 5, Auto(1.3))
     end
 
-    let 
-        axs = [ Axis(ga[j, 4]) for j ∈ [ 1:3, 5:7 ]]
-        plottau_att!(axs[1], ukdataleadlagdf, -21:7:21; )
-        plottau_att!(axs[2], ukdataconfounders2leadlagdf, -21:7:21; )
-
-        for row in [ 1, 5 ]
-            Label(
-                ga[row:(row+3), 3], L"$\tau_{\mathrm{ATT}}$"; 
-                fontsize=11.84, rotation=π/2, tellheight=false,
-            )
-            Label(
-                ga[row+3, 4], "Time, relative to intervention"; 
-                fontsize=11.84, tellwidth=false,
-            )
+    for gl ∈ [ ga1, gb1 ]
+        for (i, c) ∈ enumerate([ "England", "N. Ireland", "Scotland" ])
+            Label(gl[0, i], c; fontsize=10, halign=:left, tellwidth=false)
         end
-        linkaxes!(axs...)
+        Label(
+            gl[1, 0], L"cumulative difference \\ in diagnoses, $\times 10\,000$"; 
+            fontsize=11.84, rotation=π/2, tellheight=false
+        )
+        Label(gl[2, 1:3], "Date, 2020"; fontsize=11.84, tellwidth=false)
+        colgap!(gl, 1, 5) 
+        for c ∈ 2:3 colgap!(gl, c, 7) end
+        for r ∈ [ 1, 2 ] rowgap!(gl, r, 5) end 
     end
-
-    ga1 = GridLayout(ga[0:4, 5])
-    let 
-        axs = [ 
-            Axis(
-                ga1[j, 1]; 
-                xticks=( [ 1, 92, 183, 245 ], [ "Jan.", "April", "July", "Sept." ] )
-            ) 
-            for j ∈ [ 1, 3, 5 ]
-        ]
-        for (i, d) ∈ enumerate([ 
-                ukdataleadlagfittedoutput_167, 
-                ukdataleadlagfittedoutput_192, 
-                ukdataleadlagfittedoutput_174
-            ])
-            plotrenewalequationsamples_causaleffect!(
-                axs[i], maskcovidcases, nothing, POPULATION2020, d, i;
-                cumulativedifference=true,
-                fittedparameter=:y_matrix_det_vec,
-                counterfactualfittedparameter=:y_matrix_det_vec_counterfactual,
-                xticklabelrotation=-π/4,
-                xticks=( [ 1, 92, 183, 245 ], [ "Jan.", "April", "July", "Sept." ] ), 
-                xtitle="Date, 2020",
-                ytitle=L"Cumulative \\ difference$$",
-            )
-        end
-        vlines!(axs[1], 167; color=:red, linestyle=( :dot, :dense ), linewidth=1,)
-        vlines!(axs[2], 192; color=:red, linestyle=( :dot, :dense ), linewidth=1,)
-        vlines!(axs[3], 174; color=:red, linestyle=( :dot, :dense ), linewidth=1,)
-
-        Label(
-            ga1[0, 1], "England"; 
-            fontsize=10, halign=:left, tellwidth=false
-        )
-        formataxis!(
-            axs[1]; 
-            hidespines=( :r, :t, :b ), hidex=true, hidexticks=true, trimspines=true
-        )
-        Label(
-            ga1[2, 1], "Northern Ireland"; 
-            fontsize=10, halign=:left, tellwidth=false
-        )
-        formataxis!(
-            axs[2]; 
-            hidespines=( :r, :t, :b ), hidex=true, hidexticks=true, trimspines=true
-        )
-        Label(
-            ga1[4, 1], "Scotland"; 
-            fontsize=10, halign=:left, tellwidth=false
-        )
-        formataxis!(axs[3]; hidespines=( :r, :t, ), trimspines=true)
-
-        Label(
-            ga1[1:5, 0], "Change in cumulative incidence"; 
-            fontsize=11.84, rotation=π/2, tellheight=false,
-        )
-        Label(
-            ga1[6, 1], "Date, 2020"; 
-            fontsize=11.84, tellwidth=false,
-        )
-
-        colgap!(ga1, 1, 5)
-        for r ∈ [ 1, 3, 5, 6 ] rowgap!(ga1, r, 5) end
-    end
-
-    for c ∈ [ 1, 4 ] colgap!(ga, c, 5) end
-    for r ∈ [ 1, 3, 4 ] rowgap!(ga, r, 5) end
-        
-    labelplots!([ "A"  ], ga; rows=[ 0 ])
+    
+    linkaxes!(attax1, attax2)
+    linkaxes!(casesaxs1..., casesaxs2...)
+    labelplots!([ "A", "B" ], [ ga, gb ])
     fig
 end
 
