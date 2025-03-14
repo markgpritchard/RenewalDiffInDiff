@@ -257,6 +257,5 @@ usdatalogeffectivereproductionratios = quantilelogeffectivereproductionratios(
 )
 usdataconfoundersleadlagdf = loadanalysisdictsasdf(
     "datamodelus2leadlag", 12, maxrounds, 115; 
-    deltaindex=6:11
 )
-insertcumulativeeffects!(usdataconfoundersleadlagdf, -21:7:21)
+insertcumulativeeffects!(usdataconfoundersleadlagdf, -21:7:21; deltaindex=6:11)
