@@ -101,14 +101,16 @@ sim1_0_fitzfig = with_theme(theme_latexfonts()) do
         plottau_att!(attax1, sim1leadlagnointerventiondf, -21:7:21; )
 
         lines!(
-            casesax1, 1:100, sim1nointerventioncasesdiff.med[:, 2] ./ 10_000;
+            casesax1, 
+            1:100, 
+            sim1nointerventioncasesdiff.med[:, 2] .* 10_000 ./ simulation1dataset["Ns"][2];
             color=COLOURVECTOR[1], linewidth=1,
         )
         band!(
             casesax1, 
             1:100, 
-            sim1nointerventioncasesdiff.lci[:, 2] ./ 10_000,
-            sim1nointerventioncasesdiff.uci[:, 2] ./ 10_000;
+            sim1nointerventioncasesdiff.lci[:, 2] .* 10_000 ./ simulation1dataset["Ns"][2],
+            sim1nointerventioncasesdiff.uci[:, 2] .* 10_000 ./ simulation1dataset["Ns"][2];
             color=( COLOURVECTOR[1], 0.5 ), 
         )
         hlines!(
@@ -150,14 +152,16 @@ sim1_0_fitzfig = with_theme(theme_latexfonts()) do
         plottau_att!(attax2, sim1model1lagleaddf, -21:7:21; )
 
         lines!(
-            casesax2, 1:100, sim1casesdiff.med[:, 2] ./ 10_000;
+            casesax2, 
+            1:100, 
+            sim1casesdiff.med[:, 2] .* 10_000 ./ simulation1dataset["Ns"][2];
             color=COLOURVECTOR[1], linewidth=1,
         )
         band!(
             casesax2, 
             1:100, 
-            sim1casesdiff.lci[:, 2] ./ 10_000,
-            sim1casesdiff.uci[:, 2] ./ 10_000;
+            sim1casesdiff.lci[:, 2] .* 10_000 ./ simulation1dataset["Ns"][2],
+            sim1casesdiff.uci[:, 2] .* 10_000 ./ simulation1dataset["Ns"][2];
             color=( COLOURVECTOR[1], 0.5 ), 
         )
         hlines!(
@@ -174,11 +178,11 @@ sim1_0_fitzfig = with_theme(theme_latexfonts()) do
             fontsize=11.84, rotation=π/2, tellheight=false
         )
         Label(
-            gl[3, 0], L"$\tau_{\mathrm{ATT}}$"; 
+            gl[3, 0], L"$\varphi_{\mathrm{ATT}}$"; 
             fontsize=11.84, rotation=π/2, tellheight=false
         )
         Label(
-            gl[5, 0], L"cumulative difference \\ in diagnoses, $\times 10\,000$"; 
+            gl[5, 0], L"cumulative difference \\ in diagnoses, per $10\,000$"; 
             fontsize=11.84, rotation=π/2, tellheight=false
         )
         Label(gl[2, 1:2], "Time"; fontsize=11.84, tellwidth=false)
@@ -197,29 +201,57 @@ end
 
 safesave(plotsdir("sim1_0_fitzfig.pdf"), sim1_0_fitzfig)
 
+exp.(quantile(sim1leadlagnointerventiondf.tau_plus21, [ 0.05, 0.5, 0.95 ]))
+exp.(quantile(sim1model1lagleaddf.tau_plus21, [ 0.05, 0.5, 0.95 ]))
+
 simfig = with_theme(theme_latexfonts()) do 
-    fig = Figure(; size=( 250, 800 ))
+    fig = Figure(; size=( 250, 450 ))
     ga = GridLayout(fig[1, 1])
-    gb = GridLayout(fig[2, 1])
-    gc = GridLayout(fig[3, 1])
-    gd = GridLayout(fig[4, 1])
-    ge = GridLayout(fig[5, 1])
+    axs = [ Axis(ga[(2 * i - 1), j]; xticks=[ -21, 0, 21 ]) for i ∈ 1:3, j ∈ 1:2 ]
 
-    plottau_att!(ga, sim1leadlagnointerventiondf, sim1model1lagleaddf, -21:7:21; )
-    plottau_att!(gb, sim2leadlagnointerventiondf, sim2modelleadlagdf, -21:7:21; )
-    plottau_att!(gc, sim2leadlagconfoundernointerventiondf, sim2model1leadlagdf, -21:7:21; )
-    plottau_att!(gd, sim3leadlagnointerventiondf, sim3model1leadlagdf, -21:7:21; )
-    plottau_att!(ge, sim4leadlagnointerventiondf, sim4model1leadlagdf, -21:7:21; )
+    plottau_att!(axs[1, 1], sim2leadlagconfoundernointerventiondf, -21:7:21; )
+    plottau_att!(axs[1, 2], sim2model1leadlagdf, -21:7:21; )
+    plottau_att!(axs[2, 1], sim3leadlagnointerventiondf, -21:7:21; )
+    plottau_att!(axs[2, 2], sim3model1leadlagdf, -21:7:21; )
+    plottau_att!(axs[3, 1], sim4leadlagnointerventiondf, -21:7:21; )
+    plottau_att!(axs[3, 2], sim4model1leadlagdf, -21:7:21; )
 
-    labelplots!([ "A", "B", "C", "D", "E" ], [ ga, gb, gc, gd, ge ]; rows=1)
+    for row ∈ [ 1, 3, 5 ] 
+        Label(
+            ga[row, 0], L"$\varphi_{\mathrm{ATT}}$"; 
+            fontsize=11.84, rotation=π/2, tellheight=false,
+        )
+        Label(
+            ga[row+1, 1:2], "Time, relative to intervention"; 
+            fontsize=11.84, tellwidth=false,
+        )
+    end
+
+    linkaxes!(axs...)
+    colgap!(ga, 1, 5) 
+    for r ∈ [ 1, 3, 5 ] rowgap!(ga, r, 5) end 
+
+    labelplots!([ "A", "B", "C" ], ga; rows=[ 1, 3, 5 ])
     fig
 end
 
 safesave(plotsdir("simfig.pdf"), simfig)
 
+exp.(quantile(sim2leadlagconfoundernointerventiondf.tau_plus21, [ 0.05, 0.5, 0.95 ]))
+exp.(quantile(sim2model1leadlagdf.tau_plus21, [ 0.05, 0.5, 0.95 ]))
+
+exp.(quantile(sim3leadlagnointerventiondf.tau_plus21, [ 0.05, 0.5, 0.95 ]))
+exp.(quantile(sim3model1leadlagdf.tau_plus21, [ 0.05, 0.5, 0.95 ]))
+
+exp.(quantile(sim4leadlagnointerventiondf.tau_minus21, [ 0.05, 0.5, 0.95 ]))
+exp.(quantile(sim4model1leadlagdf.tau_minus21, [ 0.05, 0.5, 0.95 ]))
+
+exp.(quantile(sim4leadlagnointerventiondf.tau_plus21, [ 0.05, 0.5, 0.95 ]))
+exp.(quantile(sim4model1leadlagdf.tau_plus21, [ 0.05, 0.5, 0.95 ]))
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Covid data 
+# UK data 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ukdatafig = with_theme(theme_latexfonts()) do 
@@ -293,14 +325,14 @@ ukdatafig = with_theme(theme_latexfonts()) do
                 ]
             )
             lines!(
-                casesaxs1[i], 1:257, cases.med[:, 2] ./ 10_000;
+                casesaxs1[i], 1:257, cases.med[:, i] .* 10_000 ./ POPULATION2020[i];
                 color=COLOURVECTOR[1], linewidth=1,
             )
             band!(
                 casesaxs1[i], 
                 1:257, 
-                cases.lci[:, 2] ./ 10_000,
-                cases.uci[:, 2] ./ 10_000;
+                cases.lci[:, i] .* 10_000 ./ POPULATION2020[i],
+                cases.uci[:, i] .* 10_000 ./ POPULATION2020[i];
                 color=( COLOURVECTOR[1], 0.5 ), 
             )
             hlines!(
@@ -362,14 +394,14 @@ ukdatafig = with_theme(theme_latexfonts()) do
             ]
         )
             lines!(
-                casesaxs2[i], 1:257, cases.med[:, 2] ./ 10_000;
+                casesaxs2[i], 1:257, cases.med[:, i] .* 10_000 ./ POPULATION2020[i];
                 color=COLOURVECTOR[1], linewidth=1,
             )
             band!(
                 casesaxs2[i], 
                 1:257, 
-                cases.lci[:, 2] ./ 10_000,
-                cases.uci[:, 2] ./ 10_000;
+                cases.lci[:, i] .* 10_000 ./ POPULATION2020[i],
+                cases.uci[:, i] .* 10_000 ./ POPULATION2020[i];
                 color=( COLOURVECTOR[1], 0.5 ), 
             )
             hlines!(
@@ -395,7 +427,7 @@ ukdatafig = with_theme(theme_latexfonts()) do
             fontsize=11.84, rotation=π/2, tellheight=false
         )
         Label(
-            gl[3, 0], L"$\tau_{\mathrm{ATT}}$"; 
+            gl[3, 0], L"$\varphi_{\mathrm{ATT}}$"; 
             fontsize=11.84, rotation=π/2, tellheight=false
         )
         Label(gl[2, 1:4], "Date, 2020"; fontsize=11.84, tellwidth=false)
@@ -411,7 +443,7 @@ ukdatafig = with_theme(theme_latexfonts()) do
             Label(gl[0, i], c; fontsize=10, halign=:left, tellwidth=false)
         end
         Label(
-            gl[1, 0], L"cumulative difference \\ in diagnoses, $\times 10\,000$"; 
+            gl[1, 0], L"cumulative difference \\ in diagnoses, per $10\,000$"; 
             fontsize=11.84, rotation=π/2, tellheight=false
         )
         Label(gl[2, 1:3], "Date, 2020"; fontsize=11.84, tellwidth=false)
@@ -428,16 +460,82 @@ end
 
 safesave(plotsdir("ukdatafig.pdf"), ukdatafig)
 
+exp.(quantile(ukdataleadlagdf.tau_minus7, [ 0.05, 0.5, 0.95 ]))
+exp.(quantile(ukdataleadlagdf.tau_plus21, [ 0.05, 0.5, 0.95 ]))
+
+exp.(quantile(ukdataconfounders2leadlagdf.tau_plus21, [ 0.05, 0.5, 0.95 ]))
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# US data 
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 usfig = with_theme(theme_latexfonts()) do 
-    fig = Figure(; size=( 250, 800 ))
-    ga = GridLayout(fig[1, 1])
-    gb = GridLayout(fig[2, 1])
+    fig = Figure(; size=( 500, 400 ))
+    gl = GridLayout(fig[1, 1])
 
-    plottau_att!(ga, usdataleadlagdf, -21:7:21; )
-    plottau_att!(gb, usdataconfoundersleadlagdf, -21:7:21; )
+    attaxs = [ Axis(gl[1, j]) for j ∈ [ 1, 3 ] ]
+    incidentaxs = [ 
+        Axis(
+            gl[3, j]; 
+            xticks=( 1:13, usstatedataleadlag.plotstates),
+            xticklabelrotation=-π/2,
+        ) 
+        for j ∈ [ 1, 3 ] 
+    ]
 
-    labelplots!([ "A", "B" ], [ ga, gb ]; rows=1)
+    plottau_att!(attaxs[1], usdataleadlagdf, -21:7:21; )
+    plottau_att!(attaxs[2], usdataconfoundersleadlagdf, -21:7:21; )
+
+    for (i, d) ∈ enumerate([ usstatedataleadlag, usstatedataleadlag_confounder ])
+        scatter!(
+            incidentaxs[i], 1:13, d.plotmedians; 
+            color=COLOURVECTOR[1], marker=:x, markersize=5,
+        )
+        rangebars!(
+            incidentaxs[i], 1:13, d.plotlcis, d.plotucis; 
+            color=COLOURVECTOR[1], linewidth=1,
+        )
+        hlines!(
+            incidentaxs[i], 0; 
+            color=RGBAf(0, 0, 0, 0.12), linestyle=( :dot, :dense ), linewidth=1,
+        )
+        formataxis!(incidentaxs[i]; hidespines=( :r, :t ), trimspines=true)
+    end
+
+    for col ∈ [ 1, 3 ] 
+        Label(
+            gl[1, col-1], L"$\varphi_{\mathrm{ATT}}$"; 
+            fontsize=11.84, rotation=π/2, tellheight=false,
+        )
+        Label(
+            gl[2, col], "Time, relative to intervention"; 
+            fontsize=11.84, tellwidth=false,
+        )
+        Label(
+            gl[3, col-1], L"cumulative difference \\ in diagnosis, per $10\,000$"; 
+            fontsize=11.84, rotation=π/2, tellheight=false,
+        )
+        Label(
+            gl[4, col], "State"; 
+            fontsize=11.84, tellwidth=false,
+        )
+    end
+
+    linkaxes!(attaxs...)
+    linkaxes!(incidentaxs...)
+
+    for cr ∈ [ 1, 3 ]
+        colgap!(gl, cr, 5)
+        rowgap!(gl, cr, 5)
+    end
+
+    labelplots!([ "A", "B" ], gl; cols=[ 0, 2 ], rows=1)
     fig
 end
 
 safesave(plotsdir("usfig.pdf"), usfig)
+
+exp.(quantile(usdataleadlagdf.tau_plus21, [ 0.05, 0.5, 0.95 ]))
+exp.(quantile(usdataconfoundersleadlagdf.tau_plus21, [ 0.05, 0.5, 0.95 ]))
+

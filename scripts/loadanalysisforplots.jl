@@ -246,16 +246,121 @@ let
 end
 usdataleadlagdf = loadanalysisdictsasdf("datamodelus1leadlag", 12, maxrounds, 105)
 insertcumulativeeffects!(usdataleadlagdf, -21:7:21)
-usdatalogeffectivereproductionratios = quantilelogeffectivereproductionratios(
-    usdataleadlagdf,
-    51,
-    incidence,
-    populations,
-    [ collect(1.0:28:113); [ 123 ] ],
-    maskday,
-    secondaryinterventions=lagleadinterventionsmatrix(maskday, -21:7:21)
-)
+usstatedataleadlag = let 
+    plotstates = String31[ ]
+    plotmedians = Float64[ ] 
+    plotlcis = Float64[ ]  
+    plotucis = Float64[ ] 
+
+    logr0a = logbasicreproductionratios(
+        usdataleadlagdf, 
+        51, 
+        [ collect(1.0:28:113); [ 123 ] ], 
+        maskday, 
+        lagleadinterventionsmatrix(maskday, -21:7:21);
+        logdelta=0, 
+        logsecondarydelta1=0, 
+        logsecondarydelta2=0, 
+        logsecondarydelta3=0,
+        logsecondarydelta4=0,
+        logsecondarydelta5=0, 
+        logsecondarydelta6=0, 
+    )
+    logr0b = logbasicreproductionratios(
+        usdataleadlagdf, 
+        51, 
+        [ collect(1.0:28:113); [ 123 ] ], 
+        maskday, 
+        lagleadinterventionsmatrix(maskday, -21:7:21);
+    )
+
+    for (i, state) ∈ enumerate(states.state)
+        if maskday.starttimes[i] < 123 
+            push!(plotstates, state)
+            starttime = maskday.starttimes[i] 
+            stminus21 = max(0, starttime-21)
+
+            qs = quantilepredictcumulativedifferenceincases(
+                COVIDSERIALINTERVAL, 
+                usdataleadlagdf, 
+                logr0a, 
+                logr0b,
+                incidence[1:stminus21, :], 
+                populations
+            )
+
+            med = qs.med[123, i] * 10_000 / populations[i]
+            lci = qs.lci[123, i] * 10_000 / populations[i]
+            uci = qs.uci[123, i] * 10_000 / populations[i]
+
+            push!(plotmedians, med)
+            push!(plotlcis, lci)
+            push!(plotucis, uci)
+        end
+    end
+    @ntuple plotstates plotmedians plotlcis plotucis
+end
 usdataconfoundersleadlagdf = loadanalysisdictsasdf(
     "datamodelus2leadlag", 12, maxrounds, 115; 
 )
 insertcumulativeeffects!(usdataconfoundersleadlagdf, -21:7:21; deltaindex=6:11)
+usstatedataleadlag_confounder = let 
+    plotstates = String31[ ]
+    plotmedians = Float64[ ] 
+    plotlcis = Float64[ ]  
+    plotucis = Float64[ ] 
+
+    logr0a = logbasicreproductionratios(
+        usdataconfoundersleadlagdf, 
+        51, 
+        [ collect(1.0:28:113); [ 123 ] ], 
+        maskday, 
+        [
+            [ relaxshelterinplace, reopenbusiness, reopenrestaurants, reopengyms, reopencinemas ];
+            lagleadinterventionsmatrix(maskday, -21:7:21)
+        ];
+        logdelta=0, 
+        logsecondarydelta6=0, 
+        logsecondarydelta7=0, 
+        logsecondarydelta8=0,
+        logsecondarydelta9=0,
+        logsecondarydelta10=0, 
+        logsecondarydelta11=0, 
+    )
+    logr0b = logbasicreproductionratios(
+        usdataconfoundersleadlagdf, 
+        51, 
+        [ collect(1.0:28:113); [ 123 ] ], 
+        maskday, 
+        [
+            [ relaxshelterinplace, reopenbusiness, reopenrestaurants, reopengyms, reopencinemas ];
+            lagleadinterventionsmatrix(maskday, -21:7:21)
+        ];
+    )
+
+    for (i, state) ∈ enumerate(states.state)
+        if maskday.starttimes[i] < 123 
+            push!(plotstates, state)
+            starttime = maskday.starttimes[i] 
+            stminus21 = max(0, starttime-21)
+
+            qs = quantilepredictcumulativedifferenceincases(
+                COVIDSERIALINTERVAL, 
+                usdataconfoundersleadlagdf, 
+                logr0a, 
+                logr0b,
+                incidence[1:stminus21, :], 
+                populations
+            )
+
+            med = qs.med[123, i] * 10_000 / populations[i]
+            lci = qs.lci[123, i] * 10_000 / populations[i]
+            uci = qs.uci[123, i] * 10_000 / populations[i]
+
+            push!(plotmedians, med)
+            push!(plotlcis, lci)
+            push!(plotucis, uci)
+        end
+    end
+    @ntuple plotstates plotmedians plotlcis plotucis
+end
