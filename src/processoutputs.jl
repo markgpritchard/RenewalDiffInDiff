@@ -172,7 +172,7 @@ function quantilepredictdifferenceincases(
     return @ntuple lci med uci
 end
 
-function quantilepredictcumulativedifferenceincases(
+@memoize function quantilepredictcumulativedifferenceincases(
     g, df, logR0a, logR0b, initialcases, ns; quantiles=[ 0.05, 0.5, 0.95 ], 
     kwargs...
 )

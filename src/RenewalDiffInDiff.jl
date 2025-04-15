@@ -2,7 +2,7 @@
 module RenewalDiffInDiff
 
 using DrWatson
-using CubicSplines, DataFrames, Distributions, ForwardDiff, NaNMath, Random, Turing
+using CubicSplines, DataFrames, Distributions, ForwardDiff, Memoize, NaNMath, Random, Turing
 import Base: getindex, length, size, sum
 
 include("types.jl")
