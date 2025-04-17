@@ -38,12 +38,12 @@ export
     insertcumulativeeffects!,
     logbasicreproductionratios,
     logeffectivereproductionratios,
+    phiquantiles,
     predictcases,
     quantilelogeffectivereproductionratios,
     quantilepredictcases,
     quantilepredictcumulativedifferenceincases,
     quantilepredictdifferenceincases,
-    tauquantiles,
     ## extras.jl
     getindex, 
     interventionsoffset, 

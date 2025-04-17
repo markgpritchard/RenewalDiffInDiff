@@ -14,62 +14,62 @@ end
 
 function insertcumulativeeffects!(df, leadlagtimes, deltaindex; kwargs...)
     previoust = -1 
-    previoustau = nothing
+    previousphi = nothing
     for (i, t) ∈ enumerate(leadlagtimes)
         if t == 0
             # insert the value for the time of the intervention 
-            newtau = :tau_0
-            _insertcumulativeeffects!(df, newtau, previoustau, :logdelta)
+            newphi = :phi_0
+            _insertcumulativeeffects!(df, newphi, previousphi, :logdelta)
         else 
             if t < 0 
-                newtau = Symbol("tau_minus$(abs(t))")
+                newphi = Symbol("phi_minus$(abs(t))")
                 ind = deltaindex[i]
             else 
-                newtau = Symbol("tau_plus$(abs(t))") 
+                newphi = Symbol("phi_plus$(abs(t))") 
                 ind = deltaindex[i-1]
             end
-            _insertcumulativeeffects!(df, newtau, previoustau, ind)
+            _insertcumulativeeffects!(df, newphi, previousphi, ind)
         end
         previoust = t
-        previoustau = newtau
+        previousphi = newphi
     end
 end
 
-function _insertcumulativeeffects!(df, newtau, previoustau, i::Int)
+function _insertcumulativeeffects!(df, newphi, previousphi, i::Int)
     colname = Symbol("logsecondarydelta$i.logsecondarydelta")
-    _insertcumulativeeffects!(df, newtau, previoustau, colname)
+    _insertcumulativeeffects!(df, newphi, previousphi, colname)
 end
 
-function _insertcumulativeeffects!(df, newtau, ::Nothing, colname::Symbol)
-    insertcols!(df, newtau => getproperty(df, colname))
+function _insertcumulativeeffects!(df, newphi, ::Nothing, colname::Symbol)
+    insertcols!(df, newphi => getproperty(df, colname))
 end
 
-function _insertcumulativeeffects!(df, newtau, previoustau, colname::Symbol)
-    insertcols!(df, newtau => getproperty(df, previoustau) .+ getproperty(df, colname))
+function _insertcumulativeeffects!(df, newphi, previousphi, colname::Symbol)
+    insertcols!(df, newphi => getproperty(df, previousphi) .+ getproperty(df, colname))
 end
 
-function tauquantiles(df, leadlagtimes; deltaindex=automatic, kwargs...)
-    return _tauquantiles(df, leadlagtimes, deltaindex; kwargs...)
+function phiquantiles(df, leadlagtimes; deltaindex=automatic, kwargs...)
+    return _phiquantiles(df, leadlagtimes, deltaindex; kwargs...)
 end 
 
-function _tauquantiles(df, leadlagtimes, ::Automatic; kwargs...)
+function _phiquantiles(df, leadlagtimes, ::Automatic; kwargs...)
     deltaindex = eachindex(leadlagtimes)
-    return _tauquantiles(df, leadlagtimes, deltaindex; kwargs...)
+    return _phiquantiles(df, leadlagtimes, deltaindex; kwargs...)
 end 
 
-function _tauquantiles(df, leadlagtimes, deltaindex; CrI=( 0.05, 0.95 ))
+function _phiquantiles(df, leadlagtimes, deltaindex; CrI=( 0.05, 0.95 ))
     lci = zeros(length(leadlagtimes))
     med = zeros(length(leadlagtimes))
     uci = zeros(length(leadlagtimes))
     for (i, t) ∈ zip(deltaindex, leadlagtimes) 
         if t < 0 
-            tausymbol = Symbol("tau_minus$(abs(t))")
+            phisymbol = Symbol("phi_minus$(abs(t))")
         elseif t == 0 
-            tausymbol = :tau_0
+            phisymbol = :phi_0
         else
-            tausymbol = Symbol("tau_plus$(abs(t))") 
+            phisymbol = Symbol("phi_plus$(abs(t))") 
         end
-        lcii, medi, ucii = quantile(getproperty(df, tausymbol), [ CrI[1], 0.5, CrI[2] ])
+        lcii, medi, ucii = quantile(getproperty(df, phisymbol), [ CrI[1], 0.5, CrI[2] ])
         lci[i] = lcii 
         med[i] = medi 
         uci[i] = ucii 
@@ -112,7 +112,6 @@ function _quantilelogeffectivereproductionratios(
     uci = zeros(length(times), nlocations)
 
     Threads.@threads for j ∈ 1:nlocations
-        logrevector = zeros(size(df, 1))
         for t ∈ eachindex(times) 
             lcii, medi, ucii = quantile(logre[:, t, j], quantiles)
             lci[t, j] = lcii 
@@ -135,7 +134,6 @@ function quantilepredictcases(
     uci = zeros(size(cases, 2), size(cases, 3))
 
     Threads.@threads for j ∈ axes(cases, 3)
-        logrevector = zeros(size(cases, 1))
         for t ∈ axes(cases, 2) 
             lcii, medi, ucii = quantile(cases[:, t, j], quantiles)
             lci[t, j] = lcii 
@@ -160,7 +158,6 @@ function quantilepredictdifferenceincases(
     uci = zeros(size(casesdiff, 2), size(casesdiff, 3))
 
     Threads.@threads for j ∈ axes(casesdiff, 3)
-        logrevector = zeros(size(casesdiff, 1))
         for t ∈ axes(casesdiff, 2) 
             lcii, medi, ucii = quantile(casesdiff[:, t, j], quantiles)
             lci[t, j] = lcii 
@@ -173,8 +170,8 @@ function quantilepredictdifferenceincases(
 end
 
 @memoize function quantilepredictcumulativedifferenceincases(
-    g, df, logR0a, logR0b, initialcases, ns; quantiles=[ 0.05, 0.5, 0.95 ], 
-    kwargs...
+    g, df, logR0a, logR0b, initialcases, ns; 
+    quantiles=[ 0.05, 0.5, 0.95 ], kwargs...
 )
     casesa = predictcases(g, df, logR0a, initialcases, ns; kwargs...)
     casesb = predictcases(g, df, logR0b, initialcases, ns; kwargs...)
@@ -193,13 +190,11 @@ end
         end
     end
 
-
     lci = zeros(size(casesdiff, 2), size(casesdiff, 3))
     med = zeros(size(casesdiff, 2), size(casesdiff, 3))
     uci = zeros(size(casesdiff, 2), size(casesdiff, 3))
 
     Threads.@threads for j ∈ axes(casesdiff, 3)
-        logrevector = zeros(size(casesdiff, 1))
         for t ∈ axes(casesdiff, 2) 
             lcii, medi, ucii = quantile(casesdiff[:, t, j], quantiles)
             lci[t, j] = lcii 
@@ -324,7 +319,7 @@ function __logeffectivereproductionratio!(
     times, 
     i, 
     j;
-    extrapl=zeros(1), extrapr=zeros(1), kwargs...
+    kwargs...
 )
     tspline = _logeffectivereproductionratio_timespline!(
         logetavector, df, timeknots, i;

@@ -42,8 +42,11 @@ end
 
 function plotchains!(
     gl::GridLayout, data::DataFrame; 
-    colnames=RenewalDiffInDiff.automatic, plotnames_ind=RenewalDiffInDiff.automatic,
-    ylabels=RenewalDiffInDiff.automatic, kwargs...
+    colnames=RenewalDiffInDiff.automatic, 
+    plotnames_ind=RenewalDiffInDiff.automatic,
+    ylabels=RenewalDiffInDiff.automatic, 
+    ylabelrotation=π/2,
+    kwargs...
 )
     @unpack colnames, plotnames_ind = processplotchains(
         data;
@@ -55,12 +58,21 @@ function plotchains!(
     for (j, chainid) ∈ enumerate(unique(data.chain))
         inds = findall(x -> x == chainid, data.chain)
         for (i, k) ∈ enumerate(plotnames_ind) 
-            lines!(ax[i], getproperty(data, colnames[k])[inds]; color=COLOURVECTOR[j], linewidth=1,)
+            lines!(
+                ax[i], getproperty(data, colnames[k])[inds]; 
+                color=COLOURVECTOR[j], linewidth=1,
+            )
             if j == 1 
                 if ylabels == RenewalDiffInDiff.automatic
-                    Label(gl[i, 0], "$(colnames[k])"; rotation=π/2, tellheight=false)
+                    Label(
+                        gl[i, 0], "$(colnames[k])"; 
+                        rotation=ylabelrotation, tellheight=false,
+                    )
                 else 
-                    Label(gl[i, 0], ylabels[i]; tellheight=false)
+                    Label(
+                        gl[i, 0], ylabels[i]; 
+                        rotation=ylabelrotation, tellheight=false,
+                    )
                 end
             end
         end
@@ -91,7 +103,7 @@ function _processplotchains(
     data, cn, ::RenewalDiffInDiff.Automatic; 
     logdensity="log_density"
 )
-    @unpack plotnames_ind = _processplotchains(data; kwargs...)
+    @unpack plotnames_ind = _processplotchains(data; logdensity)
     return @ntuple colnames=cn plotnames_ind
 end
 
@@ -99,12 +111,11 @@ function _processplotchains(
     data, ::RenewalDiffInDiff.Automatic, pni; 
     logdensity="log_density"
 )
-    @unpack colnames = _processplotchains(data; kwargs...)
+    @unpack colnames = _processplotchains(data; logdensity)
     return @ntuple colnames plotnames_ind=pni
-
 end
 
-function _processplotchains(data, colnames, plotnames_ind; logdensity="log_density")
+~function _processplotchains(data, colnames, plotnames_ind; logdensity="log_density")
     return @ntuple colnames plotnames_ind
 end
 
@@ -117,7 +128,12 @@ function _processplotchains(data; logdensity="log_density")
     return @ntuple colnames plotnames_ind
 end
 
-function processplotchains(data; colnames=RenewalDiffInDiff.automatic, plotnames_ind=RenewalDiffInDiff.automatic, logdensity="log_density")
+function processplotchains(
+    data; 
+    colnames=RenewalDiffInDiff.automatic, 
+    plotnames_ind=RenewalDiffInDiff.automatic, 
+    logdensity="log_density"
+)
     _processplotchains(data, colnames, plotnames_ind; logdensity)
 end
 
@@ -643,42 +659,39 @@ function fitws(cases::Matrix, Ns::Vector, fittedvaluesset)
     return w_vec
 end
 
-function plottwotau_att!(gl, df1, df2, leadlagtimes; kwargs...)
-    plottau_att!(gl, df1, df2, leadlagtimes; kwargs...)
+function plottwophi_att!(gl, df1, df2, leadlagtimes; kwargs...)
+    plotphi_att!(gl, df1, df2, leadlagtimes; kwargs...)
 end
 
 function plottau_att!(gl::GridLayout, df::DataFrame, leadlagtimes; row=1, kwargs...)
     ax = Axis(gl[row, 1])
-    _plotonetau_att!(ax, df, leadlagtimes; kwargs...)
-    _labelplottau_att!(gl, row, 1; kwargs...)
+    _plotonephi_att!(ax, df, leadlagtimes; kwargs...)
+    _labelplotphi_att!(gl, row, 1; kwargs...)
 end
 
-function plottau_att!(gl::GridLayout, df1::DataFrame, df2::DataFrame, leadlagtimes; kwargs...)
-    plottau_att!(gl::GridLayout, [ df1, df2 ], leadlagtimes; kwargs...)
+function plotphi_att!(gl::GridLayout, df1::DataFrame, df2::DataFrame, leadlagtimes; kwargs...)
+    plotphi_att!(gl::GridLayout, [ df1, df2 ], leadlagtimes; kwargs...)
 end
 
-function plottau_att!(gl::GridLayout, dfs::Vector{<:DataFrame}, leadlagtimes; row=1, kwargs...)
+function plotphi_att!(gl::GridLayout, dfs::Vector{<:DataFrame}, leadlagtimes; row=1, kwargs...)
     axs = [ Axis(gl[row, i]) for i ∈ eachindex(dfs) ]
     for (i, df) ∈ enumerate(dfs)
-        _plotonetau_att!(axs[i], df, leadlagtimes; hidey=(i != 1), kwargs...)
+        _plotonephi_att!(axs[i], df, leadlagtimes; hidey=(i != 1), kwargs...)
     end
     linkaxes!(axs...)
-    _labelplottau_att!(gl, row, 2; kwargs...)
+    _labelplotphi_att!(gl, row, 2; kwargs...)
 end
 
-function plottau_att!(ax::Axis, df::DataFrame, leadlagtimes; kwargs...)
-    _plotonetau_att!(ax, df, leadlagtimes; kwargs...)
+function plotphi_att!(ax::Axis, df::DataFrame, leadlagtimes; kwargs...)
+    _plotonephi_att!(ax, df, leadlagtimes; kwargs...)
 end
 
-function _plotonetau_att!(ax, df, leadlagtimes; hidey=false, kwargs...)
-    tq = tauquantiles(df, leadlagtimes; kwargs...)
-    scatter!(ax, leadlagtimes, exp.(tq.med); color=COLOURVECTOR[1], marker=:x, markersize=5,)
-    rangebars!(
-        ax, leadlagtimes, exp.(tq.lci), exp.(tq.uci); 
-        color=COLOURVECTOR[1], linewidth=1,
-    )
+function _plotonephi_att!(ax, df, leadlagtimes; hidey=false, kwargs...)
+    tq = phiquantiles(df, leadlagtimes; kwargs...)
+    scatter!(ax, leadlagtimes, tq.med; color=COLOURVECTOR[1], marker=:x, markersize=5,)
+    rangebars!(ax, leadlagtimes, tq.lci, tq.uci; color=COLOURVECTOR[1], linewidth=1,)
     hlines!(
-        ax, 1; 
+        ax, 0; 
         color=RGBAf(0, 0, 0, 0.12), linestyle=( :dot, :dense ), linewidth=1,
     )
     formataxis!(
@@ -690,11 +703,11 @@ function _plotonetau_att!(ax, df, leadlagtimes; hidey=false, kwargs...)
     end
 end
 
-labelplottau_att!(gl, row, width; kwargs...) = _labelplottau_att!(gl, row, width; kwargs...)
+labelplotphi_att!(gl, row, width; kwargs...) = _labelplotphi_att!(gl, row, width; kwargs...)
 
-function _labelplottau_att!(gl, row, width; kwargs...)
+function _labelplotphi_att!(gl, row, width; kwargs...)
     Label(
-        gl[row, 0], L"$\tau_{\mathrm{ATT}}$"; 
+        gl[row, 0], L"$\varphi_{\mathrm{ATT}}$"; 
         fontsize=11.84, rotation=π/2, tellheight=false,
     )
     Label(

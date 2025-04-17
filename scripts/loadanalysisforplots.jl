@@ -316,7 +316,13 @@ usstatedataleadlag_confounder = let
         [ collect(1.0:28:113); [ 123 ] ], 
         maskday, 
         [
-            [ relaxshelterinplace, reopenbusiness, reopenrestaurants, reopengyms, reopencinemas ];
+            [ 
+                relaxshelterinplace, 
+                reopenbusiness, 
+                reopenrestaurants, 
+                reopengyms, 
+                reopencinemas 
+            ];
             lagleadinterventionsmatrix(maskday, -21:7:21)
         ];
         logdelta=0, 
@@ -333,7 +339,13 @@ usstatedataleadlag_confounder = let
         [ collect(1.0:28:113); [ 123 ] ], 
         maskday, 
         [
-            [ relaxshelterinplace, reopenbusiness, reopenrestaurants, reopengyms, reopencinemas ];
+            [ 
+                relaxshelterinplace, 
+                reopenbusiness, 
+                reopenrestaurants, 
+                reopengyms, 
+                reopencinemas 
+            ];
             lagleadinterventionsmatrix(maskday, -21:7:21)
         ];
     )
