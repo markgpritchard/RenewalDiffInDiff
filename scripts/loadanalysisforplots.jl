@@ -100,7 +100,6 @@ sim1casesdiff = let
 end
 sim2leadlagnointerventiondf = loadanalysisdictsasdf("sim2model1_0laglead", 8, maxrounds, 255)
 insertcumulativeeffects!(sim2leadlagnointerventiondf, -21:7:21)
-sim2confoundernointerventiondf = loadanalysisdictsasdf("sim2model2_0", 8, maxrounds, 260)
 sim2leadlagconfoundernointerventiondf = loadanalysisdictsasdf(
     "sim2model2_0laglead", 8, maxrounds, 265
 )

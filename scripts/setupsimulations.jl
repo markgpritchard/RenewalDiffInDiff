@@ -1,44 +1,32 @@
 
 using DrWatson 
 @quickactivate :RenewalDiffInDiff
-using Random, StochasticTransitionModels 
+using StableRNGs 
 
-function seirrates(u, t, p::SEIRParameters{<:Function, <:Real, <:Real})
-    s, e, i, i′, r = u  # i′ represents diagnosed infections. i + i′ is the total infectiouse prevalence
+function seirrates(u, t, p)
+    s, e, i, i′ = u 
+    # i′ represents diagnosed infections. i + i′ is the total infectiouse prevalence
     n = sum(@view u[1:5])  # 6th compartment is cumulative diagnosed infecitons
     return [
         p.β(t) * s * (i + i′) / n,  # infection rate
-        p.μ * e,  # end of latent period 
-        p.θ * p.γ * i / (1 - p.θ),  # diagnosis 
+        (1 - _diagnosedproportion(t, p)) * p.μ * e,  # end of latent period (undiagnosed) 
+        _diagnosedproportion(t, p) * p.μ * e,  # end of latent period (diagnosed) 
         p.γ * i,  # recovery (undiagnosed)
         p.γ * i′  # recovery (diagnosed)
     ]
 end
 
-function seirrates(u, t, p::SEIRParameters{<:Function, <:Real, <:Function})
-    s, e, i, i′, r = u  # i′ represents diagnosed infections. i + i′ is the total infectiouse prevalence
-    n = sum(@view u[1:5])  # 6th compartment is cumulative diagnosed infecitons
-    return [
-        p.β(t) * s * (i + i′) / n,  # infection rate
-        p.μ * e,  # end of latent period 
-        p.θ(t) * p.γ * i / (1 - p.θ(t)),  # diagnosis 
-        p.γ * i,  # recovery (undiagnosed)
-        p.γ * i′  # recovery (diagnosed)
-    ]
-end
+_diagnosedproportion(::Any, p::SEIRParameters{<:Function, <:Real, <:Real}) = p.θ
+_diagnosedproportion(t, p::SEIRParameters{<:Function, <:Real, <:Function}) = p.θ(t)
 
 seirtransitionmatrix = [
     # s   e   i   i′  r   cumulative 
      -1   1   0   0   0   0    # infection rate
-      0  -1   1   0   0   0    # end of latent period 
-      0   0  -1   1   0   1    # diagnosis 
+      0  -1   1   0   0   0    # end of latent period (undiagnosed)
+      0  -1   0   1   0   1    # end of latent period (diagnosed) 
       0   0  -1   0   1   0    # recovery (undiagnosed)
       0   0   0  -1   1   0    # recovery (diagnosed)
 ]
-
-Random.seed!(1729)
-
-# Two locations and two discrete transmission parameters 
 
 simparameters(beta, theta) = SEIRParameters(beta, 0.5, 0.4, theta)
 
@@ -66,27 +54,49 @@ beta4b(t) = beta2b(t)
 theta4a(t) = 0.3
 theta4b(t) = t <= 50 ? 0.3 : 1.2 * 0.3
 
+
+## Two locations and two discrete transmission parameters 
+
 if isfile(datadir("sims", "simulation1dataset.jld2"))
     simulation1dataset = load(datadir("sims", "simulation1dataset.jld2"))
 else 
     simulation1dataset = let  
+        rng = StableRNG(1)
+
         interventions = InterventionsMatrix([ nothing, 50 ], 100)
         
         u01a = [ 400_000 - 40, 40, 0, 0, 0, 0  ]
         p1a = sim1parameters(beta1a)
-        sim1a = stochasticmodel(seirrates, u01a, 1:100, p1a, seirtransitionmatrix)
+        sim1a = stochasticmodel(
+            seirrates, 
+            rng, 
+            u01a, 
+            1:100, 
+            p1a, 
+            seirtransitionmatrix
+        )
         
         u01b = [ 250_000 - 10, 10, 0, 0, 0, 0 ]
         p1bcounterfactual = sim1parameters(beta1bcounterfactual)
         sim1bcounterfactual = stochasticmodel(
-            seirrates, u01b, 1:100, p1bcounterfactual, seirtransitionmatrix
+            seirrates, 
+            rng, 
+            u01b, 
+            1:100, 
+            p1bcounterfactual, 
+            seirtransitionmatrix
         )
         
         p1b = sim1parameters(beta1b)
         sim1b = vcat(
             sim1bcounterfactual[1:49, :],
             stochasticmodel(
-                seirrates, sim1bcounterfactual[50, :], 50:100, p1b, seirtransitionmatrix
+                seirrates, 
+                rng, 
+                sim1bcounterfactual[50, :], 
+                50:100, 
+                p1b, 
+                seirtransitionmatrix
             )
         )
         
@@ -118,98 +128,69 @@ else
     safesave(datadir("sims", "simulation1dataset.jld2"), simulation1dataset)
 end
 
-# Two locations, continuously changing transmission parameters
 
-if isfile(datadir("sims", "simulation1a_dataset.jld2"))
-    simulation1a_dataset = load(datadir("sims", "simulation1a_dataset.jld2"))
-else 
-    simulation1a_dataset = let  
-        interventions = InterventionsMatrix([ nothing, 50 ], 100)
-        
-        u01a_a = [ 300_000 - 50, 50, 0, 0, 0, 0 ]
-        p1a_a = sim1a_parameters(beta1a_a)
-        sim1a_a = stochasticmodel(seirrates, u01a_a, 1:100, p1a_a, seirtransitionmatrix)
-
-        u01a_b = [ 250_000 - 100, 100, 0, 0, 0, 0 ]
-        p1a_bcounterfactual = sim1a_parameters(beta1a_bcounterfactual)
-        sim1a_bcounterfactual = stochasticmodel(
-            seirrates, u01a_b, 1:100, p1a_bcounterfactual, seirtransitionmatrix
-        )
-
-        p1a_b = sim1a_parameters(beta1a_b)
-        sim1a_b = vcat(
-            sim1a_bcounterfactual[1:49, :],
-            stochasticmodel(
-                seirrates, sim1a_bcounterfactual[50, :], 50:100, p1a_b, seirtransitionmatrix
-            )
-        )
-
-        prevalence = hcat(sim1a_a[:, 4], sim1a_b[:, 4])
-        counterfactualprevalence = hcat(sim1a_a[:, 4], sim1a_bcounterfactual[:, 4])
-
-        cases = zeros(Int, 100, 2)
-        for t ∈ 2:100 
-            cases[t, 1] = sim1a_a[t, 6] - sim1a_a[t-1, 6]
-            cases[t, 2] = sim1a_b[t, 6] - sim1a_b[t-1, 6]
-        end
-
-        counterfactualcases = zeros(Int, 100, 2)
-        for t ∈ 2:100 
-            counterfactualcases[t, 1] = sim1a_a[t, 6] - sim1a_a[t-1, 6]
-            counterfactualcases[t, 2] = sim1a_bcounterfactual[t, 6] - sim1a_bcounterfactual[t-1, 6]
-        end
-
-        Dict(
-            "cases" => cases, 
-            "cases_counterfactual" => counterfactualcases,
-            "interventions" => interventions, 
-            "prevalence" => prevalence, 
-            "counterfactualprevalence" => counterfactualprevalence, 
-            "Ns" => [ 300_000, 250_000 ],
-        )
-    end
-
-    safesave(datadir("sims", "simulation1a_dataset.jld2"), simulation1a_dataset)
-end
-
-
-# Three locations, continuously changing transmission parameters, and a competing intervention  
+## Three locations, continuously changing transmission parameters, and a competing 
+## intervention  
 
 if isfile(datadir("sims", "simulation2dataset.jld2"))
     simulation2dataset = load(datadir("sims", "simulation2dataset.jld2"))
 else 
     simulation2dataset = let  
+        rng = StableRNG(2)
+
         interventions = InterventionsMatrix([ nothing, 50, 30 ], 100)
         
         u02a = [ 350_000 - 50, 50, 0, 0, 0, 0 ]
         p2a = sim2parameters(beta2a)
-        sim2a = stochasticmodel(seirrates, u02a, 1:100, p2a, seirtransitionmatrix)
+        sim2a = stochasticmodel(
+            seirrates, 
+            rng, 
+            u02a, 
+            1:100, 
+            p2a, 
+            seirtransitionmatrix
+        )
 
         u02b = [ 300_000 - 100, 100, 0, 0, 0, 0 ]
         p2bcounterfactual = sim2parameters(beta2bcounterfactual)
         sim2bcounterfactual = stochasticmodel(
-            seirrates, u02b, 1:100, p2bcounterfactual, seirtransitionmatrix
+            seirrates, 
+            rng, 
+            u02b, 
+            1:100, 
+            p2bcounterfactual, 
+            seirtransitionmatrix
         )
 
         p2b = sim2parameters(beta2b)
         sim2b = vcat(
             sim2bcounterfactual[1:49, :],
             stochasticmodel(
-                seirrates, sim2bcounterfactual[50, :], 50:100, p2b, seirtransitionmatrix
+                seirrates, 
+                rng, 
+                sim2bcounterfactual[50, :], 
+                50:100, 
+                p2b, 
+                seirtransitionmatrix
             )
         )
 
         u02c = [ 400_000 - 2000, 2000, 0, 0, 0, 0 ]
         p2ccounterfactual = sim2parameters(beta2ccounterfactual)
         sim2ccounterfactual = stochasticmodel(
-            seirrates, u02c, 1:100, p2ccounterfactual, seirtransitionmatrix
+            seirrates, rng, u02c, 1:100, p2ccounterfactual, seirtransitionmatrix
         )
 
         p2c = sim2parameters(beta2c)
         sim2c = vcat(
             sim2ccounterfactual[1:29, :],
             stochasticmodel(
-                seirrates, sim2ccounterfactual[30, :], 30:100, p2c, seirtransitionmatrix
+                seirrates, 
+                rng, 
+                sim2ccounterfactual[30, :], 
+                30:100, 
+                p2c, 
+                seirtransitionmatrix
             )
         )
 
@@ -245,29 +226,49 @@ else
     safesave(datadir("sims", "simulation2dataset.jld2"), simulation2dataset)
 end
 
-# Two locations, transmission parameters violate common trends  
+
+## Two locations, transmission parameters violate common trends  
 
 if isfile(datadir("sims", "simulation3dataset.jld2"))
     simulation3dataset = load(datadir("sims", "simulation3dataset.jld2"))
 else 
     simulation3dataset = let  
+        rng = StableRNG(3)
+
         interventions = InterventionsMatrix([ nothing, 50 ], 100)
         
         u03a = [ 250_000 - 100, 100, 0, 0, 0, 0 ]
         p3a = sim3parameters(beta3a)
-        sim3a = stochasticmodel(seirrates, u03a, 1:100, p3a, seirtransitionmatrix)
+        sim3a = stochasticmodel(
+            seirrates, 
+            rng, 
+            u03a, 
+            1:100, 
+            p3a, 
+            seirtransitionmatrix
+        )
 
         u03b = [ 250_000 - 100, 100, 0, 0, 0, 0 ]
         p3bcounterfactual = sim3parameters(beta3bcounterfactual)
         sim3bcounterfactual = stochasticmodel(
-            seirrates, u03b, 1:100, p3bcounterfactual, seirtransitionmatrix
+            seirrates, 
+            rng, 
+            u03b, 
+            1:100, 
+            p3bcounterfactual,
+            seirtransitionmatrix
         )
 
         p3b = sim3parameters(beta3b)
         sim3b = vcat(
             sim3bcounterfactual[1:49, :],
             stochasticmodel(
-                seirrates, sim3bcounterfactual[50, :], 50:100, p3b, seirtransitionmatrix
+                seirrates, 
+                rng, 
+                sim3bcounterfactual[50, :], 
+                50:100, 
+                p3b, 
+                seirtransitionmatrix
             )
         )
 
@@ -299,29 +300,49 @@ else
     safesave(datadir("sims", "simulation3dataset.jld2"), simulation3dataset)
 end
 
-# Two locations, proportion detected changes at time of intervention
+
+## Two locations, proportion detected changes at time of intervention
 
 if isfile(datadir("sims", "simulation4dataset.jld2"))
     simulation4dataset = load(datadir("sims", "simulation4dataset.jld2"))
 else 
     simulation4dataset = let  
+        rng = StableRNG(3)
+
         interventions = InterventionsMatrix([ nothing, 50 ], 100)
         
         u04a = [ 350_000 - 50, 50, 0, 0, 0, 0 ]
         p4a = sim4parameters(beta4a, theta4a)
-        sim4a = stochasticmodel(seirrates, u04a, 1:100, p4a, seirtransitionmatrix)
+        sim4a = stochasticmodel(
+            seirrates, 
+            rng, 
+            u04a, 
+            1:100, 
+            p4a, 
+            seirtransitionmatrix
+        )
 
         u04b = [ 150_000 - 50, 50, 0, 0, 0, 0 ]
         p4bcounterfactual = sim4parameters(beta4bcounterfactual, theta4b)
         sim4bcounterfactual = stochasticmodel(
-            seirrates, u04b, 1:100, p4bcounterfactual, seirtransitionmatrix
+            seirrates, 
+            rng, 
+            u04b, 
+            1:100, 
+            p4bcounterfactual, 
+            seirtransitionmatrix
         )
 
         p4b = sim4parameters(beta4b, theta4b)
         sim4b = vcat(
             sim4bcounterfactual[1:49, :],
             stochasticmodel(
-                seirrates, sim4bcounterfactual[50, :], 50:100, p4b, seirtransitionmatrix
+                seirrates, 
+                rng, 
+                sim4bcounterfactual[50, :], 
+                50:100, 
+                p4b, 
+                seirtransitionmatrix
             )
         )
 

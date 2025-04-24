@@ -3,10 +3,13 @@ module RenewalDiffInDiff
 
 using DrWatson
 using CubicSplines, DataFrames, Distributions, ForwardDiff, Memoize, NaNMath, Random, Turing
+using StatsBase: sample, Weights 
 import Base: getindex, length, size, sum
+import Random: default_rng
 
 include("types.jl")
 include("consts.jl")
+include("stochasticsimulation.jl")
 include("renewalequation.jl")
 include("parameterfitting.jl")
 include("processoutputs.jl")
@@ -20,20 +23,16 @@ export
     ## consts.jl
     COVIDSERIALINTERVAL, 
     POPULATION2020,
+    ## stochasticsimulation.jl
+    stochasticiteration, 
+    stochasticmodel,
     ## renewalequation.jl
     testf,
     ## parameterfitting.jl
-    diffindiffparameters, 
-    diffindiffparameters_discretetimes, 
-    diffindiffparameters_fittocurve_splinetimes, 
-    diffindiffparameters_polytimes, 
-    diffindiffparameters_twodiscretetimes, 
-    diffindiffparameters_splinetimes, 
     generatew_gt, 
-    generatew_gtrow, 
-    generatez_gtminus1,
     keyvalues, 
     loadanalysisdictsasdf,
+    renewaldiffindiffparameters,
     ## processoutputs.jl
     insertcumulativeeffects!,
     logbasicreproductionratios,

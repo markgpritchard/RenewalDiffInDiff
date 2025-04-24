@@ -10,40 +10,34 @@ struct InterventionsMatrix{T} <: AbstractInterventionsArray{T, 2}
     duration    :: Int
 end
 
-function InterventionsMatrix(T::DataType, starttimes::Vector{Int}, duration) 
-    return InterventionsMatrix{T}(starttimes, duration)
-end
-
-function InterventionsMatrix(
-    T::DataType, starttimes::Vector{U}, duration
-) where U <: Union{Int, Nothing} 
+function InterventionsMatrix(T, starttimes::Vector{<:Union{Int, Nothing}}, duration) 
     # set any `missing` start times to be after the end of the study duration
     newstarttimes = Vector{Int}(undef, length(starttimes)) 
     for (i, t) ∈ enumerate(starttimes) 
         newstarttimes[i] = _setinterventionsmatrixstarttimes(t, duration)
     end
-    return InterventionsMatrix(T, newstarttimes, duration) 
+    return InterventionsMatrix{T}(newstarttimes, duration) 
+end
+
+function InterventionsMatrix(starttimes, duration)
+    InterventionsMatrix(Int, starttimes, duration)
 end
 
 _setinterventionsmatrixstarttimes(t::Int, ::Any) = t 
 _setinterventionsmatrixstarttimes(::Nothing, duration) = duration + 1
 
-InterventionsMatrix(args...) = InterventionsMatrix(Int, args...)
+
 
 struct InterventionsVector{T} <: AbstractInterventionsArray{T, 1}
     starttime   :: Int
     duration    :: Int
 end
 
-function InterventionsVector(T::DataType, starttime::Int, duration) 
-    return InterventionsVector{T}(starttime, duration)
+function InterventionsVector{T}(::Nothing, duration) where T
+    return InterventionsVector{T}(duration + 1, duration) 
 end
 
-function InterventionsVector(T::DataType, ::Nothing, duration) 
-    return InterventionsVector(T, duration + 1, duration) 
-end
-
-InterventionsVector(args...) = InterventionsVector(Int, args...)
+InterventionsVector(args...) = InterventionsVector{Int}(args...)
 
 abstract type AbstractModelParameters{S, T, U} end 
 
@@ -52,6 +46,15 @@ struct SEIRParameters{S, T, U} <: AbstractModelParameters{S, T, U}
     μ           :: T 
     γ           :: T 
     θ           :: U
+
+    function SEIRParameters(β, μ, γ, θ) 
+        # The generation interval calculations used in this analysis assume that μ != γ
+        @assert μ != γ
+        S = typeof(β)
+        T = typeof(μ)
+        U = typeof(θ)
+        return new{S, T, U}(β, μ, γ, θ) 
+    end
 end
 
 SEIRParameters(; beta, gamma, nu, psi) = SEIRParameters(beta, gamma, nu, psi)

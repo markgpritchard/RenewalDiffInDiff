@@ -1,7 +1,8 @@
 
 using DrWatson
 @quickactivate :RenewalDiffInDiff
-using CSV, DataFrames, Dates, Pigeons, Turing
+using CSV, DataFrames, Dates, Pigeons, Random, Turing
+import Pigeons: initialization
 include("setupsimulations.jl")
 
 include("loaddata.jl")
@@ -10,23 +11,26 @@ include("loaduscoviddata.jl")
 testrun = true 
 
 if length(ARGS) == 2 
-    id = parse(Int, ARGS[1])
+    const id = parse(Int, ARGS[1])
     n_rounds = parse(Int, ARGS[2])
 else
-    id = 1 
+    const id = 1 
     if testrun 
-        n_rounds = 4 
+        n_rounds = 5 
     else
         n_rounds = 10
     end
 end
 
 function fseir(t, mu=0.5, gamma=0.4)
+    @assert mu != gamma
+    @assert mu != 0
+    @assert gamma != 0
     return mu * gamma * (exp(-gamma * t) - exp(-mu * t)) / (mu - gamma) 
 end
 
 function pol_fitparameter(config)
-    @unpack model, modelname, n_rounds, n_chains, seed = config
+    @unpack model, modelname, n_rounds, n_chains, seed=config
     roundconfig = @ntuple modelname model n_rounds=1 n_chains seed
     round1 = produce_or_load(pol_fitparameter1, roundconfig, datadir("sims"))
     for n ∈ 2:(n_rounds-1)
@@ -49,17 +53,21 @@ function pol_fitparameter(config)
 end
 
 function pol_fitparameter1(config)
-    @unpack model, modelname, n_chains, seed = config
+    @unpack model, modelname, n_chains, seed=config
     fitted_pt = pigeons( ;
         target=TuringLogPotential(model),
-        n_rounds=1,
+        n_rounds=0,
         n_chains=n_chains,
         multithreaded=true,
         record=[ traces; record_default() ],
         seed=(seed),
         variational=GaussianReference(),
     )
-    fitted_chains = Chains(fitted_pt)
+    _fpv = Pigeons.variable(fitted_pt.replicas[1].state, :psi)
+    @assert _fpv == [ 1.0 ] "$_fpv != [1.0])"
+    pt = increment_n_rounds!(fitted_pt, 1)
+    new_pt = pigeons(pt)
+    fitted_chains = Chains(new_pt)
     return Dict(
         "chain" => fitted_chains, 
         "pt" => fitted_pt, 
@@ -70,7 +78,7 @@ function pol_fitparameter1(config)
 end
 
 function pol_fitparameterelement(config)
-    @unpack model, modelname, n_rounds, n_chains, seed = config
+    @unpack model, modelname, n_rounds, n_chains, seed=config
     oldfilename = "modelname=$(modelname)_n_chains=$(n_chains)_n_rounds=$(n_rounds - 1)_seed=$(seed).jld2"
     pt = load(datadir("sims", oldfilename))["pt"]
     pt = increment_n_rounds!(pt, 1)
@@ -86,6 +94,35 @@ function pol_fitparameterelement(config)
     )
 end
 
+function _renewaldiffindiffinitialization(target, rng, idn)
+    result = DynamicPPL.VarInfo(
+        rng, target.model, DynamicPPL.SampleFromPrior(), DynamicPPL.PriorContext()
+    )
+    DynamicPPL.link!!(result, DynamicPPL.SampleFromPrior(), target.model)
+
+    # start the exponential-distributed parameters at a sensible number < Inf
+    if idn <= 0 
+        _iv = 2.0
+    else
+        _iv = 1 / idn 
+    end 
+    Pigeons.update_state!(result, :eta_sigma2, 1, _iv)
+    Pigeons.update_state!(result, :psi, 1, 1.0)
+    Pigeons.update_state!(result, :σ2, 1, _iv)
+    Pigeons.update_state!(result, :zeta_sigma2, 1, _iv)
+
+    return result
+end
+
+macro renewaldiffindiffinitialization(model, idn)
+    T = :( typeof(TuringLogPotential($model)) )
+    quote 
+        function Pigeons.initialization(target::$T, rng::AbstractRNG, ::Int64) 
+            return _renewaldiffindiffinitialization(target, rng, $idn)
+        end
+    end
+end
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Simulation 1 "Canonical" difference in differences
@@ -98,17 +135,19 @@ W_sim1 = generatew_gt(fseir, simulation1dataset["cases"], simulation1dataset["Ns
 
 ## No effect of interventions 
 
-sim1model0laglead = diffindiffparameters_splinetimes(
+sim1model0laglead = renewaldiffindiffparameters(
     W_sim1_0, 
     simulation1dataset["cases_counterfactual"],
     simulation1dataset["interventions"], 
     [ [ 1 ]; collect(11:89/4:100) ],
     simulation1dataset["Ns"];
-    psiprior=0.8,
+    psiprior=Beta(8, 2),
     secondaryinterventions=lagleadinterventionsmatrix(
         simulation1dataset["interventions"], -21:7:21
     ),
 )
+
+@renewaldiffindiffinitialization sim1model0laglead id
 
 s1c0lagleadconfig = (
     modelname="sim1model0laglead",
@@ -121,17 +160,19 @@ sim1chain0lagleaddict = produce_or_load(pol_fitparameter, s1c0lagleadconfig, dat
 
 ## Effective intervention
 
-sim1model1laglead = diffindiffparameters_splinetimes(
+sim1model1laglead = renewaldiffindiffparameters(
     W_sim1, 
     simulation1dataset["cases"],
     simulation1dataset["interventions"], 
     [ [ 1 ]; collect(11:89/4:100) ],
     simulation1dataset["Ns"];
-    psiprior=0.8,
+    psiprior=Beta(8, 2),
     secondaryinterventions=lagleadinterventionsmatrix(
         simulation1dataset["interventions"], -21:7:21
     ),
 )
+
+@renewaldiffindiffinitialization sim1model1laglead id
 
 s1c1lagleadconfig = (
     modelname="sim1model1laglead",
@@ -156,17 +197,19 @@ W_sim2 = generatew_gt(fseir, simulation2dataset["cases"], simulation2dataset["Ns
 
 ### Do not account for known confounder
 
-sim2model1_0laglead = diffindiffparameters_splinetimes(
+sim2model1_0laglead = renewaldiffindiffparameters(
     W_sim2_0, 
     simulation2dataset["cases_counterfactual"],
     simulation2dataset["interventions"], 
     [ [ 1 ]; collect(11:89/4:100) ],
     simulation2dataset["Ns"];
-    psiprior=0.5,
+    psiprior=Beta(5, 5),
     secondaryinterventions=lagleadinterventionsmatrix(
         simulation2dataset["interventions"], -21:7:21
     ),
 )
+
+@renewaldiffindiffinitialization sim2model1_0laglead id
 
 s2c1_0lagleadconfig = (
     modelname="sim2model1_0laglead", 
@@ -181,18 +224,19 @@ sim2chain1_0lagleaddict = produce_or_load(
 
 ### with the known confounder
 
-sim2model2_0laglead = diffindiffparameters_splinetimes(
+sim2model2_0laglead = renewaldiffindiffparameters(
     W_sim2_0, 
     simulation2dataset["cases_counterfactual"],
     simulation2dataset["interventions"], 
     [ [ 1 ]; collect(11:89/4:100) ],
     simulation2dataset["Ns"];
-    psiprior=0.5,
+    psiprior=Beta(5, 5),
     secondaryinterventions=[
         [ InterventionsMatrix([ nothing, nothing, 70 ], 100) ];
         lagleadinterventionsmatrix(simulation2dataset["interventions"], -21:7:21)
     ],
 )
+@renewaldiffindiffinitialization sim2model1_0laglead id
 
 s2c2_0lagleadconfig = (
     modelname="sim2model2_0laglead", 
@@ -210,17 +254,18 @@ sim2chain2_0lagleaddict = produce_or_load(
 
 ### Do not account for known confounder 
 
-sim2model0laglead = diffindiffparameters_splinetimes(
+sim2model0laglead = renewaldiffindiffparameters(
     W_sim2, 
     simulation2dataset["cases"],
     simulation2dataset["interventions"], 
     [ [ 1 ]; collect(11:89/4:100) ],
     simulation2dataset["Ns"];
-    psiprior=0.5,
+    psiprior=Beta(5, 5),
     secondaryinterventions=lagleadinterventionsmatrix(
         simulation2dataset["interventions"], -21:7:21
     ),
 )
+@renewaldiffindiffinitialization sim2model0laglead id
 
 s2c0lagleadconfig = (
     modelname="sim2model0laglead", 
@@ -233,17 +278,19 @@ sim2lagleadchain0dict = produce_or_load(pol_fitparameter, s2c0lagleadconfig, dat
 
 ### with the known confounder 
 
-sim2model1laglead = diffindiffparameters_splinetimes(
+sim2model1laglead = renewaldiffindiffparameters(
     W_sim2, 
     simulation2dataset["cases"],
     simulation2dataset["interventions"], 
     [ [ 1 ]; collect(11:89/4:100) ],
     simulation2dataset["Ns"];
-    psiprior=0.5,
+    psiprior=Beta(5, 5),
     secondaryinterventions=[
         [ InterventionsMatrix([ nothing, nothing, 70 ], 100) ];
         lagleadinterventionsmatrix(simulation2dataset["interventions"], -21:7:21)
-    ],)
+    ],
+)
+@renewaldiffindiffinitialization sim2model1laglead id
 
 s2c1lagleadconfig = (
     modelname="sim2model1laglead",
@@ -267,17 +314,18 @@ W_sim3 = generatew_gt(fseir, simulation3dataset["cases"], simulation3dataset["Ns
 
 ## No effect of interventions  
 
-sim3model0leadlag = diffindiffparameters_splinetimes(
+sim3model0leadlag = renewaldiffindiffparameters(
     W_sim3_0, 
     simulation3dataset["cases_counterfactual"],
     simulation3dataset["interventions"], 
     [ [ 1 ]; collect(11:89/4:100) ],
     simulation3dataset["Ns"];
-    psiprior=0.3,
+    psiprior=Beta(3, 7),
     secondaryinterventions=lagleadinterventionsmatrix(
         simulation3dataset["interventions"], -21:7:21
     )
 )
+@renewaldiffindiffinitialization sim3model0leadlag id
 
 s3c0configleadlag = (
     modelname="sim3model0leadlag", 
@@ -292,17 +340,18 @@ sim3chain0dictleadlag = produce_or_load(pol_fitparameter, s3c0configleadlag, dat
 ## Analysis 2
 # with lag and lead times 
 
-sim3model2 = diffindiffparameters_splinetimes(
+sim3model2 = renewaldiffindiffparameters(
     W_sim3, 
     simulation3dataset["cases"],
     simulation3dataset["interventions"], 
     [ [ 1 ]; collect(11:89/4:100) ],
     simulation3dataset["Ns"];
-    psiprior=0.3,
+    psiprior=Beta(3, 7),
     secondaryinterventions=lagleadinterventionsmatrix(
         simulation3dataset["interventions"], -21:7:21
     )
 )
+@renewaldiffindiffinitialization sim3model2 id
 
 s3c2config = @ntuple modelname="sim3model2" model=sim3model2 n_rounds n_chains=8 seed=315+id
 sim3chain2dict = produce_or_load(pol_fitparameter, s3c2config, datadir("sims"))
@@ -319,18 +368,19 @@ W_sim4 = generatew_gt(fseir, simulation4dataset["cases"], simulation4dataset["Ns
 
 ## No effect of interventions 
 
-sim4model0leadlag = diffindiffparameters_splinetimes(
+sim4model0leadlag = renewaldiffindiffparameters(
     W_sim4_0, 
     simulation4dataset["cases_counterfactual"],
     simulation4dataset["interventions"], 
     [ [ 1 ]; collect(11:89/4:100) ],
     simulation4dataset["Ns"];
-    psiprior=0.5,
+    psiprior=Beta(5, 5),
     secondaryinterventions=lagleadinterventionsmatrix(
         simulation4dataset["interventions"], -21:7:21
     ),
 )
-
+@renewaldiffindiffinitialization sim4model0leadlag id
+  
 s4c0leadlagconfig = (
     modelname="sim4model0leadlag", 
     model=sim4model0leadlag, 
@@ -344,17 +394,18 @@ sim4chain0leadlagdict = produce_or_load(pol_fitparameter, s4c0leadlagconfig, dat
 ## Analysis 2
 # with lag and lead times 
 
-sim4model2 = diffindiffparameters_splinetimes(
+sim4model2 = renewaldiffindiffparameters(
     W_sim4, 
     simulation4dataset["cases"],
     simulation4dataset["interventions"], 
     [ [ 1 ]; collect(11:89/4:100) ],
     simulation4dataset["Ns"];
-    psiprior=0.5,
+    psiprior=Beta(5, 5),
     secondaryinterventions=lagleadinterventionsmatrix(
         simulation4dataset["interventions"], -21:7:21
     ),
 )
+@renewaldiffindiffinitialization sim4model2 id
 
 s4c2config = @ntuple modelname="sim4model2" model=sim4model2 n_rounds n_chains=8 seed=415+id
 sim4chain2dict = produce_or_load(pol_fitparameter, s4c2config, datadir("sims"))
@@ -426,15 +477,16 @@ W_maskcoviddata = generatew_gt(COVIDSERIALINTERVAL, maskcovidcases, POPULATION20
 ## Analysis 2 
 # Effect of mask requirements. No other considerations of confounding 
 
-maskingdatamodel2leadlag = diffindiffparameters_splinetimes(
+maskingdatamodel2leadlag = renewaldiffindiffparameters(
     W_maskcoviddata, 
     maskcovidcases,
     facialcoveringsrequired, 
     [ 1.0; collect(56.0:28:224); 257 ],
     POPULATION2020;
-    psiprior=0.4,
+    psiprior=Beta(4, 6),
     secondaryinterventions=lagleadinterventionsmatrix(facialcoveringsrequired_IM, -21:7:21),
 )
+@renewaldiffindiffinitialization maskingdatamodel2leadlag id
 
 maskdatac2leadlagconfig = (
     modelname="maskingdatamodel2leadlag", 
@@ -452,7 +504,7 @@ maskingdatamodel2leadlagdict = produce_or_load(
 # Effect of mask requirements with secondary interventions of end of stay-at-home and some
 # businesses reopening
 
-maskingdatamodel4 = diffindiffparameters_splinetimes(
+maskingdatamodel4 = renewaldiffindiffparameters(
     W_maskcoviddata, 
     maskcovidcases, 
     facialcoveringsrequired, 
@@ -463,6 +515,7 @@ maskingdatamodel4 = diffindiffparameters_splinetimes(
         lagleadinterventionsmatrix(facialcoveringsrequired_IM, -21:7:21) 
     ],
 )
+@renewaldiffindiffinitialization maskingdatamodel4 id
 
 maskdatac4config = (
     modelname="maskingdatamodel4", 
@@ -478,18 +531,19 @@ maskingdatamodel4dict = produce_or_load(pol_fitparameter, maskdatac4config, data
 # Effect of mask requirements with secondary interventions of end of stay-at-home and some
 # businesses reopening and mask recommendations plus lead and lag
 
-maskingdatamodel6 = diffindiffparameters_splinetimes(
+maskingdatamodel6 = renewaldiffindiffparameters(
     W_maskcoviddata, 
     maskcovidcases,
     facialcoveringsrequired, 
     [ 1.0; collect(56.0:28:224); 257 ],
     POPULATION2020;
-    psiprior=0.4,
+    psiprior=Beta(4, 6),
     secondaryinterventions=[
         [ endstayathometimes, somebusinessreopen, facialcoveringsrecommended ];
         lagleadinterventionsmatrix(facialcoveringsrequired_IM, -21:7:21) 
     ],
 )
+@renewaldiffindiffinitialization maskingdatamodel6 id
 
 maskdatac6config = (
     modelname="maskingdatamodel6", 
@@ -505,17 +559,18 @@ maskingdatamodel6dict = produce_or_load(pol_fitparameter, maskdatac6config, data
 # US data 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-const usnrounds = n_rounds > 8 ? 8 : n_rounds
+const usnrounds = n_rounds > 9 ? 9 : n_rounds
 
-datamodelus1leadlag = diffindiffparameters_splinetimes(
+datamodelus1leadlag = renewaldiffindiffparameters(
     W_uscoviddata, 
     incidence,
     maskday, 
     [ collect(1.0:28:113); [ 123 ] ],
     populations;
-    psiprior=0.8,
+    psiprior=Beta(8, 2),
     secondaryinterventions=lagleadinterventionsmatrix(maskday, -21:7:21),
 )
+@renewaldiffindiffinitialization datamodelus1leadlag id
 
 datac1leadlagconfig = (
     modelname="datamodelus1leadlag", 
@@ -530,18 +585,19 @@ datachain1leadlagdict = produce_or_load(
 
 ## With confounding interventions 
 
-datamodelus2leadlag = diffindiffparameters_splinetimes(
+datamodelus2leadlag = renewaldiffindiffparameters(
     W_uscoviddata, 
     incidence,
     maskday, 
     [ collect(1.0:28:113); [ 123 ] ],
     populations;
-    psiprior=0.8,
+    psiprior=Beta(8, 2),
     secondaryinterventions = [
         [ relaxshelterinplace, reopenbusiness, reopenrestaurants, reopengyms, reopencinemas ];
         lagleadinterventionsmatrix(maskday, -21:7:21)
     ]
 )
+@renewaldiffindiffinitialization datamodelus2leadlag id
 
 datac2leadlagconfig = (
     modelname="datamodelus2leadlag", 

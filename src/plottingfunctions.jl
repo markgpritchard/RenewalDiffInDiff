@@ -115,7 +115,7 @@ function _processplotchains(
     return @ntuple colnames plotnames_ind=pni
 end
 
-~function _processplotchains(data, colnames, plotnames_ind; logdensity="log_density")
+function _processplotchains(data, colnames, plotnames_ind; logdensity="log_density")
     return @ntuple colnames plotnames_ind
 end
 

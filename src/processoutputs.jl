@@ -91,7 +91,7 @@ function _quantilelogeffectivereproductionratios(
     df, nlocations, cases, ns, timeknots, interventions, secondaryinterventions, ::Automatic;
     kwargs...
 )
-    times = timeknots[1]:1:last(timeknots)
+    times = round(Int, timeknots[1]):1:round(Int, last(timeknots))
     return _quantilelogeffectivereproductionratios(
         df, nlocations, cases, ns, timeknots, interventions, secondaryinterventions, times;
         kwargs...
@@ -176,6 +176,10 @@ end
     casesa = predictcases(g, df, logR0a, initialcases, ns; kwargs...)
     casesb = predictcases(g, df, logR0b, initialcases, ns; kwargs...)
     casesdiff = similar(casesa)
+    lci = zeros(size(casesdiff, 2), size(casesdiff, 3))
+    med = zeros(size(casesdiff, 2), size(casesdiff, 3))
+    uci = zeros(size(casesdiff, 2), size(casesdiff, 3))
+
     Threads.@threads for j ∈ axes(casesdiff, 3)
         for t ∈ axes(casesdiff, 2)
             for k ∈ axes(casesdiff, 1)
@@ -187,15 +191,6 @@ end
                     )
                 end
             end
-        end
-    end
-
-    lci = zeros(size(casesdiff, 2), size(casesdiff, 3))
-    med = zeros(size(casesdiff, 2), size(casesdiff, 3))
-    uci = zeros(size(casesdiff, 2), size(casesdiff, 3))
-
-    Threads.@threads for j ∈ axes(casesdiff, 3)
-        for t ∈ axes(casesdiff, 2) 
             lcii, medi, ucii = quantile(casesdiff[:, t, j], quantiles)
             lci[t, j] = lcii 
             med[t, j] = medi 
@@ -204,6 +199,86 @@ end
     end 
 
     return @ntuple lci med uci
+end
+
+function logeffectivereproductionratio(
+    logzeta_g_vec::AbstractVector,
+    timespline,
+    logdelta,
+    interventions, 
+    s,
+    t, 
+    g
+)
+    return logeffectivereproductionratio(
+        logzeta_g_vec[g],
+        timespline,
+        logdelta,
+        interventions, 
+        s,
+        t,
+        g
+    )
+end
+
+function logeffectivereproductionratio(
+    zeta,
+    timespline,
+    logdelta,
+    interventions, 
+    s,
+    t,
+    g
+)
+    return +(
+        zeta, 
+        timespline[t], 
+        logdelta * interventions[t, g], 
+        s
+    ) 
+end
+
+function logeffectivereproductionratio(
+    logzeta_g_vec,
+    timespline,
+    logdelta,
+    interventions, 
+    s,
+    logsecondarydelta,
+    secondaryinterventions,
+    t, 
+    g
+)
+    return logeffectivereproductionratio(
+        logzeta_g_vec,
+        timespline,
+        logdelta,
+        interventions, 
+        s,
+        t, 
+        g
+    ) + _logeffectivereproductionratiosecondaryinterventions(
+        logsecondarydelta, secondaryinterventions, t, g
+    )
+end
+
+_logeffectivereproductionratiosecondaryinterventions(::Any, ::Nothing, ::Any, ::Any) = 0
+
+function _logeffectivereproductionratiosecondaryinterventions(
+    logsecondarydelta, secondaryinterventions::AbstractMatrix, t, g
+)
+    return logsecondarydelta * secondaryinterventions[t, g] 
+end
+
+function _logeffectivereproductionratiosecondaryinterventions(
+    logsecondarydelta::AbstractVector, secondaryinterventions::AbstractVector, t, g
+)
+    return sum(
+        [ 
+            logsecondarydelta[i] * secondaryinterventions[i][t, g] 
+            for i ∈ eachindex(secondaryinterventions) 
+        ]
+    )
 end
 
 function logbasicreproductionratios(
@@ -231,7 +306,7 @@ function _logeffectivereproductionratios(
     df, nlocations, cases, ns, timeknots, interventions, secondaryinterventions, ::Automatic;
     kwargs...
 )
-    times = timeknots[1]:1:last(timeknots)
+    times = round(Int, timeknots[1]):1:round(Int, last(timeknots))
     return _logeffectivereproductionratios(
         df, nlocations, cases, ns, timeknots, interventions, secondaryinterventions, times;
         kwargs...
@@ -248,11 +323,10 @@ function _logeffectivereproductionratios(
 
     Threads.@threads for j ∈ 1:nlocations
         logetavector = zeros(length(timeknots))
-        logsecondarydeltavector = _initiallogsecondarydeltavector(secondaryinterventions)
         for i ∈ 1:nsamples 
-            logre[i, :, j] = _logeffectivereproductionratio!(
+            _logeffectivereproductionratio!(
+                logre,
                 logetavector, 
-                logsecondarydeltavector, 
                 df, 
                 cases, 
                 ns, 
@@ -268,115 +342,90 @@ function _logeffectivereproductionratios(
     end
     return logre
 end
-
+#=
 _initiallogsecondarydeltavector(::Nothing) = nothing
 _initiallogsecondarydeltavector(::AbstractMatrix) = zeros(1)
 
 function _initiallogsecondarydeltavector(secondaryinterventions::Vector{<:AbstractMatrix})
     return zeros(length(secondaryinterventions))
 end
-
+=#
 function _logeffectivereproductionratio!(
+    logre,
     logetavector, 
-    logsecondarydeltavector, 
     df, 
     cases, 
-    ns, 
+    Ns, 
     timeknots, 
     interventions, 
     secondaryinterventions, 
     times, 
     i, 
     j;
-    peakperiod=2, kwargs...
-)
-    peakperiodsymbol = Symbol("eta_t$peakperiod")
-    __logeffectivereproductionratio!(
-        logetavector, 
-        logsecondarydeltavector, 
-        df, 
-        cases, 
-        ns, 
-        timeknots, 
-        interventions, 
-        secondaryinterventions, 
-        times, 
-        i, 
-        j;
-        peakperiodsymbol => 0, kwargs...
-    )
-end
-
-function __logeffectivereproductionratio!(
-    logetavector, 
-    logsecondarydeltavector, 
-    df, 
-    cases, 
-    ns, 
-    timeknots, 
-    interventions, 
-    secondaryinterventions, 
-    times, 
-    i, 
-    j;
+    extrapl=zeros(1), extrapr=zeros(1),
+    zeroperiod=2,
     kwargs...
 )
-    tspline = _logeffectivereproductionratio_timespline!(
-        logetavector, df, timeknots, i;
-        kwargs...
-    )
-    locationparameter = _logeffectivereproductionratio_zetavalue(df, i, j; kwargs...)
-    interventionparameter = _logeffectivereproductionratio_value(df, :logdelta, i; kwargs...)
-    _logeffectivereproductionratio_secondarydeltavector!(
-        logsecondarydeltavector, df, i; 
-        kwargs...
-    )
-    identifiedproportion = _logeffectivereproductionratio_value(df, :psi, i; kwargs...)
+    intercept = getproperty(df, :intercept)[i]
+    zeta_sigma2 = getproperty(df, :zeta_sigma2)[i]
+    zeta = intercept + getproperty(df, Symbol("logzeta_g$j.logzeta"))[i] * zeta_sigma2
+    for k ∈ eachindex(logetavector)
+        if isa(zeroperiod, Number) && k == zeroperiod 
+            if k == 1 
+                _otherk = 2 
+            else 
+                _otherk = k - 1
+            end
+            logetavector[k] = zero(getproperty(df, Symbol("eta_t$_otherk.logeta"))[i])
+        else
+            logetavector[k] = getproperty(df, Symbol("eta_t$k.logeta"))[i]
+        end
+    end
+    eta_sigma2 = getproperty(df, :eta_sigma2)[i]
+    timespline = CubicSpline(timeknots, logetavector * eta_sigma2; extrapl, extrapr)
+    logdelta = getproperty(df, :logdelta)[i]
+    logsecondarydelta = _logsecondarydeltav(df, secondaryinterventions, i)
+    psi = getproperty(df, :psi)[i]
 
-    return ___logeffectivereproductionratio!(
-        tspline, 
-        interventions, 
-        secondaryinterventions, 
-        locationparameter, 
-        interventionparameter, 
-        identifiedproportion, 
-        logsecondarydeltavector, 
-        cases, 
-        ns, 
-        times, 
-        j;
-    )
+    for t ∈ times 
+        s = _calcs(cases, Ns, psi, t, j)
+        logre[i, t, j] = logeffectivereproductionratio(
+            zeta,
+            timespline,
+            logdelta,
+            interventions, 
+            s,
+            logsecondarydelta,
+            secondaryinterventions, 
+            t,
+            j
+        )  
+        #println("logre[$t] = $(logre[t])")      
+    end
 end
 
-function ___logeffectivereproductionratio!(
-    tspline, 
-    interventions, 
-    secondaryinterventions, 
-    locationparameter, 
-    interventionparameter, 
-    identifiedproportion, 
-    logsecondarydeltavector, 
-    cases, 
-    ns, 
-    times, 
-    j;
-)
-    return [
-        (
-            tspline(t) + 
-            locationparameter + 
-            interventionparameter * interventions[m, j] +
-            _logeffectivereproductionratiosecondaryinterventions(
-                secondaryinterventions, logsecondarydeltavector, j, m
-            ) + 
-            _logeffectivereproductionratiocumulativecasesvalue(
-                identifiedproportion, cases, ns, j, m
-            )
-        )
-        for (m, t) ∈ enumerate(times) 
+function _calcs(cases, Ns, psi, t, j)
+    if t == 1 
+        return zero(log(1 / (Ns[j] * psi))) 
+    else 
+        return log(1 - sum(cases[1:(t - 1), j]) / (Ns[j] * psi))
+    end
+end
+
+_calcs(::Nothing, ::Nothing, ::Any, ::Any, ::Any) = 0
+
+_logsecondarydeltav(::Any, ::Nothing, ::Any) = nothing
+_logsecondarydeltav(df, ::AbstractMatrix, i) = getproperty(df, :logsecondarydelta)[i]
+
+function _logsecondarydeltav(df, secondaryinterventions::Vector{<:AbstractMatrix}, i)
+    ℓ = length(secondaryinterventions)
+    return [ 
+        getproperty(df, Symbol("logsecondarydelta$k.logsecondarydelta"))[i] 
+        for k ∈ 1:ℓ 
     ]
 end
 
+#=
 function _logeffectivereproductionratiocumulativecasesvalue(
     ::Any, ::Nothing, ::Any, ::Any, ::Any
 )
@@ -471,7 +520,7 @@ function _logeffectivereproductionratio_secondarydeltavalue!(
         getproperty(df, Symbol("logsecondarydelta$k.logsecondarydelta"))[i]
     end
 end
-
+=#
 function _logeffectivereproductionratio_value(df, symbol, i; kwargs...)
     get(kwargs, symbol) do 
         getproperty(df, symbol)[i]
