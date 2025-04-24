@@ -144,7 +144,7 @@ subsetsim1plot = with_theme(theme_latexfonts()) do
             counterfactualcases=simulation1dataset["cases_counterfactual"], 
             markersize=2, fittedparameter=:y_matrix_det_vec_counterfactual,
             fittedcolour=( COLOURVECTOR[2], 0.75 ), 
-            ytitle="No\nintervetion",
+            ytitle="No\nintervention",
         )
         axs4 = plotrenewalequationsamples_cases!(
             ga, 
@@ -424,7 +424,7 @@ subsetsim1plotcsuppl = with_theme(theme_latexfonts()) do
             counterfactualcases=simulation1dataset["cases_counterfactual"], 
             markersize=2, fittedparameter=:y_matrix_det_vec_counterfactual,
             fittedcolour=( COLOURVECTOR[2], 0.75 ), 
-            ytitle="No\nintervetion",
+            ytitle="No\nintervention",
         )
         axs4 = plotrenewalequationsamples_cases!(
             ga, 
@@ -787,7 +787,7 @@ subsetsim2plotsuppl = with_theme(theme_latexfonts()) do
             counterfactualcases=simulation2dataset["cases_counterfactual"], 
             markersize=2, fittedparameter=:y_matrix_det_vec_counterfactual,
             fittedcolour=( COLOURVECTOR[2], 0.75 ), 
-            ytitle="No\nintervetion",
+            ytitle="No\nintervention",
         )
         axs4 = plotrenewalequationsamples_cases!(
             ga, 
@@ -911,7 +911,7 @@ subsetsim2plotsuppl = with_theme(theme_latexfonts()) do
             counterfactualcases=simulation2dataset["cases_counterfactual"], 
             markersize=2, fittedparameter=:y_matrix_det_vec_counterfactual,
             fittedcolour=( COLOURVECTOR[2], 0.75 ), 
-            ytitle="No\nintervetion",
+            ytitle="No\nintervention",
         )
         axs4 = plotrenewalequationsamples_cases!(
             gb, 
@@ -1187,7 +1187,7 @@ subsetsim3plot0suppl = with_theme(theme_latexfonts()) do
             counterfactualcases=simulation3dataset["cases_counterfactual"], 
             markersize=2, fittedparameter=:y_matrix_det_vec_counterfactual,
             fittedcolour=( COLOURVECTOR[2], 0.75 ), 
-            ytitle="No\nintervetion",
+            ytitle="No\nintervention",
         )
         axs4 = plotrenewalequationsamples_cases!(
             ga, 
@@ -1448,7 +1448,7 @@ subsetsim3plotsuppl = with_theme(theme_latexfonts()) do
             counterfactualcases=simulation3dataset["cases_counterfactual"], 
             markersize=2, fittedparameter=:y_matrix_det_vec_counterfactual,
             fittedcolour=( COLOURVECTOR[2], 0.75 ), 
-            ytitle="No\nintervetion",
+            ytitle="No\nintervention",
         )
         axs4 = plotrenewalequationsamples_cases!(
             ga, 
@@ -1911,7 +1911,7 @@ subsetsim4plotsuppl0 = with_theme(theme_latexfonts()) do
             counterfactualcases=simulation4dataset["cases_counterfactual"], 
             markersize=2, fittedparameter=:y_matrix_det_vec_counterfactual,
             fittedcolour=( COLOURVECTOR[2], 0.75 ), 
-            ytitle="No\nintervetion",
+            ytitle="No\nintervention",
         )
         axs4 = plotrenewalequationsamples_cases!(
             ga, 
@@ -2032,7 +2032,7 @@ subsetsim4plotsuppl = with_theme(theme_latexfonts()) do
             counterfactualcases=simulation4dataset["cases_counterfactual"], 
             markersize=2, fittedparameter=:y_matrix_det_vec_counterfactual,
             fittedcolour=( COLOURVECTOR[2], 0.75 ), 
-            ytitle="No\nintervetion",
+            ytitle="No\nintervention",
         )
         axs4 = plotrenewalequationsamples_cases!(
             ga, 
@@ -2974,14 +2974,14 @@ subsetdatafit1plot = with_theme(theme_latexfonts()) do
         markersize=2, fittedparameter=:y_matrix_det_vec_counterfactual,
         fittedcolour=( COLOURVECTOR[2], 0.75 ), 
         xticks=( [ 1, 93, 215 ], [ "June", "Sept.", "Jan." ] ), 
-        ytitle=L"Without \\ intervetion$$",
+        ytitle=L"Without \\ intervention$$",
     )
     axs4 = plotrenewalequationsamples_cases!(
         ga, allcovidcases, selectpops, datafit1, 4;
         locationinds=[ 1:5; [ 9 ] ],
         markersize=2, fittedparameter=:y_matrix_det_vec,
         xticks=( [ 1, 93, 215 ], [ "June", "Sept.", "Jan." ] ), 
-        ytitle=L"With \\ intervetion$$",
+        ytitle=L"With \\ intervention$$",
     )
     axs5 = plotrenewalequationsamples_causaleffect!(
         ga, allcovidcases, nothing, selectpops, datafit1, 5;
@@ -3096,14 +3096,14 @@ subsetdatafit1plotb = with_theme(theme_latexfonts()) do
         markersize=2, fittedparameter=:y_matrix_det_vec_counterfactual,
         fittedcolour=( COLOURVECTOR[2], 0.75 ), 
         xticks=( [ 1, 93, 215 ], [ "June", "Sept.", "Jan." ] ), 
-        ytitle=L"Without \\ intervetion$$",
+        ytitle=L"Without \\ intervention$$",
     )
     axs4 = plotrenewalequationsamples_cases!(
         ga, allcovidcases, selectpops, datafit1, 4;
         locationinds=6:8,
         markersize=2, fittedparameter=:y_matrix_det_vec,
         xticks=( [ 1, 93, 215 ], [ "June", "Sept.", "Jan." ] ), 
-        ytitle=L"With \\ intervetion$$",
+        ytitle=L"With \\ intervention$$",
     )
     axs5 = plotrenewalequationsamples_causaleffect!(
         ga, allcovidcases, nothing, selectpops, datafit1, 5;
@@ -3325,14 +3325,14 @@ datafit2plot = with_theme(theme_latexfonts()) do
         markersize=2, fittedparameter=:y_matrix_det_vec_counterfactual,
         fittedcolour=( COLOURVECTOR[2], 0.75 ), 
         xticks=( [ 1, 93, 215 ], [ "June", "Sept.", "Jan." ] ), 
-        ytitle=L"Without \\ intervetion$$",
+        ytitle=L"Without \\ intervention$$",
     )
     axs4 = plotrenewalequationsamples_cases!(
         ga, pil1covidcases, selectpops, datafit2, 4;
         locationinds=[ 1:5; [ 9 ] ],
         markersize=2, fittedparameter=:y_matrix_det_vec,
         xticks=( [ 1, 93, 215 ], [ "June", "Sept.", "Jan." ] ), 
-        ytitle=L"With \\ intervetion$$",
+        ytitle=L"With \\ intervention$$",
     )
     axs5 = plotrenewalequationsamples_causaleffect!(
         ga, pil1covidcases, nothing, selectpops, datafit2, 5;
@@ -3447,14 +3447,14 @@ datafit2plotb = with_theme(theme_latexfonts()) do
         markersize=2, fittedparameter=:y_matrix_det_vec_counterfactual,
         fittedcolour=( COLOURVECTOR[2], 0.75 ), 
         xticks=( [ 1, 93, 215 ], [ "June", "Sept.", "Jan." ] ), 
-        ytitle=L"Without \\ intervetion$$",
+        ytitle=L"Without \\ intervention$$",
     )
     axs4 = plotrenewalequationsamples_cases!(
         ga, pil1covidcases, selectpops, datafit2, 4;
         locationinds=6:8,
         markersize=2, fittedparameter=:y_matrix_det_vec,
         xticks=( [ 1, 93, 215 ], [ "June", "Sept.", "Jan." ] ), 
-        ytitle=L"With \\ intervetion$$",
+        ytitle=L"With \\ intervention$$",
     )
     axs5 = plotrenewalequationsamples_causaleffect!(
         ga, pil1covidcases, nothing, selectpops, datafit2, 5;
@@ -3549,14 +3549,14 @@ subsetdatafit2plot = with_theme(theme_latexfonts()) do
         markersize=2, fittedparameter=:y_matrix_det_vec_counterfactual,
         fittedcolour=( COLOURVECTOR[2], 0.75 ), 
         xticks=xticks=( [ 1, 93, 215 ], [ "June", "Sept.", "Jan." ] ), 
-        ytitle=L"~ \\ ~ \\ Without \\ intervetion$$",
+        ytitle=L"~ \\ ~ \\ Without \\ intervention$$",
     )
     axs3 = plotrenewalequationsamples_cases!(
         ga, pil1covidcases, selectpops, datafit2, 3;
         locationinds=[ 1:5; [ 9 ] ],
         markersize=2, fittedparameter=:y_matrix_det_vec,
         xticks=xticks=( [ 1, 93, 215 ], [ "June", "Sept.", "Jan." ] ), 
-        ytitle=L"~ \\ ~ \\ With \\ intervetion$$",
+        ytitle=L"~ \\ ~ \\ With \\ intervention$$",
     )
     axs4 = plotrenewalequationsamples_causaleffect!(
         ga, pil1covidcases, nothing, selectpops, datafit2, 4;
@@ -3656,14 +3656,14 @@ datafit3plot = with_theme(theme_latexfonts()) do
         markersize=2, fittedparameter=:y_matrix_det_vec_counterfactual,
         fittedcolour=( COLOURVECTOR[2], 0.75 ), 
         xticks=( [ 1, 93, 215 ], [ "June", "Sept.", "Jan." ] ), 
-        ytitle=L"Without \\ intervetion$$",
+        ytitle=L"Without \\ intervention$$",
     )
     axs4 = plotrenewalequationsamples_cases!(
         ga, allcovidcases, selectpops, datafit3, 4;
         locationinds=[ 1:5; [ 9 ] ],
         markersize=2, fittedparameter=:y_matrix_det_vec,
         xticks=( [ 1, 93, 215 ], [ "June", "Sept.", "Jan." ] ), 
-        ytitle=L"With \\ intervetion$$",
+        ytitle=L"With \\ intervention$$",
     )
     axs5 = plotrenewalequationsamples_causaleffect!(
         ga, allcovidcases, nothing, selectpops, datafit3, 5;
@@ -3988,13 +3988,13 @@ subsetmaskdatafit1plot = with_theme(theme_latexfonts()) do
         markersize=2, fittedparameter=:y_matrix_det_vec_counterfactual,
         fittedcolour=( COLOURVECTOR[2], 0.75 ), 
         xticks=( [ 1, 92, 183 ], [ "Jan.", "April", "July" ] ), 
-        ytitle=L"Without \\ intervetion$$",
+        ytitle=L"Without \\ intervention$$",
     )
     axs4 = plotrenewalequationsamples_cases!(
         ga, maskcovidcases[1:191, :], POPULATION2020, maskingdatafit1, 4;
         markersize=2, fittedparameter=:y_matrix_det_vec,
         xticks=( [ 1, 92, 183 ], [ "Jan.", "April", "July" ] ), 
-        ytitle=L"With \\ intervetion$$",
+        ytitle=L"With \\ intervention$$",
     )
     axs5 = plotrenewalequationsamples_causaleffect!(
         ga, maskcovidcases[1:191, :], nothing, POPULATION2020, maskingdatafit1, 5;
@@ -4122,13 +4122,13 @@ subsetmaskdatafit2plot = with_theme(theme_latexfonts()) do
         markersize=2, fittedparameter=:y_matrix_det_vec_counterfactual,
         fittedcolour=( COLOURVECTOR[2], 0.75 ), 
         xticks=( [ 1, 92, 183, 245 ], [ "Jan.", "April", "July", "Sept." ] ), 
-        ytitle=L"Without \\ intervetion$$",
+        ytitle=L"Without \\ intervention$$",
     )
     axs4 = plotrenewalequationsamples_cases!(
         ga, maskcovidcases, POPULATION2020, maskingdatafit2, 4;
         markersize=2, fittedparameter=:y_matrix_det_vec,
         xticks=( [ 1, 92, 183, 245 ], [ "Jan.", "April", "July", "Sept." ] ), 
-        ytitle=L"With \\ intervetion$$",
+        ytitle=L"With \\ intervention$$",
     )
     axs5 = plotrenewalequationsamples_causaleffect!(
         ga, maskcovidcases, nothing, POPULATION2020, maskingdatafit2, 5;
@@ -4256,13 +4256,13 @@ subsetmaskdatafit3plot = with_theme(theme_latexfonts()) do
         markersize=2, fittedparameter=:y_matrix_det_vec_counterfactual,
         fittedcolour=( COLOURVECTOR[2], 0.75 ), 
         xticks=( [ 1, 92, 183, 245 ], [ "Jan.", "April", "July", "Sept." ] ), 
-        ytitle=L"Without \\ intervetion$$",
+        ytitle=L"Without \\ intervention$$",
     )
     axs4 = plotrenewalequationsamples_cases!(
         ga, maskcovidcases, POPULATION2020, maskingdatafit3, 4;
         markersize=2, fittedparameter=:y_matrix_det_vec,
         xticks=( [ 1, 92, 183, 245 ], [ "Jan.", "April", "July", "Sept." ] ), 
-        ytitle=L"With \\ intervetion$$",
+        ytitle=L"With \\ intervention$$",
     )
     axs5 = plotrenewalequationsamples_causaleffect!(
         ga, maskcovidcases, nothing, POPULATION2020, maskingdatafit3, 5;
@@ -4391,13 +4391,13 @@ subsetmaskdatafit4plot = with_theme(theme_latexfonts()) do
         markersize=2, fittedparameter=:y_matrix_det_vec_counterfactual,
         fittedcolour=( COLOURVECTOR[2], 0.75 ), 
         xticks=( [ 1, 92, 183, 245 ], [ "Jan.", "April", "July", "Sept." ] ), 
-        ytitle=L"Without \\ intervetion$$",
+        ytitle=L"Without \\ intervention$$",
     )
     axs4 = plotrenewalequationsamples_cases!(
         ga, maskcovidcases, POPULATION2020, maskingdatafit4, 4;
         markersize=2, fittedparameter=:y_matrix_det_vec,
         xticks=( [ 1, 92, 183, 245 ], [ "Jan.", "April", "July", "Sept." ] ), 
-        ytitle=L"With \\ intervetion$$",
+        ytitle=L"With \\ intervention$$",
     )
     axs5 = plotrenewalequationsamples_causaleffect!(
         ga, maskcovidcases, nothing, POPULATION2020, maskingdatafit4, 5;
@@ -4533,13 +4533,13 @@ subsetmaskdatafit5plot = with_theme(theme_latexfonts()) do
         markersize=2, fittedparameter=:y_matrix_det_vec_counterfactual,
         fittedcolour=( COLOURVECTOR[2], 0.75 ), 
         xticks=( [ 1, 92, 183, 245 ], [ "Jan.", "April", "July", "Sept." ] ), 
-        ytitle=L"Without \\ intervetion$$",
+        ytitle=L"Without \\ intervention$$",
     )
     axs4 = plotrenewalequationsamples_cases!(
         ga, maskcovidcases, POPULATION2020, maskingdatafit5, 4;
         markersize=2, fittedparameter=:y_matrix_det_vec,
         xticks=( [ 1, 92, 183, 245 ], [ "Jan.", "April", "July", "Sept." ] ), 
-        ytitle=L"With \\ intervetion$$",
+        ytitle=L"With \\ intervention$$",
     )
     axs5 = plotrenewalequationsamples_causaleffect!(
         ga, maskcovidcases, nothing, POPULATION2020, maskingdatafit5, 5;
