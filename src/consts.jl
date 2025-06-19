@@ -1,4 +1,7 @@
 
+struct Automatic end  # not exported
+const automatic = Automatic()  # not exported
+
 # result from https://github.com/mrc-ide/EpiEstim/blob/master/data/covid_deaths_2020_uk.rda
 COVIDSERIALINTERVAL = [  
     0.0000000000,
@@ -34,9 +37,9 @@ COVIDSERIALINTERVAL = [
     0.0002057625
 ]
 
+# values from 
+# https://www.ons.gov.uk/file?uri=/peoplepopulationandcommunity/populationandmigration/populationestimates/datasets/populationestimatesforukenglandandwalesscotlandandnorthernireland/mid2020/ukpopestimatesmid2020on2021geography.xls
 const POPULATION2020 = [  
-    # values from 
-    # https://www.ons.gov.uk/file?uri=/peoplepopulationandcommunity/populationandmigration/populationestimates/datasets/populationestimatesforukenglandandwalesscotlandandnorthernireland/mid2020/ukpopestimatesmid2020on2021geography.xls
     56_550_138,  # ENGLAND
     1_895_510,  # NORTHERN IRELAND
     5_466_000,  # SCOTLAND

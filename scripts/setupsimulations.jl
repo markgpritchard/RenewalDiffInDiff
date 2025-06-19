@@ -1,27 +1,19 @@
 
 using DrWatson 
 @quickactivate :RenewalDiffInDiff
-using Random, StochasticTransitionModels 
+using Random
+using StochasticTransitionModels 
 
-function seirrates(u, t, p::SEIRParameters{<:Function, <:Real, <:Real})
-    s, e, i, i′, r = u  # i′ represents diagnosed infections. i + i′ is the total infectiouse prevalence
-    n = sum(@view u[1:5])  # 6th compartment is cumulative diagnosed infecitons
+_theta(p::SEIRParameters{<:Function, <:Real, <:Real}, ::Any) = p.θ
+_theta(p::SEIRParameters{<:Function, <:Real, <:Function}, t) = p.θ(t)
+
+function seirrates(u, t, p)
+    s, e, i, i′, = u  # i′ is diagnosed infections; i + i′ is total infectious prevalence
+    n = sum(@view u[1:5])  # 6th compartment is cumulative diagnosed infections
     return [
         p.β(t) * s * (i + i′) / n,  # infection rate
         p.μ * e,  # end of latent period 
-        p.θ * p.γ * i / (1 - p.θ),  # diagnosis 
-        p.γ * i,  # recovery (undiagnosed)
-        p.γ * i′  # recovery (diagnosed)
-    ]
-end
-
-function seirrates(u, t, p::SEIRParameters{<:Function, <:Real, <:Function})
-    s, e, i, i′, r = u  # i′ represents diagnosed infections. i + i′ is the total infectiouse prevalence
-    n = sum(@view u[1:5])  # 6th compartment is cumulative diagnosed infecitons
-    return [
-        p.β(t) * s * (i + i′) / n,  # infection rate
-        p.μ * e,  # end of latent period 
-        p.θ(t) * p.γ * i / (1 - p.θ(t)),  # diagnosis 
+        _theta(p, t) * p.γ * i / (1 - _theta(p, t)),  # diagnosis 
         p.γ * i,  # recovery (undiagnosed)
         p.γ * i′  # recovery (diagnosed)
     ]

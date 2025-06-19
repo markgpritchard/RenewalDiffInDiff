@@ -1,9 +1,55 @@
 
 using DrWatson
 @quickactivate :RenewalDiffInDiff
-using CSV, DataFrames, Dates, Pigeons, Turing
+
+using CSV
+using DataFrames
+using Dates
+using Turing
+#using Optimization
+#using OptimizationOptimJL
+
+#using Zygote
+
+#using LazyArrays
+
+#using ForwardDiff
+
+#using Optim
+#using NaNMath
+using Turing
+#using Optimization, OptimizationOptimJL
+
+using ReverseDiff
+
+#Turing.setadbackend(:zygote)
+
+gseir(t; mu=0.5, gamma=0.4) = gseir(t, mu, gamma)
+gseir(t, mu, gamma) = mu * gamma * (exp(-gamma * t) - exp(-mu * t)) / (mu - gamma) 
+
+
 include("setupsimulations.jl")
-include("loaddata.jl")
+
+
+M = R0_did(
+    simulation1dataset["cases"],
+    simulation1dataset["interventions"];
+    g=gseir,
+    N=simulation1dataset["Ns"],
+)
+
+
+chain = sample(M, NUTS(0.65; adtype=AutoReverseDiff(false)), MCMCThreads(), 12, 4)
+#chain = sample(M, NUTS(0.65; adtype=AutoReverseDiff(false)), 12)
+
+
+include(srcdir("plottingfunctions.jl"))
+
+chaindf = DataFrame(chain)
+plotchains(chaindf; plotnames_ind=3:15)
+
+
+
 
 testrun = true 
 
@@ -19,9 +65,7 @@ else
     end
 end
 
-function fseir(t, mu=0.5, gamma=0.4)
-    return mu * gamma * (exp(-gamma * t) - exp(-mu * t)) / (mu - gamma) 
-end
+
 
 function pol_fitparameter(config)
     @unpack model, modelname, n_rounds, n_chains, seed = config
@@ -805,3 +849,51 @@ datamodel4 = diffindiffparameters_splinetimes(
 datac4config = @ntuple modelname="datamodel4" model=datamodel4 n_rounds n_chains=8 seed=1040+id
 datachain4dict = produce_or_load(pol_fitparameter, datac4config, datadir("sims"))
 
+#
+#
+#
+#
+#
+#
+
+
+using Turing, Optim
+data1 = randn(900, 120)
+
+# p = the dimension of the factor model
+# this is just an example; we ignore rotational invariance issues
+
+@model factormodel(dat, p) = begin
+    N, K = size(dat)
+
+    σ ~ filldist(InverseGamma(1, 1), K)  # factor uniquenesses
+    λ ~ filldist(Normal(0, 1), p, K)           # factor loadings
+    μ ~ filldist(Normal(0, 10), K)             # variable-specific intercept
+    F ~ filldist(Normal(0,1), N, p)           # latent factors
+
+    mu = F * λ
+
+    for k in 1:K
+        for i in 1:N
+            dat[i,k] ~ Normal(μ[k] + mu[i,k], σ[k])
+        end
+    end
+end;
+
+#=
+(1) MLE/MAP estimates take an *extraordinarily* long time, especially compared to e.g., R's factanal() or fa() routines. I would expect it to take a few seconds, maybe. Instead, it takes so long I get tired of waiting and cancel. :( I'm not willing to wait overnight for a model like this, ha ha.
+(2) standard NUTS estimation also takes a *very* long time (and seems to spend a lot of time generating values that are "rejected for numerical errors").
+(3) basic MH is slightly slow, but usable (-ish).
+(4) Going from ForwardDiff to a reverse-mode AD (like Zygote) does not change anything.
+=#
+
+# Trying a reverse diff backend like Zygote doesn't change anything.
+# using Zygote
+# Turing.setadbackend(:zygote)
+
+map_estimate = optimize(factormodel(data1, 1), MAP())
+hmc_estimate = sample(factormodel(data1, 1), NUTS(0.65), 2000)
+mh_estimate = sample(factormodel(data1, 1), MH(), 20000)
+
+# Also tested ADVI on master, but gives errors
+# advi_estimate = vi(factormodel(data1, 1), ADVI(10, 1000))

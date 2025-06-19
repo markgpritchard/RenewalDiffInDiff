@@ -1,5 +1,8 @@
 
-using CairoMakie, DataFrames, Pigeons, PlotFormatting, Turing
+using CairoMakie
+using DataFrames
+using PlotFormatting
+using Turing
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Constants  
@@ -38,6 +41,7 @@ function plotchains!(
         data;
         colnames, plotnames_ind, kwargs...
     )
+    @assert length(plotnames_ind) <= 100
         
     ax = [ Axis(gl[i, 1]) for i ∈ eachindex(plotnames_ind) ]
     n_ax = length(ax)
@@ -71,14 +75,14 @@ end
 
 function _processplotchains(
     data, ::RenewalDiffInDiff.Automatic, ::RenewalDiffInDiff.Automatic; 
-    logdensity="log_density"
+    kwargs...
 )
-    return _processplotchains(data; logdensity)
+    return _processplotchains(data; kwargs...)
 end
 
 function _processplotchains(
     data, cn, ::RenewalDiffInDiff.Automatic; 
-    logdensity="log_density"
+    kwargs...
 )
     @unpack plotnames_ind = _processplotchains(data; kwargs...)
     return @ntuple colnames=cn plotnames_ind
@@ -86,7 +90,7 @@ end
 
 function _processplotchains(
     data, ::RenewalDiffInDiff.Automatic, pni; 
-    logdensity="log_density"
+    kwargs...
 )
     @unpack colnames = _processplotchains(data; kwargs...)
     return @ntuple colnames plotnames_ind=pni
@@ -106,8 +110,13 @@ function _processplotchains(data; logdensity="log_density")
     return @ntuple colnames plotnames_ind
 end
 
-function processplotchains(data; colnames=RenewalDiffInDiff.automatic, plotnames_ind=RenewalDiffInDiff.automatic, logdensity="log_density")
-    _processplotchains(data, colnames, plotnames_ind; logdensity)
+function processplotchains(
+    data; 
+    colnames=RenewalDiffInDiff.automatic, 
+    plotnames_ind=RenewalDiffInDiff.automatic, 
+    logdensity="log_density"
+)
+    return _processplotchains(data, colnames, plotnames_ind; logdensity)
 end
 
 function plotrenewalequationsamples(args...; plotsize=( 800, 800 ), kwargs...)
