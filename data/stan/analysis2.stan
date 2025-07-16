@@ -1,0 +1,176 @@
+functions {
+  //real calcproportionwaned(real t, real mean) {
+  //  real p = exponential_lpdf(t, 1 / mean);
+  //  return p;
+  //}
+  array[] real generatethetavector(
+    real thetazero, 
+    array[] real rawtheta, 
+    int ntimes
+  ) {
+    array[ntimes] real theta;
+    theta[1] = thetazero;
+    for (t in 2:ntimes) {
+      theta[t] = theta[(t - 1)] + rawtheta[(t - 1)];
+    }
+    return theta;
+  }
+
+  array[, ] real generateRmat(
+    array[, ] int interventions,
+    real alpha,
+    array[] real gamma,
+    real gammavariance,
+    array[] real theta,
+    real thetavariance,
+    real tau,
+    int ntimes, 
+    int nlocations
+  ) {
+    array[ntimes, nlocations] real Rmat;
+    for (t in 1:ntimes) { for(j in 1:nlocations) { 
+      Rmat[t, j] = exp(
+        alpha
+        + gamma[j] * sqrt(gammavariance)
+        + theta[t] * sqrt(thetavariance)
+        + tau * interventions[t, j]
+      );
+    }}
+    return Rmat;
+  }
+
+  array[] real generateiotazeros(
+    array[, ] real incidence, int nseedtimes, int nlocations
+  ) {
+    array[nlocations] real iota_zeros;
+    for(j in 1:nlocations) {
+      iota_zeros[j] = fmax(
+        0,
+        log(sum(incidence[1:nseedtimes, j]) / nseedtimes)
+      );
+    }
+    return iota_zeros;
+  }
+
+  real calculateexpectedsusceptible() {
+    return 1.0;
+  }
+
+  real calculateexpectedI_seedtimes(real iota_zero, int t, int nseedtimes) {
+    return exp(iota_zero - 2 * (nseedtimes - t));
+  }
+
+  real calculatecumulativegenerationnumbers(
+    array[] real predictedinfections, 
+    array[] real g,
+    int t,
+    int glength
+  ) {
+    real gn;
+    int startt = max(1, t - glength);
+    for (x in startt:(t - 1)) {
+      gn += predictedinfections[x] * g[(t - x)];
+    }
+    return gn;
+  }
+
+  real calculateexpectedI(
+    array[] real predictedinfections, 
+    array[] real g, 
+    real rho, 
+    real S, 
+    int N,
+    int t, 
+    int glength
+  ) {
+    real z = calculatecumulativegenerationnumbers(
+      predictedinfections, g, t, glength
+    );
+    return S * rho * z / N;
+  }
+}
+
+data {
+  int<lower=2> ntimes;
+  int<lower=2> nlocations;
+  int<lower=1> nseedtimes;
+  int<lower=1> glength;
+  array[ntimes, nlocations] int incidence;
+  array[ntimes, nlocations] int interventions;
+  array[nlocations] int Ns;
+  array[glength] real g;
+}
+
+parameters {
+  real alpha;
+  real gammavariance;
+  array[nlocations] real gamma;
+  real thetavariance;
+  real thetazero;
+  array[(ntimes - 1)] real rawtheta;
+  real tau;
+  real meanimmuneduration;
+  array[ntimes, (nseedtimes + nlocations)] real predictedinfections;
+  real psi;
+}
+
+transformed parameters {
+  array[ntimes] real theta = generatethetavector(thetazero, rawtheta, ntimes);
+  array[ntimes, nlocations] real Rmat = generateRmat(
+    interventions,
+    alpha,
+    gamma,
+    gammavariance,
+    theta,
+    thetavariance,
+    tau,
+    ntimes, 
+    nlocations
+  );
+  array[nlocations] real iota_zeros = generateiotazeros(
+    incidence, nseedtimes, nlocations
+  );
+
+  /*array[ntimes, nlocations] real waned;
+  for (t in 1:ntimes) {
+    for (g in 1:nlocations) {
+      waned[t, g] = exp(exponential_lpdf(t, 1 / meanimmuneduration));
+    }
+  }*/
+}
+
+model {
+  alpha ~ normal(log(2), 1);
+  gammavariance ~ exponential(1 / 0.4);
+  gamma ~ normal(0, 1);
+  thetavariance ~ exponential(1);
+  thetazero ~ normal(0, 0.05);
+  rawtheta ~ normal(0, 1);
+  tau ~ normal(0, 1);
+  meanimmuneduration ~ exponential(1 / 100);
+
+  for (j in 1:nlocations) {
+    for (t in 1:nseedtimes) {
+      real pred = calculateexpectedI_seedtimes(iota_zeros[j], t, nseedtimes);
+      predictedinfections[t, j] ~ poisson(pred);
+    }
+    for (t in (nseedtimes + 1):(nseedtimes + nlocations)) {
+      real pred = calculateexpectedI(
+        predictedinfections[1:(t - 1)], 
+        g, 
+        Rmat[t, j], 
+        1.0, 
+        Ns[j],
+        t, 
+        glength
+      );
+      predictedinfections[t, j] ~ poisson(pred);
+    }
+  }
+
+  psi ~ beta(6, 4);
+  incidence ~ binomial(
+    psi, 
+    predictedinfections[(nseedtimes + 1):(nseedtimes + nlocations), 1:nlocations]
+  );
+}

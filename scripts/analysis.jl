@@ -5,30 +5,60 @@ using DrWatson
 using CSV
 using DataFrames
 using Dates
-using Turing
-#using Optimization
-#using OptimizationOptimJL
 
-#using Zygote
+using CondaPkg
 
-#using LazyArrays
+#condaenv = CondaPkg.envdir()
 
-#using ForwardDiff
+ENV["JULIA_CONDAPKG_CHANNEL_PRIORITY"] = "flexible"
+ENV["CMDSTAN"] = "$(CondaPkg.envdir())/Library/bin/cmdstan"
 
-#using Optim
-#using NaNMath
-using Turing
-#using Optimization, OptimizationOptimJL
+asdf = "$(CondaPkg.envdir())/Library/bin/cmdstan"
 
-using ReverseDiff
+
+using Stan
+using StanSample  
 
 #Turing.setadbackend(:zygote)
 
-gseir(t; mu=0.5, gamma=0.4) = gseir(t, mu, gamma)
-gseir(t, mu, gamma) = mu * gamma * (exp(-gamma * t) - exp(-mu * t)) / (mu - gamma) 
-
-
 include("setupsimulations.jl")
+
+#gseirvector = [ gseir(t) for t ∈ 1:28 ]
+
+stanmodel = read(scriptsdir("analysis.stan"), String)
+
+
+CondaPkg.withenv() do
+    run(
+        ``
+    )
+end
+
+model = SampleModel("analysis", stanmodel)
+
+
+#model = SampleModel("analysis", stanmodel, scriptsdir())
+
+
+CondaPkg.withenv() do
+  model = SampleModel("analysis", stanmodel, scriptsdir())
+
+end
+
+
+
+modeldata = dataforstanmodel( ; 
+    g=gseir,
+    incidence=simulation1dataset["cases"],
+    interventions=simulation1dataset["interventions"],
+    nseedtimes=28,
+    Ns=simulation1dataset["Ns"],
+    glength=28,
+)
+
+
+
+rc = stan_sample(model1; data=modeldata)
 
 
 M = R0_did(

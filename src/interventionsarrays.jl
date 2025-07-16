@@ -59,7 +59,7 @@ function _starttimeargumenterror()
     return ArgumentError(
         """
         at least two start times must be provided to `InterventionsMatrix` (at least two \
-        groups must be represented). To represent a single group use `InterventionsVector`
+        groups must be represented). For a single group use `InterventionsVector`
         """
     )
 end

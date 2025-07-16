@@ -2,7 +2,7 @@
 using DrWatson 
 @quickactivate :RenewalDiffInDiff
 using Random
-using StochasticTransitionModels 
+#using StochasticTransitionModels 
 
 _theta(p::SEIRParameters{<:Function, <:Real, <:Real}, ::Any) = p.θ
 _theta(p::SEIRParameters{<:Function, <:Real, <:Function}, t) = p.θ(t)

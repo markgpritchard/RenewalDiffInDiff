@@ -12,7 +12,7 @@ function expectedinfections(g, M, ρ, s, n, t, j; tmax=28)
     t >= 2 || throw(DomainError(t, "requires t ≥ 2"))
     return s * ρ * sum([ real(M[x, j]) * g(t - x) for x ∈ max(1, t - tmax):t-1 ]) / n
 end
-
+#=
 @model function R0_did(
     incidence,
     interventions;
@@ -116,3 +116,4 @@ end
 
     incidence ~ arraydist(NegativeBinomial.(r, p))
 end
+=#
