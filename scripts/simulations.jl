@@ -1,42 +1,152 @@
 
 using DrWatson 
 @quickactivate :RenewalDiffInDiff
-using Random, StochasticTransitionModels 
+using CairoMakie
+using Random
+using RenewalDiD 
+using RenewalDiD.Plotting
+using Turing
 
-function seirrates(u, t, p::SEIRParameters{<:Function, <:Real, <:Real})
-    s, e, i, i′, r = u  # i′ represents diagnosed infections. i + i′ is the total infectiouse prevalence
-    n = sum(@view u[1:5])  # 6th compartment is cumulative diagnosed infecitons
-    return [
-        p.β(t) * s * (i + i′) / n,  # infection rate
-        p.μ * e,  # end of latent period 
-        p.θ * p.γ * i / (1 - p.θ),  # diagnosis 
-        p.γ * i,  # recovery (undiagnosed)
-        p.γ * i′  # recovery (diagnosed)
-    ]
+## Simulation 1:
+# 3 small populations 
+# 0.1% initially exposed
+# constant transmission, R0 = 2 ± 10%
+# constant detection, 80%
+# no effective intervention; placebo intervention in one group at time 50
+sim1 = let 
+    rng = Xoshiro(1)
+    ns = smallpop(rng, 3)
+    es = rand.(rng, Binomial.(ns, 0.001))
+    u0s = [simulationu0(; s=(n - e), e) for (n, e) in zip(ns, es)]
+    mu = 0.2
+    kappa = 0.5
+    delta = 0.3
+    psi = 0.8
+    betac = 2 * mu 
+    beta1 = betac
+    beta2 = 0.9 * betac 
+    beta3 = 1.1 * betac 
+    s1 = packsimulationtuple( ; 
+        u0=u0s[1], beta=beta1, mu, delta, psi, kappa, intervention=50,
+    )
+    s2 = packsimulationtuple( ; 
+        u0=u0s[2], beta=beta2, mu, delta, psi, kappa, intervention=nothing,
+    )
+    s3 = packsimulationtuple( ; 
+        u0=u0s[3], beta=beta3, mu, delta, psi, kappa, intervention=nothing,
+    )
+    packsimulations(rng, 100, s1, s2, s3; sampletime=14)
 end
+safesave(datadir("sims", "sim1.jld2"), Dict("sim" => sim1))
 
-function seirrates(u, t, p::SEIRParameters{<:Function, <:Real, <:Function})
-    s, e, i, i′, r = u  # i′ represents diagnosed infections. i + i′ is the total infectiouse prevalence
-    n = sum(@view u[1:5])  # 6th compartment is cumulative diagnosed infecitons
-    return [
-        p.β(t) * s * (i + i′) / n,  # infection rate
-        p.μ * e,  # end of latent period 
-        p.θ(t) * p.γ * i / (1 - p.θ(t)),  # diagnosis 
-        p.γ * i,  # recovery (undiagnosed)
-        p.γ * i′  # recovery (diagnosed)
-    ]
+## Simulation 2:
+# 3 small populations 
+# 0.1% initially exposed
+# constant transmission, R0 = 2 ± 10%
+# constant detection, 80%
+# intervention in group 1 at time 50 reduces transmission by 20%
+sim2 = let 
+    rng = Xoshiro(2)
+    ns = smallpop(rng, 3)
+    es = rand.(rng, Binomial.(ns, 0.001))
+    u0s = [simulationu0(; s=(n - e), e) for (n, e) in zip(ns, es)]
+    mu = 0.2
+    kappa = 0.5
+    delta = 0.3
+    psi = 0.8
+    betac = 2 * mu 
+    beta1(t) = t < 50 ? betac : 0.8 * betac
+    beta2 = 0.9 * betac 
+    beta3 = 1.1 * betac 
+    s1 = packsimulationtuple( ; 
+        u0=u0s[1], beta=beta1, mu, delta, psi, kappa, intervention=50,
+    )
+    s2 = packsimulationtuple( ; 
+        u0=u0s[2], beta=beta2, mu, delta, psi, kappa, intervention=nothing,
+    )
+    s3 = packsimulationtuple( ; 
+        u0=u0s[3], beta=beta3, mu, delta, psi, kappa, intervention=nothing,
+    )
+    packsimulations(rng, 100, s1, s2, s3; sampletime=14)
 end
+safesave(datadir("sims", "sim2.jld2"), Dict("sim" => sim2))
 
-seirtransitionmatrix = [
-    # s   e   i   i′  r   cumulative 
-     -1   1   0   0   0   0    # infection rate
-      0  -1   1   0   0   0    # end of latent period 
-      0   0  -1   1   0   1    # diagnosis 
-      0   0  -1   0   1   0    # recovery (undiagnosed)
-      0   0   0  -1   1   0    # recovery (diagnosed)
-]
+## Simulation 32:
+# 3 small populations 
+# 0.1% initially exposed
+# constant transmission, R0 = 2 ± 10%
+# constant detection, 80%
+# intervention in group 1 at time 25 reduces transmission by 20%
+sim3 = let 
+    rng = Xoshiro(3)
+    ns = smallpop(rng, 3)
+    es = rand.(rng, Binomial.(ns, 0.001))
+    u0s = [simulationu0(; s=(n - e), e) for (n, e) in zip(ns, es)]
+    mu = 0.2
+    kappa = 0.5
+    delta = 0.3
+    psi = 0.8
+    betac = 2 * mu 
+    beta1(t) = t < 25 ? betac : 0.8 * betac
+    beta2 = 0.9 * betac 
+    beta3 = 1.1 * betac 
+    s1 = packsimulationtuple( ; 
+        u0=u0s[1], beta=beta1, mu, delta, psi, kappa, intervention=25,
+    )
+    s2 = packsimulationtuple( ; 
+        u0=u0s[2], beta=beta2, mu, delta, psi, kappa, intervention=nothing,
+    )
+    s3 = packsimulationtuple( ; 
+        u0=u0s[3], beta=beta3, mu, delta, psi, kappa, intervention=nothing,
+    )
+    packsimulations(rng, 100, s1, s2, s3; sampletime=14)
+end
+safesave(datadir("sims", "sim3.jld2"), Dict("sim" => sim3))
 
-Random.seed!(1729)
+## Simulation 4:
+# 3 small populations 
+# 0.1% initially exposed
+# constant transmission, R0 = 2 ± 10%
+# constant detection, 80%
+# intervention in group 1 at time 75 reduces transmission by 20%
+sim4 = let 
+    rng = Xoshiro(4)
+    ns = smallpop(rng, 3)
+    es = rand.(rng, Binomial.(ns, 0.001))
+    u0s = [simulationu0(; s=(n - e), e) for (n, e) in zip(ns, es)]
+    mu = 0.2
+    kappa = 0.5
+    delta = 0.3
+    psi = 0.8
+    betac = 2 * mu 
+    beta1(t) = t < 75 ? betac : 0.8 * betac
+    beta2 = 0.9 * betac 
+    beta3 = 1.1 * betac 
+    s1 = packsimulationtuple( ; 
+        u0=u0s[1], beta=beta1, mu, delta, psi, kappa, intervention=75,
+    )
+    s2 = packsimulationtuple( ; 
+        u0=u0s[2], beta=beta2, mu, delta, psi, kappa, intervention=nothing,
+    )
+    s3 = packsimulationtuple( ; 
+        u0=u0s[3], beta=beta3, mu, delta, psi, kappa, intervention=nothing,
+    )
+    packsimulations(rng, 100, s1, s2, s3; sampletime=14)
+end
+safesave(datadir("sims", "sim4.jld2"), Dict("sim" => sim4))
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # Two locations and two discrete transmission parameters 
 

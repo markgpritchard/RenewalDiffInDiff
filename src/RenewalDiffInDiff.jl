@@ -1,40 +1,26 @@
+# functions for this analysis 
 
 module RenewalDiffInDiff
 
-using DrWatson
-using CubicSplines, DataFrames, Distributions, ForwardDiff, NaNMath, Random, Turing
-import Base: getindex, length, size, sum
+import ReverseDiff
 
-include("types.jl")
-include("consts.jl")
-include("renewalequation.jl")
-include("parameterfitting.jl")
-include("extras.jl")
+using CairoMakie: Axis, Colorbar, Label, Legend, TopLeft, hidespines!
+using DrWatson: datadir, safesave
+using Random: AbstractRNG, Xoshiro, default_rng
+using RenewalDiD: DataFrame, map_DataFrame, simulationu0
+using StatsBase: ordinalrank, sample
+using Turing: AutoReverseDiff, Binomial, Distribution, MCMCThreads, NUTS, Prior, Uniform
+using Turing: maximum_likelihood
 
- 
-## types.jl
-export InterventionsMatrix, InterventionsVector, SEIRParameters
-## consts.jl/
-export COVIDSERIALINTERVAL, POPULATION2020
+# simulationhelperfunctions.jl
+export largepop, simu0, smallpop
+# workflow.jl
+export analysisworkflow, maximumlikelihoodworkflow, mcmcworkflow, priorsworkflow
+# plotformatting.jl
+export formataxis!, labelplots!, setvalue!
 
-## renewalequation.jl
-#export calculatesumfi, expectedinfections, poissoninfections, runrenewalequation, 
-#    runrenewalequation!, runrenewalequationsample!, runrenewalequationsamples, testf
-export renewalequation_expectedcases, renewalequation_expectedcases!,
-    renewalequation_expectedcases_rt, renewalequation_expectedcases_rt!, 
-    renewalequation_poissoncases, renewalequation_poissoncases!, 
-    renewalequation_poissoncases_rt, renewalequation_poissoncases_rt!, 
-    samplerenewalequation, samplerenewalequation!, samplerenewalequation_2sets, 
-    samplerenewalequation_counterfactual, samplerenewalequation_polytimes_2sets,
-    samplerhomatrix, samplerhomatrix!, testf
+include("simulationhelperfunctions.jl")
+include("workflow.jl")
+include("plotformatting.jl")
 
-## parameterfitting.jl
-export diffindiffparameters, diffindiffparameters_discretetimes, 
-    diffindiffparameters_fittocurve_splinetimes, diffindiffparameters_polytimes, 
-    diffindiffparameters_twodiscretetimes, diffindiffparameters_splinetimes, generatew_gt, 
-    generatew_gtrow, generatez_gtminus1, keyvalues, loadanalysisdictsasdf
-
-## extras.jl
-export getindex, interventionsoffset, length, seir_deterministic, size
-    
 end  # module RenewalDiffInDiff

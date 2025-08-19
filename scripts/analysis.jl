@@ -1,7 +1,157 @@
 
 using DrWatson
 @quickactivate :RenewalDiffInDiff
-using CSV, DataFrames, Dates, Pigeons, Turing
+
+using CairoMakie
+using Random
+using RenewalDiD
+using RenewalDiD.Plotting
+using Turing
+#using StatsBase
+#using ReverseDiff
+
+
+
+
+
+rng = Xoshiro(1)
+
+sim1 = let  
+    # 3 small populations, constant transmission except for intervention, 1 intervention 
+    # group
+    u0s = [simu0(rng, smallpop, 0.001) for _ in 1:3]
+    mu = 0.2
+    delta = 0.3
+    psi = 0.8
+    kappa = 0.5
+    #=_beta1counter(t) = 0.4 
+    _beta1(t) = t < 50 ? _beta1counter(t) : 0.8 * _beta1counter(t)
+    _beta2(t) = 0.9 * _beta1counter(t)
+    _beta3(t) = 1.2 * _beta1counter(t)=#
+    betac = 0.4 
+    beta1(t) = t < 50 ? betac : 0.8 * betac
+    beta2 = 0.9 * betac 
+    beta3 = 1.2 * betac 
+    s1 = packsimulationtuple( ; 
+        u0=u0s[1], beta=beta1, mu, delta, psi, kappa, intervention=50,
+    )
+    s2 = packsimulationtuple( ; 
+        u0=u0s[2], beta=beta2, mu, delta, psi, kappa, intervention=nothing,
+    )
+    s3 = packsimulationtuple( ; 
+        u0=u0s[3], beta=beta3, mu, delta, psi, kappa, intervention=nothing,
+    )
+    packsimulations(rng, 100, s1, s2, s3; sampletime=14)
+end
+
+model1 = renewaldid(                      
+    sim1, 
+    g_seir, 
+    RenewalDiDPriors( ; 
+        alphaprior=Normal(log(2), 1), 
+        mu_delayprior=log(5),
+        sigma_gammaprior=Exponential(0.2),
+        sigma_thetaprior=Exponential(0.075), 
+        psiprior=Beta(8, 2),
+        tauprior=Normal(0, 0.2),
+    );                          
+    mu=0.2, kappa=0.5,               
+)
+
+#test 
+
+#priorsdf, priorschain = priorsworkflow(model1; chain=1, name="test1", npriors=1000, priorsseed=1)
+#map_df, map_estimate = maximumlikelihoodworkflow(model1, priorsdf; chain=1, name="test1")
+
+
+
+test = analysisworkflow(
+    model1; 
+    name="test1", 
+    chain=1, 
+    npriors=1000, 
+    mapmaxtime=60, 
+    nsamples=12, 
+    priorsseed=1, 
+    sampleseed=1001,
+)
+
+
+#priorschain1 = sample(rng, model1, Prior(), 10_000)
+#priorsdf1 = DataFrame(priorschain1)
+priorsdf1 = test["priorsdf"]
+priortraceplot1 = trplot(priorsdf1; ncols=5, nplots=50, size=(1000, 1000))  # examine 50 variables
+priorsfittedoutputs1 = samplerenewaldidinfections(
+    g_seir, priorsdf1, sim1; 
+    mu=0.2, kappa=0.5,   
+)
+priorsoutputquantiles1 = quantilerenewaldidinfections(
+    priorsfittedoutputs1, [0.025, 0.05, 0.25, 0.5, 0.75, 0.95, 0.975]
+)
+priorsplot1 = plotmodel(
+    priorsoutputquantiles1, sim1; 
+    interventionlinestyle=(:dot, :dense), linewidth=1,
+)
+
+#=
+initindices1 = findall(x -> x <= 4, ordinalrank(priorsdf1.lp; rev=true)) 
+priorsfittedinitoutputs1 = samplerenewaldidinfections(
+    g_seir, priorsdf1, sim1, initindices1; 
+    gamma=0.2, sigma=0.5,
+)
+priorsoutputinitquantiles1 = quantilerenewaldidinfections(
+    priorsfittedinitoutputs1, [0.025, 0.05, 0.25, 0.5, 0.75, 0.95, 0.975]
+)
+priorsinitplot1 = plotmodel(
+    priorsoutputinitquantiles1, sim1; 
+    interventionlinestyle=(:dot, :dense), linewidth=1,
+)
+=#
+#priorinitparams = [[values(priorsdf[i, 3:735])...] for i in initindices]
+#priorinitparams1 = [[values(priorsdf1[i, 3:733])...] for i in initindices1]
+
+mapdf = test["mapdf"]
+mapoutputs1 = samplerenewaldidinfections(
+    g_seir, mapdf, sim1; 
+    mu=0.2, kappa=0.5,   
+)
+mapoutputquantiles1 = quantilerenewaldidinfections(
+    mapoutputs1, 0.5
+)
+mapplot1 = plotmodel(
+    mapoutputquantiles1, sim1; 
+    interventionlinestyle=(:dot, :dense), linewidth=1,
+)
+
+#chain1 = sample(
+#    rng, model1, NUTS(0.65; adtype=AutoReverseDiff()), MCMCThreads(), 100, 4; 
+#    initial_params=priorinitparams1,
+#) 
+#df1 = DataFrame(chain1)
+df1 = test["mcmcdf"]
+p1 = trplot(df1; ncols=5, nplots=50, size=(1000, 1000))  # examine 50 variables
+#p2 = tracerankplot(df1; binsize=5, ncols=5, nplots=50, size=(1000, 1000)) 
+
+fittedoutputs1 = samplerenewaldidinfections(
+    g_seir, df1, sim1; 
+    mu=0.2, kappa=0.5,   
+)
+outputquantiles1 = quantilerenewaldidinfections(
+    fittedoutputs1, [0.025, 0.05, 0.25, 0.5, 0.75, 0.95, 0.975]
+)
+p3 = plotmodel(
+    outputquantiles1, sim1;
+    interventionlinestyle=(:dot, :dense), linewidth=1,
+)
+
+
+
+using CSV
+using DataFrames
+using Dates
+using RenewalDiD
+using Turing
+
 include("setupsimulations.jl")
 include("loaddata.jl")
 
