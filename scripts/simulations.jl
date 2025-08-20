@@ -1,469 +1,1307 @@
 
 using DrWatson 
 @quickactivate :RenewalDiffInDiff
+
 using CairoMakie
+using Distributions
 using Random
 using RenewalDiD 
 using RenewalDiD.Plotting
-using Turing
 
 ## Simulation 1:
-# 3 small populations 
+# 3 large populations 
 # 0.1% initially exposed
-# constant transmission, R0 = 2 ± 10%
+# constant transmission, equal for all groups, R0
 # constant detection, 80%
 # no effective intervention; placebo intervention in one group at time 50
 sim1 = let 
     rng = Xoshiro(1)
-    ns = smallpop(rng, 3)
-    es = rand.(rng, Binomial.(ns, 0.001))
-    u0s = [simulationu0(; s=(n - e), e) for (n, e) in zip(ns, es)]
+    u0s = [simu0(rng, largepop, 0.001) for _ in 1:3]
     mu = 0.2
     kappa = 0.5
     delta = 0.3
     psi = 0.8
-    betac = 2 * mu 
-    beta1 = betac
-    beta2 = 0.9 * betac 
-    beta3 = 1.1 * betac 
+    betas = repeat([2 * mu]; inner=3)
     s1 = packsimulationtuple( ; 
-        u0=u0s[1], beta=beta1, mu, delta, psi, kappa, intervention=50,
+        u0=u0s[1], beta=betas[1], mu, delta, psi, kappa, intervention=50,
     )
     s2 = packsimulationtuple( ; 
-        u0=u0s[2], beta=beta2, mu, delta, psi, kappa, intervention=nothing,
+        u0=u0s[2], beta=betas[2], mu, delta, psi, kappa, intervention=nothing,
     )
     s3 = packsimulationtuple( ; 
-        u0=u0s[3], beta=beta3, mu, delta, psi, kappa, intervention=nothing,
+        u0=u0s[3], beta=betas[3], mu, delta, psi, kappa, intervention=nothing,
     )
-    packsimulations(rng, 100, s1, s2, s3; sampletime=14)
+    packsimulations(rng, 100, s1, s2, s3; id="sim1", sampletime=14)
 end
-safesave(datadir("sims", "sim1.jld2"), Dict("sim" => sim1))
+plotmodel(sim1; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
+safesave(simulationdir("sim1.jld2"), Dict("sim" => sim1))
 
 ## Simulation 2:
-# 3 small populations 
-# 0.1% initially exposed
-# constant transmission, R0 = 2 ± 10%
-# constant detection, 80%
-# intervention in group 1 at time 50 reduces transmission by 20%
+# as in simulation 1 but intervention in one group at time 50 reduces transmission by 20%
 sim2 = let 
     rng = Xoshiro(2)
-    ns = smallpop(rng, 3)
-    es = rand.(rng, Binomial.(ns, 0.001))
-    u0s = [simulationu0(; s=(n - e), e) for (n, e) in zip(ns, es)]
+    u0s = [simu0(rng, largepop, 0.001) for _ in 1:3]
     mu = 0.2
     kappa = 0.5
     delta = 0.3
     psi = 0.8
-    betac = 2 * mu 
-    beta1(t) = t < 50 ? betac : 0.8 * betac
-    beta2 = 0.9 * betac 
-    beta3 = 1.1 * betac 
+    betasc = repeat([2 * mu]; inner=3)
+    betas = [t -> (t < 50 ? 1.0 : 0.8) * betasc[1], t -> betasc[2], t -> betasc[3]]
     s1 = packsimulationtuple( ; 
-        u0=u0s[1], beta=beta1, mu, delta, psi, kappa, intervention=50,
+        u0=u0s[1], beta=betas[1], mu, delta, psi, kappa, intervention=50,
     )
     s2 = packsimulationtuple( ; 
-        u0=u0s[2], beta=beta2, mu, delta, psi, kappa, intervention=nothing,
+        u0=u0s[2], beta=betas[2], mu, delta, psi, kappa, intervention=nothing,
     )
     s3 = packsimulationtuple( ; 
-        u0=u0s[3], beta=beta3, mu, delta, psi, kappa, intervention=nothing,
+        u0=u0s[3], beta=betas[3], mu, delta, psi, kappa, intervention=nothing,
     )
-    packsimulations(rng, 100, s1, s2, s3; sampletime=14)
+    packsimulations(rng, 100, s1, s2, s3; id="sim2", sampletime=14)
 end
-safesave(datadir("sims", "sim2.jld2"), Dict("sim" => sim2))
+plotmodel(sim2; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
+safesave(simulationdir("sim2.jld2"), Dict("sim" => sim2))
 
-## Simulation 32:
-# 3 small populations 
-# 0.1% initially exposed
-# constant transmission, R0 = 2 ± 10%
-# constant detection, 80%
-# intervention in group 1 at time 25 reduces transmission by 20%
+## Simulation 3:
+# as in simulation 1 but 10% variation in transmission between groups
 sim3 = let 
     rng = Xoshiro(3)
-    ns = smallpop(rng, 3)
-    es = rand.(rng, Binomial.(ns, 0.001))
-    u0s = [simulationu0(; s=(n - e), e) for (n, e) in zip(ns, es)]
+    u0s = [simu0(rng, largepop, 0.001) for _ in 1:3]
     mu = 0.2
     kappa = 0.5
     delta = 0.3
     psi = 0.8
-    betac = 2 * mu 
-    beta1(t) = t < 25 ? betac : 0.8 * betac
-    beta2 = 0.9 * betac 
-    beta3 = 1.1 * betac 
+    betas = [2 * mu * rand(rng, Uniform(0.9, 1.1)) for _ in 1:3]
     s1 = packsimulationtuple( ; 
-        u0=u0s[1], beta=beta1, mu, delta, psi, kappa, intervention=25,
+        u0=u0s[1], beta=betas[1], mu, delta, psi, kappa, intervention=50,
     )
     s2 = packsimulationtuple( ; 
-        u0=u0s[2], beta=beta2, mu, delta, psi, kappa, intervention=nothing,
+        u0=u0s[2], beta=betas[2], mu, delta, psi, kappa, intervention=nothing,
     )
     s3 = packsimulationtuple( ; 
-        u0=u0s[3], beta=beta3, mu, delta, psi, kappa, intervention=nothing,
+        u0=u0s[3], beta=betas[3], mu, delta, psi, kappa, intervention=nothing,
     )
-    packsimulations(rng, 100, s1, s2, s3; sampletime=14)
+    packsimulations(rng, 100, s1, s2, s3; id="sim3", sampletime=14)
 end
-safesave(datadir("sims", "sim3.jld2"), Dict("sim" => sim3))
+plotmodel(sim3; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
+safesave(simulationdir("sim3.jld2"), Dict("sim" => sim3))
 
 ## Simulation 4:
-# 3 small populations 
-# 0.1% initially exposed
-# constant transmission, R0 = 2 ± 10%
-# constant detection, 80%
-# intervention in group 1 at time 75 reduces transmission by 20%
+# as in simulation 3 but intervention in one group at time 50 reduces transmission by 20%
 sim4 = let 
     rng = Xoshiro(4)
-    ns = smallpop(rng, 3)
-    es = rand.(rng, Binomial.(ns, 0.001))
-    u0s = [simulationu0(; s=(n - e), e) for (n, e) in zip(ns, es)]
+    u0s = [simu0(rng, largepop, 0.001) for _ in 1:3]
     mu = 0.2
     kappa = 0.5
     delta = 0.3
     psi = 0.8
-    betac = 2 * mu 
-    beta1(t) = t < 75 ? betac : 0.8 * betac
-    beta2 = 0.9 * betac 
-    beta3 = 1.1 * betac 
+    betasc = [2 * mu * rand(rng, Uniform(0.9, 1.1)) for _ in 1:3]
+    betas = [t -> (t < 50 ? 1.0 : 0.8) * betasc[1], t -> betasc[2], t -> betasc[3]]
     s1 = packsimulationtuple( ; 
-        u0=u0s[1], beta=beta1, mu, delta, psi, kappa, intervention=75,
+        u0=u0s[1], beta=betas[1], mu, delta, psi, kappa, intervention=50,
     )
     s2 = packsimulationtuple( ; 
-        u0=u0s[2], beta=beta2, mu, delta, psi, kappa, intervention=nothing,
+        u0=u0s[2], beta=betas[2], mu, delta, psi, kappa, intervention=nothing,
     )
     s3 = packsimulationtuple( ; 
-        u0=u0s[3], beta=beta3, mu, delta, psi, kappa, intervention=nothing,
+        u0=u0s[3], beta=betas[3], mu, delta, psi, kappa, intervention=nothing,
     )
-    packsimulations(rng, 100, s1, s2, s3; sampletime=14)
+    packsimulations(rng, 100, s1, s2, s3; id="sim4", sampletime=14)
 end
-safesave(datadir("sims", "sim4.jld2"), Dict("sim" => sim4))
+plotmodel(sim4; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
+safesave(simulationdir("sim4.jld2"), Dict("sim" => sim4))
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-# Two locations and two discrete transmission parameters 
-
-simparameters(beta, theta) = SEIRParameters(beta, 0.5, 0.4, theta)
-
-sim1parameters(beta) = simparameters(beta, 0.8)
-beta1a(t) = t <= 50 ? 0.6 : 0.66
-beta1bcounterfactual(t) = 1.15 * beta1a(t)
-beta1b(t) = t <= 50 ? beta1bcounterfactual(t) : 0.8 * beta1bcounterfactual(t)
-
-sim1a_parameters(beta) = simparameters(beta, 0.6)
-beta1a_a(t) = 0.5 + 0.1 * cos(2π * (t - 20) / 365)
-beta1a_bcounterfactual(t) = 1.15 * beta1a_a(t)
-beta1a_b(t) = t <= 50 ? beta1a_bcounterfactual(t) : 0.8 * beta1a_bcounterfactual(t)
-
-sim2parameters(beta) = simparameters(beta, 0.5)
-beta2a(t) = 0.5 + 0.15 * cos(2π * (t - 80) / 365)
-beta2bcounterfactual(t) = 1.15 * beta2a(t)
-beta2b(t) = t <= 50 ? beta2bcounterfactual(t) : 0.8 * beta2bcounterfactual(t)
-beta2ccounterfactual(t) = t <= 70 ? 1.05 * beta2a(t) : 1.05 * 1.15 * beta2a(t)
-beta2c(t) = t <= 30 ? beta2ccounterfactual(t) : 0.8 * beta2ccounterfactual(t)
-
-sim3parameters(beta) = simparameters(beta, 0.3)
-beta3a(t) = 0.5 + 0.15 * cos(2π * (t - 80) / 365)
-beta3bcounterfactual(t) = beta3a(t) * (0.9 + 0.005 * t)
-beta3b(t) = t <= 50 ? beta3bcounterfactual(t) : 0.8 * beta3bcounterfactual(t)
-
-sim4parameters(beta, theta) = simparameters(beta, theta)
-beta4a(t) = beta2a(t)
-beta4bcounterfactual(t) = beta2bcounterfactual(t)
-beta4b(t) = beta2b(t)
-theta4a(t) = 0.3
-theta4b(t) = t <= 50 ? 0.3 : 1.2 * 0.3
-
-if isfile(datadir("sims", "simulation1dataset.jld2"))
-    simulation1dataset = load(datadir("sims", "simulation1dataset.jld2"))
-else 
-    simulation1dataset = let  
-        interventions = InterventionsMatrix([ nothing, 50 ], 100)
-        
-        u01a = [ 400_000 - 40, 40, 0, 0, 0, 0  ]
-        p1a = sim1parameters(beta1a)
-        sim1a = stochasticmodel(seirrates, u01a, 1:100, p1a, seirtransitionmatrix)
-        
-        u01b = [ 250_000 - 10, 10, 0, 0, 0, 0 ]
-        p1bcounterfactual = sim1parameters(beta1bcounterfactual)
-        sim1bcounterfactual = stochasticmodel(
-            seirrates, u01b, 1:100, p1bcounterfactual, seirtransitionmatrix
-        )
-        
-        p1b = sim1parameters(beta1b)
-        sim1b = vcat(
-            sim1bcounterfactual[1:49, :],
-            stochasticmodel(
-                seirrates, sim1bcounterfactual[50, :], 50:100, p1b, seirtransitionmatrix
-            )
-        )
-        
-        prevalence = hcat(sim1a[:, 4], sim1b[:, 4])
-        counterfactualprevalence = hcat(sim1a[:, 4], sim1bcounterfactual[:, 4])
-
-        cases = zeros(Int, 100, 2)
-        for t ∈ 2:100 
-            cases[t, 1] = sim1a[t, 6] - sim1a[t-1, 6]
-            cases[t, 2] = sim1b[t, 6] - sim1b[t-1, 6]
-        end
-
-        counterfactualcases = zeros(Int, 100, 2)
-        for t ∈ 2:100 
-            counterfactualcases[t, 1] = sim1a[t, 6] - sim1a[t-1, 6]
-            counterfactualcases[t, 2] = sim1bcounterfactual[t, 6] - sim1bcounterfactual[t-1, 6]
-        end
-
-        Dict(
-            "cases" => cases, 
-            "cases_counterfactual" => counterfactualcases,
-            "interventions" => interventions, 
-            "prevalence" => prevalence, 
-            "counterfactualprevalence" => counterfactualprevalence, 
-            "Ns" => [ 400_000, 250_000 ],
-        )
-    end
-
-    safesave(datadir("sims", "simulation1dataset.jld2"), simulation1dataset)
+## Simulation 5:
+# as in simulation 1 but 25% variation in transmission between groups
+sim5 = let 
+    rng = Xoshiro(5)
+    u0s = [simu0(rng, largepop, 0.001) for _ in 1:3]
+    mu = 0.2
+    kappa = 0.5
+    delta = 0.3
+    psi = 0.8
+    betas = [2 * mu * rand(rng, Uniform(0.75, 1.25)) for _ in 1:3]
+    s1 = packsimulationtuple( ; 
+        u0=u0s[1], beta=betas[1], mu, delta, psi, kappa, intervention=50,
+    )
+    s2 = packsimulationtuple( ; 
+        u0=u0s[2], beta=betas[2], mu, delta, psi, kappa, intervention=nothing,
+    )
+    s3 = packsimulationtuple( ; 
+        u0=u0s[3], beta=betas[3], mu, delta, psi, kappa, intervention=nothing,
+    )
+    packsimulations(rng, 100, s1, s2, s3; id="sim5", sampletime=14)
 end
+plotmodel(sim5; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
+safesave(simulationdir("sim5.jld2"), Dict("sim" => sim5))
 
-# Two locations, continuously changing transmission parameters
-
-if isfile(datadir("sims", "simulation1a_dataset.jld2"))
-    simulation1a_dataset = load(datadir("sims", "simulation1a_dataset.jld2"))
-else 
-    simulation1a_dataset = let  
-        interventions = InterventionsMatrix([ nothing, 50 ], 100)
-        
-        u01a_a = [ 300_000 - 50, 50, 0, 0, 0, 0 ]
-        p1a_a = sim1a_parameters(beta1a_a)
-        sim1a_a = stochasticmodel(seirrates, u01a_a, 1:100, p1a_a, seirtransitionmatrix)
-
-        u01a_b = [ 250_000 - 100, 100, 0, 0, 0, 0 ]
-        p1a_bcounterfactual = sim1a_parameters(beta1a_bcounterfactual)
-        sim1a_bcounterfactual = stochasticmodel(
-            seirrates, u01a_b, 1:100, p1a_bcounterfactual, seirtransitionmatrix
-        )
-
-        p1a_b = sim1a_parameters(beta1a_b)
-        sim1a_b = vcat(
-            sim1a_bcounterfactual[1:49, :],
-            stochasticmodel(
-                seirrates, sim1a_bcounterfactual[50, :], 50:100, p1a_b, seirtransitionmatrix
-            )
-        )
-
-        prevalence = hcat(sim1a_a[:, 4], sim1a_b[:, 4])
-        counterfactualprevalence = hcat(sim1a_a[:, 4], sim1a_bcounterfactual[:, 4])
-
-        cases = zeros(Int, 100, 2)
-        for t ∈ 2:100 
-            cases[t, 1] = sim1a_a[t, 6] - sim1a_a[t-1, 6]
-            cases[t, 2] = sim1a_b[t, 6] - sim1a_b[t-1, 6]
-        end
-
-        counterfactualcases = zeros(Int, 100, 2)
-        for t ∈ 2:100 
-            counterfactualcases[t, 1] = sim1a_a[t, 6] - sim1a_a[t-1, 6]
-            counterfactualcases[t, 2] = sim1a_bcounterfactual[t, 6] - sim1a_bcounterfactual[t-1, 6]
-        end
-
-        Dict(
-            "cases" => cases, 
-            "cases_counterfactual" => counterfactualcases,
-            "interventions" => interventions, 
-            "prevalence" => prevalence, 
-            "counterfactualprevalence" => counterfactualprevalence, 
-            "Ns" => [ 300_000, 250_000 ],
-        )
-    end
-
-    safesave(datadir("sims", "simulation1a_dataset.jld2"), simulation1a_dataset)
+## Simulation 6:
+# as in simulation 5 but intervention in one group at time 50 reduces transmission by 20%
+sim6 = let 
+    rng = Xoshiro(6)
+    u0s = [simu0(rng, largepop, 0.001) for _ in 1:3]
+    mu = 0.2
+    kappa = 0.5
+    delta = 0.3
+    psi = 0.8
+    betasc = [2 * mu * rand(rng, Uniform(0.75, 1.25)) for _ in 1:3]
+    betas = [t -> (t < 50 ? 1.0 : 0.8) * betasc[1], t -> betasc[2], t -> betasc[3]]
+    s1 = packsimulationtuple( ; 
+        u0=u0s[1], beta=betas[1], mu, delta, psi, kappa, intervention=50,
+    )
+    s2 = packsimulationtuple( ; 
+        u0=u0s[2], beta=betas[2], mu, delta, psi, kappa, intervention=nothing,
+    )
+    s3 = packsimulationtuple( ; 
+        u0=u0s[3], beta=betas[3], mu, delta, psi, kappa, intervention=nothing,
+    )
+    packsimulations(rng, 100, s1, s2, s3; id="sim6", sampletime=14)
 end
+plotmodel(sim6; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
+safesave(simulationdir("sim6.jld2"), Dict("sim" => sim6))
 
-
-# Three locations, continuously changing transmission parameters, and a competing intervention  
-
-if isfile(datadir("sims", "simulation2dataset.jld2"))
-    simulation2dataset = load(datadir("sims", "simulation2dataset.jld2"))
-else 
-    simulation2dataset = let  
-        interventions = InterventionsMatrix([ nothing, 50, 30 ], 100)
-        
-        u02a = [ 350_000 - 50, 50, 0, 0, 0, 0 ]
-        p2a = sim2parameters(beta2a)
-        sim2a = stochasticmodel(seirrates, u02a, 1:100, p2a, seirtransitionmatrix)
-
-        u02b = [ 300_000 - 100, 100, 0, 0, 0, 0 ]
-        p2bcounterfactual = sim2parameters(beta2bcounterfactual)
-        sim2bcounterfactual = stochasticmodel(
-            seirrates, u02b, 1:100, p2bcounterfactual, seirtransitionmatrix
-        )
-
-        p2b = sim2parameters(beta2b)
-        sim2b = vcat(
-            sim2bcounterfactual[1:49, :],
-            stochasticmodel(
-                seirrates, sim2bcounterfactual[50, :], 50:100, p2b, seirtransitionmatrix
-            )
-        )
-
-        u02c = [ 400_000 - 2000, 2000, 0, 0, 0, 0 ]
-        p2ccounterfactual = sim2parameters(beta2ccounterfactual)
-        sim2ccounterfactual = stochasticmodel(
-            seirrates, u02c, 1:100, p2ccounterfactual, seirtransitionmatrix
-        )
-
-        p2c = sim2parameters(beta2c)
-        sim2c = vcat(
-            sim2ccounterfactual[1:29, :],
-            stochasticmodel(
-                seirrates, sim2ccounterfactual[30, :], 30:100, p2c, seirtransitionmatrix
-            )
-        )
-
-        prevalence = hcat(sim2a[:, 4], sim2b[:, 4], sim2c[:, 4])
-        counterfactualprevalence = hcat(
-            sim2a[:, 4], sim2bcounterfactual[:, 4], sim2ccounterfactual[:, 4]
-        )
-
-        cases = zeros(Int, 100, 3)
-        for t ∈ 2:100 
-            cases[t, 1] = sim2a[t, 6] - sim2a[t-1, 6]
-            cases[t, 2] = sim2b[t, 6] - sim2b[t-1, 6]
-            cases[t, 3] = sim2c[t, 6] - sim2c[t-1, 6]
-        end
-
-        counterfactualcases = zeros(Int, 100, 3)
-        for t ∈ 2:100 
-            counterfactualcases[t, 1] = sim2a[t, 6] - sim2a[t-1, 6]
-            counterfactualcases[t, 2] = sim2bcounterfactual[t, 6] - sim2bcounterfactual[t-1, 6]
-            counterfactualcases[t, 3] = sim2ccounterfactual[t, 6] - sim2ccounterfactual[t-1, 6]
-        end
-
-        Dict(
-            "cases" => cases, 
-            "cases_counterfactual" => counterfactualcases,
-            "interventions" => interventions, 
-            "prevalence" => prevalence, 
-            "counterfactualprevalence" => counterfactualprevalence, 
-            "Ns" => [ 350_000, 300_000, 400_000 ],
-        )
-    end
-
-    safesave(datadir("sims", "simulation2dataset.jld2"), simulation2dataset)
+## Simulation 7:
+# as in simulation 5 but 20% seasonal forcing of transmission
+sim7 = let 
+    rng = Xoshiro(7)
+    u0s = [simu0(rng, largepop, 0.001) for _ in 1:3]
+    mu = 0.2
+    kappa = 0.5
+    delta = 0.3
+    psi = 0.8
+    betas_const = [2 * mu * rand(rng, Uniform(0.75, 1.25)) for _ in 1:3]
+    betas = [t -> betas_const[i] * (1 + 0.2 * cos(2pi * (t - 20) / 365)) for i in 1:3]
+    s1 = packsimulationtuple( ; 
+        u0=u0s[1], beta=betas[1], mu, delta, psi, kappa, intervention=50,
+    )
+    s2 = packsimulationtuple( ; 
+        u0=u0s[2], beta=betas[2], mu, delta, psi, kappa, intervention=nothing,
+    )
+    s3 = packsimulationtuple( ; 
+        u0=u0s[3], beta=betas[3], mu, delta, psi, kappa, intervention=nothing,
+    )
+    packsimulations(rng, 100, s1, s2, s3; id="sim7", sampletime=14)
 end
+plotmodel(sim7; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
+safesave(simulationdir("sim7.jld2"), Dict("sim" => sim7))
 
-# Two locations, transmission parameters violate common trends  
-
-if isfile(datadir("sims", "simulation3dataset.jld2"))
-    simulation3dataset = load(datadir("sims", "simulation3dataset.jld2"))
-else 
-    simulation3dataset = let  
-        interventions = InterventionsMatrix([ nothing, 50 ], 100)
-        
-        u03a = [ 250_000 - 100, 100, 0, 0, 0, 0 ]
-        p3a = sim3parameters(beta3a)
-        sim3a = stochasticmodel(seirrates, u03a, 1:100, p3a, seirtransitionmatrix)
-
-        u03b = [ 250_000 - 100, 100, 0, 0, 0, 0 ]
-        p3bcounterfactual = sim3parameters(beta3bcounterfactual)
-        sim3bcounterfactual = stochasticmodel(
-            seirrates, u03b, 1:100, p3bcounterfactual, seirtransitionmatrix
-        )
-
-        p3b = sim3parameters(beta3b)
-        sim3b = vcat(
-            sim3bcounterfactual[1:49, :],
-            stochasticmodel(
-                seirrates, sim3bcounterfactual[50, :], 50:100, p3b, seirtransitionmatrix
-            )
-        )
-
-        prevalence = hcat(sim3a[:, 4], sim3b[:, 4])
-        counterfactualprevalence = hcat(sim3a[:, 4], sim3bcounterfactual[:, 4])
-
-        cases = zeros(Int, 100, 2)
-        for t ∈ 2:100 
-            cases[t, 1] = sim3a[t, 6] - sim3a[t-1, 6]
-            cases[t, 2] = sim3b[t, 6] - sim3b[t-1, 6]
-        end
-
-        counterfactualcases = zeros(Int, 100, 2)
-        for t ∈ 2:100 
-            counterfactualcases[t, 1] = sim3a[t, 6] - sim3a[t-1, 6]
-            counterfactualcases[t, 2] = sim3bcounterfactual[t, 6] - sim3bcounterfactual[t-1, 6]
-        end
-
-        Dict(
-            "cases" => cases, 
-            "cases_counterfactual" => counterfactualcases,
-            "interventions" => interventions, 
-            "prevalence" => prevalence, 
-            "counterfactualprevalence" => counterfactualprevalence, 
-            "Ns" => [ 250_000, 250_000 ],
-        )
-    end
-
-    safesave(datadir("sims", "simulation3dataset.jld2"), simulation3dataset)
+## Simulation 8:
+# as in simulation 7 but intervention in one group at time 50 reduces transmission by 20%
+sim8 = let 
+    rng = Xoshiro(8)
+    u0s = [simu0(rng, largepop, 0.001) for _ in 1:3]
+    mu = 0.2
+    kappa = 0.5
+    delta = 0.3
+    psi = 0.8
+    betas_const = [2 * mu * rand(rng, Uniform(0.75, 1.25)) for _ in 1:3]
+    betasc = [t -> betas_const[i] * (1 + 0.2 * cos(2pi * (t - 20) / 365)) for i in 1:3]
+    betas = [t -> (t < 50 ? 1.0 : 0.8) * betasc[1](t), t -> betasc[2](t), t -> betasc[3](t)]
+    s1 = packsimulationtuple( ; 
+        u0=u0s[1], beta=betas[1], mu, delta, psi, kappa, intervention=50,
+    )
+    s2 = packsimulationtuple( ; 
+        u0=u0s[2], beta=betas[2], mu, delta, psi, kappa, intervention=nothing,
+    )
+    s3 = packsimulationtuple( ; 
+        u0=u0s[3], beta=betas[3], mu, delta, psi, kappa, intervention=nothing,
+    )
+    packsimulations(rng, 100, s1, s2, s3; id="sim8", sampletime=14)
 end
+plotmodel(sim8; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
+safesave(simulationdir("sim8.jld2"), Dict("sim" => sim8))
 
-# Two locations, proportion detected changes at time of intervention
 
-if isfile(datadir("sims", "simulation4dataset.jld2"))
-    simulation4dataset = load(datadir("sims", "simulation4dataset.jld2"))
-else 
-    simulation4dataset = let  
-        interventions = InterventionsMatrix([ nothing, 50 ], 100)
-        
-        u04a = [ 350_000 - 50, 50, 0, 0, 0, 0 ]
-        p4a = sim4parameters(beta4a, theta4a)
-        sim4a = stochasticmodel(seirrates, u04a, 1:100, p4a, seirtransitionmatrix)
-
-        u04b = [ 150_000 - 50, 50, 0, 0, 0, 0 ]
-        p4bcounterfactual = sim4parameters(beta4bcounterfactual, theta4b)
-        sim4bcounterfactual = stochasticmodel(
-            seirrates, u04b, 1:100, p4bcounterfactual, seirtransitionmatrix
-        )
-
-        p4b = sim4parameters(beta4b, theta4b)
-        sim4b = vcat(
-            sim4bcounterfactual[1:49, :],
-            stochasticmodel(
-                seirrates, sim4bcounterfactual[50, :], 50:100, p4b, seirtransitionmatrix
-            )
-        )
-
-        prevalence = hcat(sim4a[:, 4], sim4b[:, 4])
-        counterfactualprevalence = hcat(sim4a[:, 4], sim4bcounterfactual[:, 4])
-
-        cases = zeros(Int, 100, 2)
-        for t ∈ 2:100 
-            cases[t, 1] = sim4a[t, 6] - sim4a[t-1, 6]
-            cases[t, 2] = sim4b[t, 6] - sim4b[t-1, 6]
-        end
-
-        counterfactualcases = zeros(Int, 100, 2)
-        for t ∈ 2:100 
-            counterfactualcases[t, 1] = sim4a[t, 6] - sim4a[t-1, 6]
-            counterfactualcases[t, 2] = sim4bcounterfactual[t, 6] - sim4bcounterfactual[t-1, 6]
-        end
-
-        Dict(
-            "cases" => cases, 
-            "cases_counterfactual" => counterfactualcases,
-            "interventions" => interventions, 
-            "prevalence" => prevalence, 
-            "counterfactualprevalence" => counterfactualprevalence, 
-            "Ns" => [ 350_000, 150_000 ],
-        )
-    end
-
-    safesave(datadir("sims", "simulation4dataset.jld2"), simulation4dataset)
+## Simulation 9:
+# as in simulation 8 but intervention in two groups at time 50 reduces transmission by 20%
+sim9 = let 
+    rng = Xoshiro(9)
+    u0s = [simu0(rng, largepop, 0.001) for _ in 1:3]
+    mu = 0.2
+    kappa = 0.5
+    delta = 0.3
+    psi = 0.8
+    betas_const = [2 * mu * rand(rng, Uniform(0.75, 1.25)) for _ in 1:3]
+    betasc = [t -> betas_const[i] * (1 + 0.2 * cos(2pi * (t - 20) / 365)) for i in 1:3]
+    betas = [
+        t -> (t < 50 ? 1.0 : 0.8) * betasc[1](t), 
+        t -> (t < 50 ? 1.0 : 0.8) * betasc[2](t), 
+        t -> betasc[3](t)
+    ]
+    s1 = packsimulationtuple( ; 
+        u0=u0s[1], beta=betas[1], mu, delta, psi, kappa, intervention=50,
+    )
+    s2 = packsimulationtuple( ; 
+        u0=u0s[2], beta=betas[2], mu, delta, psi, kappa, intervention=50,
+    )
+    s3 = packsimulationtuple( ; 
+        u0=u0s[3], beta=betas[3], mu, delta, psi, kappa, intervention=nothing,
+    )
+    packsimulations(rng, 100, s1, s2, s3; id="sim9", sampletime=14)
 end
+plotmodel(sim9; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
+safesave(simulationdir("sim9.jld2"), Dict("sim" => sim9))
+
+## Simulation 10:
+# as in simulation 9 but intervention in two groups at different times reduces transmission by 20%
+sim10 = let 
+    rng = Xoshiro(10)
+    u0s = [simu0(rng, largepop, 0.001) for _ in 1:3]
+    mu = 0.2
+    kappa = 0.5
+    delta = 0.3
+    psi = 0.8
+    betas_const = [2 * mu * rand(rng, Uniform(0.75, 1.25)) for _ in 1:3]
+    betasc = [t -> betas_const[i] * (1 + 0.2 * cos(2pi * (t - 20) / 365)) for i in 1:3]
+    betas = [
+        t -> (t < 50 ? 1.0 : 0.8) * betasc[1](t), 
+        t -> (t < 25 ? 1.0 : 0.8) * betasc[2](t), 
+        t -> betasc[3](t)
+    ]
+    s1 = packsimulationtuple( ; 
+        u0=u0s[1], beta=betas[1], mu, delta, psi, kappa, intervention=50,
+    )
+    s2 = packsimulationtuple( ; 
+        u0=u0s[2], beta=betas[2], mu, delta, psi, kappa, intervention=25,
+    )
+    s3 = packsimulationtuple( ; 
+        u0=u0s[3], beta=betas[3], mu, delta, psi, kappa, intervention=nothing,
+    )
+    packsimulations(rng, 100, s1, s2, s3; id="sim10", sampletime=14)
+end
+plotmodel(sim10; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
+safesave(simulationdir("sim10.jld2"), Dict("sim" => sim10))
+
+## Simulation 11:
+# as in simulation 10 but intervention of interest has no effect and an alternative 
+# intervention reduces transmission by 20%
+sim11 = let 
+    rng = Xoshiro(11)
+    u0s = [simu0(rng, largepop, 0.001) for _ in 1:3]
+    mu = 0.2
+    kappa = 0.5
+    delta = 0.3
+    psi = 0.8
+    betas_const = [2 * mu * rand(rng, Uniform(0.75, 1.25)) for _ in 1:3]
+    betasc = [t -> betas_const[i] * (1 + 0.2 * cos(2pi * (t - 20) / 365)) for i in 1:3]
+    betas = [
+        t -> betasc[1](t), 
+        t -> (t < 60 ? 1.0 : 0.8) * betasc[2](t), 
+        t -> (t < 35 ? 1.0 : 0.8) * betasc[3](t)
+    ]
+    
+    s1 = packsimulationtuple( ; 
+        u0=u0s[1], beta=betas[1], mu, delta, psi, kappa, intervention=[50, nothing],
+    )
+    s2 = packsimulationtuple( ; 
+        u0=u0s[2], beta=betas[2], mu, delta, psi, kappa, intervention=[25, 60],
+    )
+    s3 = packsimulationtuple( ; 
+        u0=u0s[3], beta=betas[3], mu, delta, psi, kappa, intervention=[nothing, 35],
+    )
+    packsimulations(rng, 100, s1, s2, s3; id="sim11", sampletime=14)
+end
+plotmodel(sim11; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
+safesave(simulationdir("sim11.jld2"), Dict("sim" => sim11))
+
+## Simulation 12:
+# as in simulation 11 but intervention of interest reduces transmission by 20%
+sim12 = let 
+    rng = Xoshiro(12)
+    u0s = [simu0(rng, largepop, 0.001) for _ in 1:3]
+    mu = 0.2
+    kappa = 0.5
+    delta = 0.3
+    psi = 0.8
+    betas_const = [2 * mu * rand(rng, Uniform(0.75, 1.25)) for _ in 1:3]
+    betasc = [t -> betas_const[i] * (1 + 0.2 * cos(2pi * (t - 20) / 365)) for i in 1:3]
+    betas = [
+        t -> (t < 50 ? 1.0 : 0.8) * betasc[1](t), 
+        t -> (t < 25 ? 1.0 : 0.8) * (t < 60 ? 1.0 : 0.8) * betasc[2](t), 
+        t -> (t < 35 ? 1.0 : 0.8) * betasc[3](t)
+    ]
+    
+    s1 = packsimulationtuple( ; 
+        u0=u0s[1], beta=betas[1], mu, delta, psi, kappa, intervention=[50, nothing],
+    )
+    s2 = packsimulationtuple( ; 
+        u0=u0s[2], beta=betas[2], mu, delta, psi, kappa, intervention=[25, 60],
+    )
+    s3 = packsimulationtuple( ; 
+        u0=u0s[3], beta=betas[3], mu, delta, psi, kappa, intervention=[nothing, 35],
+    )
+    packsimulations(rng, 100, s1, s2, s3; id="sim12", sampletime=14)
+end
+plotmodel(sim12; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
+safesave(simulationdir("sim12.jld2"), Dict("sim" => sim12))
+
+## Simulation 13:
+# as in simulation 11 but alternative intervention increases transmission by 20%
+sim13 = let 
+    rng = Xoshiro(13)
+    u0s = [simu0(rng, largepop, 0.001) for _ in 1:3]
+    mu = 0.2
+    kappa = 0.5
+    delta = 0.3
+    psi = 0.8
+    betas_const = [2 * mu * rand(rng, Uniform(0.75, 1.25)) for _ in 1:3]
+    betasc = [t -> betas_const[i] * (1 + 0.2 * cos(2pi * (t - 20) / 365)) for i in 1:3]
+    betas = [
+        t -> betasc[1](t), 
+        t -> (t < 60 ? 1.0 : 1.2) * betasc[2](t), 
+        t -> (t < 35 ? 1.0 : 1.2) * betasc[3](t)
+    ]
+    
+    s1 = packsimulationtuple( ; 
+        u0=u0s[1], beta=betas[1], mu, delta, psi, kappa, intervention=[50, nothing],
+    )
+    s2 = packsimulationtuple( ; 
+        u0=u0s[2], beta=betas[2], mu, delta, psi, kappa, intervention=[25, 60],
+    )
+    s3 = packsimulationtuple( ; 
+        u0=u0s[3], beta=betas[3], mu, delta, psi, kappa, intervention=[nothing, 35],
+    )
+    packsimulations(rng, 100, s1, s2, s3; id="sim13", sampletime=14)
+end
+plotmodel(sim13; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
+safesave(simulationdir("sim13.jld2"), Dict("sim" => sim13))
+
+## Simulation 14:
+# as in simulation 13 but intervention of interest reduces transmission by 20%
+sim14 = let 
+    rng = Xoshiro(14)
+    u0s = [simu0(rng, largepop, 0.001) for _ in 1:3]
+    mu = 0.2
+    kappa = 0.5
+    delta = 0.3
+    psi = 0.8
+    betas_const = [2 * mu * rand(rng, Uniform(0.75, 1.25)) for _ in 1:3]
+    betasc = [t -> betas_const[i] * (1 + 0.2 * cos(2pi * (t - 20) / 365)) for i in 1:3]
+    betas = [
+        t -> (t < 50 ? 1.0 : 0.8) * betasc[1](t), 
+        t -> (t < 25 ? 1.0 : 0.8) * (t < 60 ? 1.0 : 1.2) * betasc[2](t), 
+        t -> (t < 35 ? 1.0 : 1.2) * betasc[3](t)
+    ]
+
+    s1 = packsimulationtuple( ; 
+        u0=u0s[1], beta=betas[1], mu, delta, psi, kappa, intervention=[50, nothing],
+    )
+    s2 = packsimulationtuple( ; 
+        u0=u0s[2], beta=betas[2], mu, delta, psi, kappa, intervention=[25, 60],
+    )
+    s3 = packsimulationtuple( ; 
+        u0=u0s[3], beta=betas[3], mu, delta, psi, kappa, intervention=[nothing, 35],
+    )
+    packsimulations(rng, 100, s1, s2, s3; id="sim14", sampletime=14)
+end
+plotmodel(sim14; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
+safesave(simulationdir("sim14.jld2"), Dict("sim" => sim14))
+
+## Simulation 15:
+# as in simulation 11 but lower proportion detected
+sim15 = let 
+    rng = Xoshiro(15)
+    u0s = [simu0(rng, largepop, 0.001) for _ in 1:3]
+    mu = 0.2
+    kappa = 0.5
+    delta = 0.3
+    psi = 0.4
+    betas_const = [2 * mu * rand(rng, Uniform(0.75, 1.25)) for _ in 1:3]
+    betasc = [t -> betas_const[i] * (1 + 0.2 * cos(2pi * (t - 20) / 365)) for i in 1:3]
+    betas = [
+        t -> betasc[1](t), 
+        t -> (t < 60 ? 1.0 : 0.8) * betasc[2](t), 
+        t -> (t < 35 ? 1.0 : 0.8) * betasc[3](t)
+    ]
+    
+    s1 = packsimulationtuple( ; 
+        u0=u0s[1], beta=betas[1], mu, delta, psi, kappa, intervention=[50, nothing],
+    )
+    s2 = packsimulationtuple( ; 
+        u0=u0s[2], beta=betas[2], mu, delta, psi, kappa, intervention=[25, 60],
+    )
+    s3 = packsimulationtuple( ; 
+        u0=u0s[3], beta=betas[3], mu, delta, psi, kappa, intervention=[nothing, 35],
+    )
+    packsimulations(rng, 100, s1, s2, s3; id="sim15", sampletime=14)
+end
+plotmodel(sim15; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
+safesave(simulationdir("sim15.jld2"), Dict("sim" => sim15))
+
+## Simulation 16:
+# as in simulation 15 but intervention of interest reduces transmission by 20%
+sim16 = let 
+    rng = Xoshiro(16)
+    u0s = [simu0(rng, largepop, 0.001) for _ in 1:3]
+    mu = 0.2
+    kappa = 0.5
+    delta = 0.3
+    psi = 0.4
+    betas_const = [2 * mu * rand(rng, Uniform(0.75, 1.25)) for _ in 1:3]
+    betasc = [t -> betas_const[i] * (1 + 0.2 * cos(2pi * (t - 20) / 365)) for i in 1:3]
+    betas = [
+        t -> (t < 50 ? 1.0 : 0.8) * betasc[1](t), 
+        t -> (t < 25 ? 1.0 : 0.8) * (t < 60 ? 1.0 : 0.8) * betasc[2](t), 
+        t -> (t < 35 ? 1.0 : 0.8) * betasc[3](t)
+    ]
+    
+    s1 = packsimulationtuple( ; 
+        u0=u0s[1], beta=betas[1], mu, delta, psi, kappa, intervention=[50, nothing],
+    )
+    s2 = packsimulationtuple( ; 
+        u0=u0s[2], beta=betas[2], mu, delta, psi, kappa, intervention=[25, 60],
+    )
+    s3 = packsimulationtuple( ; 
+        u0=u0s[3], beta=betas[3], mu, delta, psi, kappa, intervention=[nothing, 35],
+    )
+    packsimulations(rng, 100, s1, s2, s3; id="sim16", sampletime=14)
+end
+plotmodel(sim16; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
+safesave(simulationdir("sim16.jld2"), Dict("sim" => sim16))
+
+## Simulation 17:
+# as in simulation 15 but proportion detected changes over time, consistently for all groups
+sim17 = let 
+    rng = Xoshiro(17)
+    u0s = [simu0(rng, largepop, 0.001) for _ in 1:3]
+    mu = 0.2
+    kappa = 0.5
+    delta = 0.3
+    psi = t -> 0.4 + 0.004 * t
+    betas_const = [2 * mu * rand(rng, Uniform(0.75, 1.25)) for _ in 1:3]
+    betasc = [t -> betas_const[i] * (1 + 0.2 * cos(2pi * (t - 20) / 365)) for i in 1:3]
+    betas = [
+        t -> betasc[1](t), 
+        t -> (t < 60 ? 1.0 : 0.8) * betasc[2](t), 
+        t -> (t < 35 ? 1.0 : 0.8) * betasc[3](t)
+    ]
+    
+    s1 = packsimulationtuple( ; 
+        u0=u0s[1], beta=betas[1], mu, delta, psi, kappa, intervention=[50, nothing],
+    )
+    s2 = packsimulationtuple( ; 
+        u0=u0s[2], beta=betas[2], mu, delta, psi, kappa, intervention=[25, 60],
+    )
+    s3 = packsimulationtuple( ; 
+        u0=u0s[3], beta=betas[3], mu, delta, psi, kappa, intervention=[nothing, 35],
+    )
+    packsimulations(rng, 100, s1, s2, s3; id="sim17", sampletime=14)
+end
+plotmodel(sim17; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
+safesave(simulationdir("sim17.jld2"), Dict("sim" => sim17))
+
+## Simulation 18:
+# as in simulation 17 but intervention of interest reduces transmission by 20%
+sim18 = let 
+    rng = Xoshiro(18)
+    u0s = [simu0(rng, largepop, 0.001) for _ in 1:3]
+    mu = 0.2
+    kappa = 0.5
+    delta = 0.3
+    psi = t -> 0.4 + 0.004 * t
+    betas_const = [2 * mu * rand(rng, Uniform(0.75, 1.25)) for _ in 1:3]
+    betasc = [t -> betas_const[i] * (1 + 0.2 * cos(2pi * (t - 20) / 365)) for i in 1:3]
+    betas = [
+        t -> (t < 50 ? 1.0 : 0.8) * betasc[1](t), 
+        t -> (t < 25 ? 1.0 : 0.8) * (t < 60 ? 1.0 : 0.8) * betasc[2](t), 
+        t -> (t < 35 ? 1.0 : 0.8) * betasc[3](t)
+    ]
+    
+    s1 = packsimulationtuple( ; 
+        u0=u0s[1], beta=betas[1], mu, delta, psi, kappa, intervention=[50, nothing],
+    )
+    s2 = packsimulationtuple( ; 
+        u0=u0s[2], beta=betas[2], mu, delta, psi, kappa, intervention=[25, 60],
+    )
+    s3 = packsimulationtuple( ; 
+        u0=u0s[3], beta=betas[3], mu, delta, psi, kappa, intervention=[nothing, 35],
+    )
+    packsimulations(rng, 100, s1, s2, s3; id="sim18", sampletime=14)
+end
+plotmodel(sim18; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
+safesave(simulationdir("sim18.jld2"), Dict("sim" => sim18))
+
+## Simulation 19:
+# as in simulation 15 but alternative intervention increases proportion detected
+sim19 = let 
+    rng = Xoshiro(19)
+    u0s = [simu0(rng, largepop, 0.001) for _ in 1:3]
+    mu = 0.2
+    kappa = 0.5
+    delta = 0.3
+    psis = [
+        t -> 0.4, 
+        t -> (t < 60 ? 0.4 : 0.8), 
+        t -> (t < 35 ? 0.4 : 0.8)
+    ]
+    betas_const = [2 * mu * rand(rng, Uniform(0.75, 1.25)) for _ in 1:3]
+    betasc = [t -> betas_const[i] * (1 + 0.2 * cos(2pi * (t - 20) / 365)) for i in 1:3]
+    betas = [
+        t -> betasc[1](t), 
+        t -> (t < 60 ? 1.0 : 0.8) * betasc[2](t), 
+        t -> (t < 35 ? 1.0 : 0.8) * betasc[3](t)
+    ]
+    
+    s1 = packsimulationtuple( ; 
+        u0=u0s[1], beta=betas[1], mu, delta, psi=psis[1], kappa, intervention=[50, nothing],
+    )
+    s2 = packsimulationtuple( ; 
+        u0=u0s[2], beta=betas[2], mu, delta, psi=psis[2], kappa, intervention=[25, 60],
+    )
+    s3 = packsimulationtuple( ; 
+        u0=u0s[3], beta=betas[3], mu, delta, psi=psis[3], kappa, intervention=[nothing, 35],
+    )
+    packsimulations(rng, 100, s1, s2, s3; id="sim19", sampletime=14)
+end
+plotmodel(sim19; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
+safesave(simulationdir("sim19.jld2"), Dict("sim" => sim19))
+
+## Simulation 20:
+# as in simulation 19 but intervention of interest reduces transmission by 20%
+sim20 = let 
+    rng = Xoshiro(20)
+    u0s = [simu0(rng, largepop, 0.001) for _ in 1:3]
+    mu = 0.2
+    kappa = 0.5
+    delta = 0.3
+    psis = [
+        t -> 0.4, 
+        t -> (t < 60 ? 0.4 : 0.8), 
+        t -> (t < 35 ? 0.4 : 0.8)
+    ]
+    betas_const = [2 * mu * rand(rng, Uniform(0.75, 1.25)) for _ in 1:3]
+    betasc = [t -> betas_const[i] * (1 + 0.2 * cos(2pi * (t - 20) / 365)) for i in 1:3]
+    betas = [
+        t -> (t < 50 ? 1.0 : 0.8) * betasc[1](t), 
+        t -> (t < 25 ? 1.0 : 0.8) * (t < 60 ? 1.0 : 0.8) * betasc[2](t), 
+        t -> (t < 35 ? 1.0 : 0.8) * betasc[3](t)
+    ]
+    
+    s1 = packsimulationtuple( ; 
+        u0=u0s[1], beta=betas[1], mu, delta, psi=psis[1], kappa, intervention=[50, nothing],
+    )
+    s2 = packsimulationtuple( ; 
+        u0=u0s[2], beta=betas[2], mu, delta, psi=psis[2], kappa, intervention=[25, 60],
+    )
+    s3 = packsimulationtuple( ; 
+        u0=u0s[3], beta=betas[3], mu, delta, psi=psis[3], kappa, intervention=[nothing, 35],
+    )
+    packsimulations(rng, 100, s1, s2, s3; id="sim20", sampletime=14)
+end
+plotmodel(sim20; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
+safesave(simulationdir("sim20.jld2"), Dict("sim" => sim20))
+
+## Simulation 21:
+# as in simulation 15 but intervention of interest increases proportion detected
+sim21 = let 
+    rng = Xoshiro(21)
+    u0s = [simu0(rng, largepop, 0.001) for _ in 1:3]
+    mu = 0.2
+    kappa = 0.5
+    delta = 0.3
+    psis = [
+        t -> (t < 50 ? 0.4 : 0.8), 
+        t -> (t < 24 ? 0.4 : 0.8), 
+        t -> 0.4
+    ]
+    betas_const = [2 * mu * rand(rng, Uniform(0.75, 1.25)) for _ in 1:3]
+    betasc = [t -> betas_const[i] * (1 + 0.2 * cos(2pi * (t - 20) / 365)) for i in 1:3]
+    betas = [
+        t -> betasc[1](t), 
+        t -> (t < 60 ? 1.0 : 0.8) * betasc[2](t), 
+        t -> (t < 35 ? 1.0 : 0.8) * betasc[3](t)
+    ]
+    
+    s1 = packsimulationtuple( ; 
+        u0=u0s[1], beta=betas[1], mu, delta, psi=psis[1], kappa, intervention=[50, nothing],
+    )
+    s2 = packsimulationtuple( ; 
+        u0=u0s[2], beta=betas[2], mu, delta, psi=psis[2], kappa, intervention=[25, 60],
+    )
+    s3 = packsimulationtuple( ; 
+        u0=u0s[3], beta=betas[3], mu, delta, psi=psis[3], kappa, intervention=[nothing, 35],
+    )
+    packsimulations(rng, 100, s1, s2, s3; id="sim21", sampletime=14)
+end
+plotmodel(sim21; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
+safesave(simulationdir("sim21.jld2"), Dict("sim" => sim21))
+
+## Simulation 22:
+# as in simulation 21 but intervention of interest reduces transmission by 20%
+sim22 = let 
+    rng = Xoshiro(22)
+    u0s = [simu0(rng, largepop, 0.001) for _ in 1:3]
+    mu = 0.2
+    kappa = 0.5
+    delta = 0.3
+    psis = [
+        t -> (t < 50 ? 0.4 : 0.8), 
+        t -> (t < 24 ? 0.4 : 0.8), 
+        t -> 0.4
+    ]
+    betas_const = [2 * mu * rand(rng, Uniform(0.75, 1.25)) for _ in 1:3]
+    betasc = [t -> betas_const[i] * (1 + 0.2 * cos(2pi * (t - 20) / 365)) for i in 1:3]
+    betas = [
+        t -> betasc[1](t), 
+        t -> (t < 60 ? 1.0 : 0.8) * betasc[2](t), 
+        t -> (t < 35 ? 1.0 : 0.8) * betasc[3](t)
+    ]
+    
+    s1 = packsimulationtuple( ; 
+        u0=u0s[1], beta=betas[1], mu, delta, psi=psis[1], kappa, intervention=[50, nothing],
+    )
+    s2 = packsimulationtuple( ; 
+        u0=u0s[2], beta=betas[2], mu, delta, psi=psis[2], kappa, intervention=[25, 60],
+    )
+    s3 = packsimulationtuple( ; 
+        u0=u0s[3], beta=betas[3], mu, delta, psi=psis[3], kappa, intervention=[nothing, 35],
+    )
+    packsimulations(rng, 100, s1, s2, s3; id="sim22", sampletime=14)
+end
+plotmodel(sim22; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
+safesave(simulationdir("sim22.jld2"), Dict("sim" => sim22))
+
+## Simulation 23:
+# as in simulation 1 but with small populations
+sim23 = let 
+    rng = Xoshiro(23)
+    u0s = [simu0(rng, smallpop, 0.001) for _ in 1:3]
+    mu = 0.2
+    kappa = 0.5
+    delta = 0.3
+    psi = 0.8
+    betas = repeat([2 * mu]; inner=3)
+    s1 = packsimulationtuple( ; 
+        u0=u0s[1], beta=betas[1], mu, delta, psi, kappa, intervention=50,
+    )
+    s2 = packsimulationtuple( ; 
+        u0=u0s[2], beta=betas[2], mu, delta, psi, kappa, intervention=nothing,
+    )
+    s3 = packsimulationtuple( ; 
+        u0=u0s[3], beta=betas[3], mu, delta, psi, kappa, intervention=nothing,
+    )
+    packsimulations(rng, 100, s1, s2, s3; id="sim23", sampletime=14)
+end
+plotmodel(sim23; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
+safesave(simulationdir("sim23.jld2"), Dict("sim" => sim23))
+
+## Simulation 24:
+# as in simulation 2 but with small populations
+sim24 = let 
+    rng = Xoshiro(24)
+    u0s = [simu0(rng, smallpop, 0.001) for _ in 1:3]
+    mu = 0.2
+    kappa = 0.5
+    delta = 0.3
+    psi = 0.8
+    betasc = repeat([2 * mu]; inner=3)
+    betas = [t -> (t < 50 ? 1.0 : 0.8) * betasc[1], t -> betasc[2], t -> betasc[3]]
+    s1 = packsimulationtuple( ; 
+        u0=u0s[1], beta=betas[1], mu, delta, psi, kappa, intervention=50,
+    )
+    s2 = packsimulationtuple( ; 
+        u0=u0s[2], beta=betas[2], mu, delta, psi, kappa, intervention=nothing,
+    )
+    s3 = packsimulationtuple( ; 
+        u0=u0s[3], beta=betas[3], mu, delta, psi, kappa, intervention=nothing,
+    )
+    packsimulations(rng, 100, s1, s2, s3; id="sim24", sampletime=14)
+end
+plotmodel(sim24; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
+safesave(simulationdir("sim24.jld2"), Dict("sim" => sim24))
+
+## Simulation 25:
+# as in simulation 3 but with small populations
+sim25 = let 
+    rng = Xoshiro(25)
+    u0s = [simu0(rng, smallpop, 0.001) for _ in 1:3]
+    mu = 0.2
+    kappa = 0.5
+    delta = 0.3
+    psi = 0.8
+    betas = [2 * mu * rand(rng, Uniform(0.9, 1.1)) for _ in 1:3]
+    s1 = packsimulationtuple( ; 
+        u0=u0s[1], beta=betas[1], mu, delta, psi, kappa, intervention=50,
+    )
+    s2 = packsimulationtuple( ; 
+        u0=u0s[2], beta=betas[2], mu, delta, psi, kappa, intervention=nothing,
+    )
+    s3 = packsimulationtuple( ; 
+        u0=u0s[3], beta=betas[3], mu, delta, psi, kappa, intervention=nothing,
+    )
+    packsimulations(rng, 100, s1, s2, s3; id="sim25", sampletime=14)
+end
+plotmodel(sim25; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
+safesave(simulationdir("sim25.jld2"), Dict("sim" => sim25))
+
+## Simulation 26:
+# as in simulation 4 but with small populations
+sim26 = let 
+    rng = Xoshiro(26)
+    u0s = [simu0(rng, smallpop, 0.001) for _ in 1:3]
+    mu = 0.2
+    kappa = 0.5
+    delta = 0.3
+    psi = 0.8
+    betasc = [2 * mu * rand(rng, Uniform(0.9, 1.1)) for _ in 1:3]
+    betas = [t -> (t < 50 ? 1.0 : 0.8) * betasc[1], t -> betasc[2], t -> betasc[3]]
+    s1 = packsimulationtuple( ; 
+        u0=u0s[1], beta=betas[1], mu, delta, psi, kappa, intervention=50,
+    )
+    s2 = packsimulationtuple( ; 
+        u0=u0s[2], beta=betas[2], mu, delta, psi, kappa, intervention=nothing,
+    )
+    s3 = packsimulationtuple( ; 
+        u0=u0s[3], beta=betas[3], mu, delta, psi, kappa, intervention=nothing,
+    )
+    packsimulations(rng, 100, s1, s2, s3; id="sim26", sampletime=14)
+end
+plotmodel(sim26; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
+safesave(simulationdir("sim26.jld2"), Dict("sim" => sim26))
+
+## Simulation 27:
+# as in simulation 5 but with small populations
+sim27 = let 
+    rng = Xoshiro(27)
+    u0s = [simu0(rng, smallpop, 0.001) for _ in 1:3]
+    mu = 0.2
+    kappa = 0.5
+    delta = 0.3
+    psi = 0.8
+    betas = [2 * mu * rand(rng, Uniform(0.75, 1.25)) for _ in 1:3]
+    s1 = packsimulationtuple( ; 
+        u0=u0s[1], beta=betas[1], mu, delta, psi, kappa, intervention=50,
+    )
+    s2 = packsimulationtuple( ; 
+        u0=u0s[2], beta=betas[2], mu, delta, psi, kappa, intervention=nothing,
+    )
+    s3 = packsimulationtuple( ; 
+        u0=u0s[3], beta=betas[3], mu, delta, psi, kappa, intervention=nothing,
+    )
+    packsimulations(rng, 100, s1, s2, s3; id="sim27", sampletime=14)
+end
+plotmodel(sim27; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
+safesave(simulationdir("sim27.jld2"), Dict("sim27" => sim5))
+
+## Simulation 28:
+# as in simulation 6 but with small populations
+sim28 = let 
+    rng = Xoshiro(28)
+    u0s = [simu0(rng, smallpop, 0.001) for _ in 1:3]
+    mu = 0.2
+    kappa = 0.5
+    delta = 0.3
+    psi = 0.8
+    betasc = [2 * mu * rand(rng, Uniform(0.75, 1.25)) for _ in 1:3]
+    betas = [t -> (t < 50 ? 1.0 : 0.8) * betasc[1], t -> betasc[2], t -> betasc[3]]
+    s1 = packsimulationtuple( ; 
+        u0=u0s[1], beta=betas[1], mu, delta, psi, kappa, intervention=50,
+    )
+    s2 = packsimulationtuple( ; 
+        u0=u0s[2], beta=betas[2], mu, delta, psi, kappa, intervention=nothing,
+    )
+    s3 = packsimulationtuple( ; 
+        u0=u0s[3], beta=betas[3], mu, delta, psi, kappa, intervention=nothing,
+    )
+    packsimulations(rng, 100, s1, s2, s3; id="sim28", sampletime=14)
+end
+plotmodel(sim28; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
+safesave(simulationdir("sim28.jld2"), Dict("sim" => sim28))
+
+## Simulation 29:
+# as in simulation 7 but with small populations
+sim29 = let 
+    rng = Xoshiro(29)
+    u0s = [simu0(rng, smallpop, 0.001) for _ in 1:3]
+    mu = 0.2
+    kappa = 0.5
+    delta = 0.3
+    psi = 0.8
+    betas_const = [2 * mu * rand(rng, Uniform(0.75, 1.25)) for _ in 1:3]
+    betas = [t -> betas_const[i] * (1 + 0.2 * cos(2pi * (t - 20) / 365)) for i in 1:3]
+    s1 = packsimulationtuple( ; 
+        u0=u0s[1], beta=betas[1], mu, delta, psi, kappa, intervention=50,
+    )
+    s2 = packsimulationtuple( ; 
+        u0=u0s[2], beta=betas[2], mu, delta, psi, kappa, intervention=nothing,
+    )
+    s3 = packsimulationtuple( ; 
+        u0=u0s[3], beta=betas[3], mu, delta, psi, kappa, intervention=nothing,
+    )
+    packsimulations(rng, 100, s1, s2, s3; id="sim29", sampletime=14)
+end
+plotmodel(sim29; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
+safesave(simulationdir("sim29.jld2"), Dict("sim" => sim29))
+
+## Simulation 30:
+# as in simulation 8 but with small populations
+sim30 = let 
+    rng = Xoshiro(30)
+    u0s = [simu0(rng, smallpop, 0.001) for _ in 1:3]
+    mu = 0.2
+    kappa = 0.5
+    delta = 0.3
+    psi = 0.8
+    betas_const = [2 * mu * rand(rng, Uniform(0.75, 1.25)) for _ in 1:3]
+    betasc = [t -> betas_const[i] * (1 + 0.2 * cos(2pi * (t - 20) / 365)) for i in 1:3]
+    betas = [t -> (t < 50 ? 1.0 : 0.8) * betasc[1](t), t -> betasc[2](t), t -> betasc[3](t)]
+    s1 = packsimulationtuple( ; 
+        u0=u0s[1], beta=betas[1], mu, delta, psi, kappa, intervention=50,
+    )
+    s2 = packsimulationtuple( ; 
+        u0=u0s[2], beta=betas[2], mu, delta, psi, kappa, intervention=nothing,
+    )
+    s3 = packsimulationtuple( ; 
+        u0=u0s[3], beta=betas[3], mu, delta, psi, kappa, intervention=nothing,
+    )
+    packsimulations(rng, 100, s1, s2, s3; id="sim30", sampletime=14)
+end
+plotmodel(sim30; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
+safesave(simulationdir("sim30.jld2"), Dict("sim" => sim30))
+
+## Simulation 31:
+# as in simulation 9 but with small populations
+sim31 = let 
+    rng = Xoshiro(31)
+    u0s = [simu0(rng, smallpop, 0.001) for _ in 1:3]
+    mu = 0.2
+    kappa = 0.5
+    delta = 0.3
+    psi = 0.8
+    betas_const = [2 * mu * rand(rng, Uniform(0.75, 1.25)) for _ in 1:3]
+    betasc = [t -> betas_const[i] * (1 + 0.2 * cos(2pi * (t - 20) / 365)) for i in 1:3]
+    betas = [
+        t -> (t < 50 ? 1.0 : 0.8) * betasc[1](t), 
+        t -> (t < 50 ? 1.0 : 0.8) * betasc[2](t), 
+        t -> betasc[3](t)
+    ]
+    s1 = packsimulationtuple( ; 
+        u0=u0s[1], beta=betas[1], mu, delta, psi, kappa, intervention=50,
+    )
+    s2 = packsimulationtuple( ; 
+        u0=u0s[2], beta=betas[2], mu, delta, psi, kappa, intervention=50,
+    )
+    s3 = packsimulationtuple( ; 
+        u0=u0s[3], beta=betas[3], mu, delta, psi, kappa, intervention=nothing,
+    )
+    packsimulations(rng, 100, s1, s2, s3; id="sim31", sampletime=14)
+end
+plotmodel(sim31; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
+safesave(simulationdir("sim31.jld2"), Dict("sim" => sim31))
+
+## Simulation 32:
+# as in simulation 10 but with small populations
+sim32 = let 
+    rng = Xoshiro(32)
+    u0s = [simu0(rng, smallpop, 0.001) for _ in 1:3]
+    mu = 0.2
+    kappa = 0.5
+    delta = 0.3
+    psi = 0.8
+    betas_const = [2 * mu * rand(rng, Uniform(0.75, 1.25)) for _ in 1:3]
+    betasc = [t -> betas_const[i] * (1 + 0.2 * cos(2pi * (t - 20) / 365)) for i in 1:3]
+    betas = [
+        t -> (t < 50 ? 1.0 : 0.8) * betasc[1](t), 
+        t -> (t < 25 ? 1.0 : 0.8) * betasc[2](t), 
+        t -> betasc[3](t)
+    ]
+    s1 = packsimulationtuple( ; 
+        u0=u0s[1], beta=betas[1], mu, delta, psi, kappa, intervention=50,
+    )
+    s2 = packsimulationtuple( ; 
+        u0=u0s[2], beta=betas[2], mu, delta, psi, kappa, intervention=25,
+    )
+    s3 = packsimulationtuple( ; 
+        u0=u0s[3], beta=betas[3], mu, delta, psi, kappa, intervention=nothing,
+    )
+    packsimulations(rng, 100, s1, s2, s3; id="sim32", sampletime=14)
+end
+plotmodel(sim32; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
+safesave(simulationdir("sim32.jld2"), Dict("sim" => sim32))
+
+## Simulation 33:
+# as in simulation 11 but with small populations
+sim33 = let 
+    rng = Xoshiro(33)
+    u0s = [simu0(rng, smallpop, 0.001) for _ in 1:3]
+    mu = 0.2
+    kappa = 0.5
+    delta = 0.3
+    psi = 0.8
+    betas_const = [2 * mu * rand(rng, Uniform(0.75, 1.25)) for _ in 1:3]
+    betasc = [t -> betas_const[i] * (1 + 0.2 * cos(2pi * (t - 20) / 365)) for i in 1:3]
+    betas = [
+        t -> betasc[1](t), 
+        t -> (t < 60 ? 1.0 : 0.8) * betasc[2](t), 
+        t -> (t < 35 ? 1.0 : 0.8) * betasc[3](t)
+    ]
+    
+    s1 = packsimulationtuple( ; 
+        u0=u0s[1], beta=betas[1], mu, delta, psi, kappa, intervention=[50, nothing],
+    )
+    s2 = packsimulationtuple( ; 
+        u0=u0s[2], beta=betas[2], mu, delta, psi, kappa, intervention=[25, 60],
+    )
+    s3 = packsimulationtuple( ; 
+        u0=u0s[3], beta=betas[3], mu, delta, psi, kappa, intervention=[nothing, 35],
+    )
+    packsimulations(rng, 100, s1, s2, s3; id="sim33", sampletime=14)
+end
+plotmodel(sim33; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
+safesave(simulationdir("sim33.jld2"), Dict("sim" => sim33))
+
+## Simulation 34:
+# as in simulation 12 but with small populations
+sim34 = let 
+    rng = Xoshiro(34)
+    u0s = [simu0(rng, smallpop, 0.001) for _ in 1:3]
+    mu = 0.2
+    kappa = 0.5
+    delta = 0.3
+    psi = 0.8
+    betas_const = [2 * mu * rand(rng, Uniform(0.75, 1.25)) for _ in 1:3]
+    betasc = [t -> betas_const[i] * (1 + 0.2 * cos(2pi * (t - 20) / 365)) for i in 1:3]
+    betas = [
+        t -> (t < 50 ? 1.0 : 0.8) * betasc[1](t), 
+        t -> (t < 25 ? 1.0 : 0.8) * (t < 60 ? 1.0 : 0.8) * betasc[2](t), 
+        t -> (t < 35 ? 1.0 : 0.8) * betasc[3](t)
+    ]
+    
+    s1 = packsimulationtuple( ; 
+        u0=u0s[1], beta=betas[1], mu, delta, psi, kappa, intervention=[50, nothing],
+    )
+    s2 = packsimulationtuple( ; 
+        u0=u0s[2], beta=betas[2], mu, delta, psi, kappa, intervention=[25, 60],
+    )
+    s3 = packsimulationtuple( ; 
+        u0=u0s[3], beta=betas[3], mu, delta, psi, kappa, intervention=[nothing, 35],
+    )
+    packsimulations(rng, 100, s1, s2, s3; id="sim34", sampletime=14)
+end
+plotmodel(sim34; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
+safesave(simulationdir("sim34.jld2"), Dict("sim" => sim34))
+
+## Simulation 35:
+# as in simulation 13 but with small populations
+sim35 = let 
+    rng = Xoshiro(35)
+    u0s = [simu0(rng, smallpop, 0.001) for _ in 1:3]
+    mu = 0.2
+    kappa = 0.5
+    delta = 0.3
+    psi = 0.8
+    betas_const = [2 * mu * rand(rng, Uniform(0.75, 1.25)) for _ in 1:3]
+    betasc = [t -> betas_const[i] * (1 + 0.2 * cos(2pi * (t - 20) / 365)) for i in 1:3]
+    betas = [
+        t -> betasc[1](t), 
+        t -> (t < 60 ? 1.0 : 1.2) * betasc[2](t), 
+        t -> (t < 35 ? 1.0 : 1.2) * betasc[3](t)
+    ]
+    
+    s1 = packsimulationtuple( ; 
+        u0=u0s[1], beta=betas[1], mu, delta, psi, kappa, intervention=[50, nothing],
+    )
+    s2 = packsimulationtuple( ; 
+        u0=u0s[2], beta=betas[2], mu, delta, psi, kappa, intervention=[25, 60],
+    )
+    s3 = packsimulationtuple( ; 
+        u0=u0s[3], beta=betas[3], mu, delta, psi, kappa, intervention=[nothing, 35],
+    )
+    packsimulations(rng, 100, s1, s2, s3; id="sim35", sampletime=14)
+end
+plotmodel(sim35; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
+safesave(simulationdir("sim35.jld2"), Dict("sim" => sim35))
+
+## Simulation 36:
+# as in simulation 14 but with small populations
+sim36 = let 
+    rng = Xoshiro(36)
+    u0s = [simu0(rng, smallpop, 0.001) for _ in 1:3]
+    mu = 0.2
+    kappa = 0.5
+    delta = 0.3
+    psi = 0.8
+    betas_const = [2 * mu * rand(rng, Uniform(0.75, 1.25)) for _ in 1:3]
+    betasc = [t -> betas_const[i] * (1 + 0.2 * cos(2pi * (t - 20) / 365)) for i in 1:3]
+    betas = [
+        t -> (t < 50 ? 1.0 : 0.8) * betasc[1](t), 
+        t -> (t < 25 ? 1.0 : 0.8) * (t < 60 ? 1.0 : 1.2) * betasc[2](t), 
+        t -> (t < 35 ? 1.0 : 1.2) * betasc[3](t)
+    ]
+
+    s1 = packsimulationtuple( ; 
+        u0=u0s[1], beta=betas[1], mu, delta, psi, kappa, intervention=[50, nothing],
+    )
+    s2 = packsimulationtuple( ; 
+        u0=u0s[2], beta=betas[2], mu, delta, psi, kappa, intervention=[25, 60],
+    )
+    s3 = packsimulationtuple( ; 
+        u0=u0s[3], beta=betas[3], mu, delta, psi, kappa, intervention=[nothing, 35],
+    )
+    packsimulations(rng, 100, s1, s2, s3; id="sim36", sampletime=14)
+end
+plotmodel(sim36; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
+safesave(simulationdir("sim36.jld2"), Dict("sim" => sim36))
+
+## Simulation 37:
+# as in simulation 15 but with small populations
+sim37 = let 
+    rng = Xoshiro(37)
+    u0s = [simu0(rng, smallpop, 0.001) for _ in 1:3]
+    mu = 0.2
+    kappa = 0.5
+    delta = 0.3
+    psi = 0.4
+    betas_const = [2 * mu * rand(rng, Uniform(0.75, 1.25)) for _ in 1:3]
+    betasc = [t -> betas_const[i] * (1 + 0.2 * cos(2pi * (t - 20) / 365)) for i in 1:3]
+    betas = [
+        t -> betasc[1](t), 
+        t -> (t < 60 ? 1.0 : 0.8) * betasc[2](t), 
+        t -> (t < 35 ? 1.0 : 0.8) * betasc[3](t)
+    ]
+    
+    s1 = packsimulationtuple( ; 
+        u0=u0s[1], beta=betas[1], mu, delta, psi, kappa, intervention=[50, nothing],
+    )
+    s2 = packsimulationtuple( ; 
+        u0=u0s[2], beta=betas[2], mu, delta, psi, kappa, intervention=[25, 60],
+    )
+    s3 = packsimulationtuple( ; 
+        u0=u0s[3], beta=betas[3], mu, delta, psi, kappa, intervention=[nothing, 35],
+    )
+    packsimulations(rng, 100, s1, s2, s3; id="sim37", sampletime=14)
+end
+plotmodel(sim37; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
+safesave(simulationdir("sim37.jld2"), Dict("sim" => sim37))
+
+## Simulation 38:
+# as in simulation 16 but with small populations
+sim38 = let 
+    rng = Xoshiro(38)
+    u0s = [simu0(rng, smallpop, 0.001) for _ in 1:3]
+    mu = 0.2
+    kappa = 0.5
+    delta = 0.3
+    psi = 0.4
+    betas_const = [2 * mu * rand(rng, Uniform(0.75, 1.25)) for _ in 1:3]
+    betasc = [t -> betas_const[i] * (1 + 0.2 * cos(2pi * (t - 20) / 365)) for i in 1:3]
+    betas = [
+        t -> (t < 50 ? 1.0 : 0.8) * betasc[1](t), 
+        t -> (t < 25 ? 1.0 : 0.8) * (t < 60 ? 1.0 : 0.8) * betasc[2](t), 
+        t -> (t < 35 ? 1.0 : 0.8) * betasc[3](t)
+    ]
+    
+    s1 = packsimulationtuple( ; 
+        u0=u0s[1], beta=betas[1], mu, delta, psi, kappa, intervention=[50, nothing],
+    )
+    s2 = packsimulationtuple( ; 
+        u0=u0s[2], beta=betas[2], mu, delta, psi, kappa, intervention=[25, 60],
+    )
+    s3 = packsimulationtuple( ; 
+        u0=u0s[3], beta=betas[3], mu, delta, psi, kappa, intervention=[nothing, 35],
+    )
+    packsimulations(rng, 100, s1, s2, s3; id="sim38", sampletime=14)
+end
+plotmodel(sim38; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
+safesave(simulationdir("sim38.jld2"), Dict("sim" => sim38))
+
+## Simulation 39:
+# as in simulation 17 but with small populations
+sim39 = let 
+    rng = Xoshiro(39)
+    u0s = [simu0(rng, smallpop, 0.001) for _ in 1:3]
+    mu = 0.2
+    kappa = 0.5
+    delta = 0.3
+    psi = t -> 0.4 + 0.004 * t
+    betas_const = [2 * mu * rand(rng, Uniform(0.75, 1.25)) for _ in 1:3]
+    betasc = [t -> betas_const[i] * (1 + 0.2 * cos(2pi * (t - 20) / 365)) for i in 1:3]
+    betas = [
+        t -> betasc[1](t), 
+        t -> (t < 60 ? 1.0 : 0.8) * betasc[2](t), 
+        t -> (t < 35 ? 1.0 : 0.8) * betasc[3](t)
+    ]
+    
+    s1 = packsimulationtuple( ; 
+        u0=u0s[1], beta=betas[1], mu, delta, psi, kappa, intervention=[50, nothing],
+    )
+    s2 = packsimulationtuple( ; 
+        u0=u0s[2], beta=betas[2], mu, delta, psi, kappa, intervention=[25, 60],
+    )
+    s3 = packsimulationtuple( ; 
+        u0=u0s[3], beta=betas[3], mu, delta, psi, kappa, intervention=[nothing, 35],
+    )
+    packsimulations(rng, 100, s1, s2, s3; id="sim39", sampletime=14)
+end
+plotmodel(sim39; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
+safesave(simulationdir("sim39.jld2"), Dict("sim" => sim39))
+
+## Simulation 40:
+# as in simulation 18 but with small populations
+sim40 = let 
+    rng = Xoshiro(40)
+    u0s = [simu0(rng, smallpop, 0.001) for _ in 1:3]
+    mu = 0.2
+    kappa = 0.5
+    delta = 0.3
+    psi = t -> 0.4 + 0.004 * t
+    betas_const = [2 * mu * rand(rng, Uniform(0.75, 1.25)) for _ in 1:3]
+    betasc = [t -> betas_const[i] * (1 + 0.2 * cos(2pi * (t - 20) / 365)) for i in 1:3]
+    betas = [
+        t -> (t < 50 ? 1.0 : 0.8) * betasc[1](t), 
+        t -> (t < 25 ? 1.0 : 0.8) * (t < 60 ? 1.0 : 0.8) * betasc[2](t), 
+        t -> (t < 35 ? 1.0 : 0.8) * betasc[3](t)
+    ]
+    
+    s1 = packsimulationtuple( ; 
+        u0=u0s[1], beta=betas[1], mu, delta, psi, kappa, intervention=[50, nothing],
+    )
+    s2 = packsimulationtuple( ; 
+        u0=u0s[2], beta=betas[2], mu, delta, psi, kappa, intervention=[25, 60],
+    )
+    s3 = packsimulationtuple( ; 
+        u0=u0s[3], beta=betas[3], mu, delta, psi, kappa, intervention=[nothing, 35],
+    )
+    packsimulations(rng, 100, s1, s2, s3; id="sim40", sampletime=14)
+end
+plotmodel(sim40; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
+safesave(simulationdir("sim40.jld2"), Dict("sim" => sim40))
+
+## Simulation 41:
+# as in simulation 19 but with small populations
+sim41 = let 
+    rng = Xoshiro(41)
+    u0s = [simu0(rng, smallpop, 0.001) for _ in 1:3]
+    mu = 0.2
+    kappa = 0.5
+    delta = 0.3
+    psis = [
+        t -> 0.4, 
+        t -> (t < 60 ? 0.4 : 0.8), 
+        t -> (t < 35 ? 0.4 : 0.8)
+    ]
+    betas_const = [2 * mu * rand(rng, Uniform(0.75, 1.25)) for _ in 1:3]
+    betasc = [t -> betas_const[i] * (1 + 0.2 * cos(2pi * (t - 20) / 365)) for i in 1:3]
+    betas = [
+        t -> betasc[1](t), 
+        t -> (t < 60 ? 1.0 : 0.8) * betasc[2](t), 
+        t -> (t < 35 ? 1.0 : 0.8) * betasc[3](t)
+    ]
+    
+    s1 = packsimulationtuple( ; 
+        u0=u0s[1], beta=betas[1], mu, delta, psi=psis[1], kappa, intervention=[50, nothing],
+    )
+    s2 = packsimulationtuple( ; 
+        u0=u0s[2], beta=betas[2], mu, delta, psi=psis[2], kappa, intervention=[25, 60],
+    )
+    s3 = packsimulationtuple( ; 
+        u0=u0s[3], beta=betas[3], mu, delta, psi=psis[3], kappa, intervention=[nothing, 35],
+    )
+    packsimulations(rng, 100, s1, s2, s3; id="sim41", sampletime=14)
+end
+plotmodel(sim41; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
+safesave(simulationdir("sim41.jld2"), Dict("sim" => sim41))
+
+## Simulation 42:
+# as in simulation 20 but with small populations
+sim42 = let 
+    rng = Xoshiro(42)
+    u0s = [simu0(rng, smallpop, 0.001) for _ in 1:3]
+    mu = 0.2
+    kappa = 0.5
+    delta = 0.3
+    psis = [
+        t -> 0.4, 
+        t -> (t < 60 ? 0.4 : 0.8), 
+        t -> (t < 35 ? 0.4 : 0.8)
+    ]
+    betas_const = [2 * mu * rand(rng, Uniform(0.75, 1.25)) for _ in 1:3]
+    betasc = [t -> betas_const[i] * (1 + 0.2 * cos(2pi * (t - 20) / 365)) for i in 1:3]
+    betas = [
+        t -> (t < 50 ? 1.0 : 0.8) * betasc[1](t), 
+        t -> (t < 25 ? 1.0 : 0.8) * (t < 60 ? 1.0 : 0.8) * betasc[2](t), 
+        t -> (t < 35 ? 1.0 : 0.8) * betasc[3](t)
+    ]
+    
+    s1 = packsimulationtuple( ; 
+        u0=u0s[1], beta=betas[1], mu, delta, psi=psis[1], kappa, intervention=[50, nothing],
+    )
+    s2 = packsimulationtuple( ; 
+        u0=u0s[2], beta=betas[2], mu, delta, psi=psis[2], kappa, intervention=[25, 60],
+    )
+    s3 = packsimulationtuple( ; 
+        u0=u0s[3], beta=betas[3], mu, delta, psi=psis[3], kappa, intervention=[nothing, 35],
+    )
+    packsimulations(rng, 100, s1, s2, s3; id="sim42", sampletime=14)
+end
+plotmodel(sim42; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
+safesave(simulationdir("sim42.jld2"), Dict("sim" => sim42))
+
+## Simulation 43:
+# as in simulation 21 but with small populations
+sim43 = let 
+    rng = Xoshiro(43)
+    u0s = [simu0(rng, smallpop, 0.001) for _ in 1:3]
+    mu = 0.2
+    kappa = 0.5
+    delta = 0.3
+    psis = [
+        t -> (t < 50 ? 0.4 : 0.8), 
+        t -> (t < 24 ? 0.4 : 0.8), 
+        t -> 0.4
+    ]
+    betas_const = [2 * mu * rand(rng, Uniform(0.75, 1.25)) for _ in 1:3]
+    betasc = [t -> betas_const[i] * (1 + 0.2 * cos(2pi * (t - 20) / 365)) for i in 1:3]
+    betas = [
+        t -> betasc[1](t), 
+        t -> (t < 60 ? 1.0 : 0.8) * betasc[2](t), 
+        t -> (t < 35 ? 1.0 : 0.8) * betasc[3](t)
+    ]
+    
+    s1 = packsimulationtuple( ; 
+        u0=u0s[1], beta=betas[1], mu, delta, psi=psis[1], kappa, intervention=[50, nothing],
+    )
+    s2 = packsimulationtuple( ; 
+        u0=u0s[2], beta=betas[2], mu, delta, psi=psis[2], kappa, intervention=[25, 60],
+    )
+    s3 = packsimulationtuple( ; 
+        u0=u0s[3], beta=betas[3], mu, delta, psi=psis[3], kappa, intervention=[nothing, 35],
+    )
+    packsimulations(rng, 100, s1, s2, s3; id="sim43", sampletime=14)
+end
+plotmodel(sim43; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
+safesave(simulationdir("sim43.jld2"), Dict("sim" => sim43))
+
+## Simulation 44:
+# as in simulation 22 but with small populations
+sim44 = let 
+    rng = Xoshiro(44)
+    u0s = [simu0(rng, smallpop, 0.001) for _ in 1:3]
+    mu = 0.2
+    kappa = 0.5
+    delta = 0.3
+    psis = [
+        t -> (t < 50 ? 0.4 : 0.8), 
+        t -> (t < 24 ? 0.4 : 0.8), 
+        t -> 0.4
+    ]
+    betas_const = [2 * mu * rand(rng, Uniform(0.75, 1.25)) for _ in 1:3]
+    betasc = [t -> betas_const[i] * (1 + 0.2 * cos(2pi * (t - 20) / 365)) for i in 1:3]
+    betas = [
+        t -> betasc[1](t), 
+        t -> (t < 60 ? 1.0 : 0.8) * betasc[2](t), 
+        t -> (t < 35 ? 1.0 : 0.8) * betasc[3](t)
+    ]
+    
+    s1 = packsimulationtuple( ; 
+        u0=u0s[1], beta=betas[1], mu, delta, psi=psis[1], kappa, intervention=[50, nothing],
+    )
+    s2 = packsimulationtuple( ; 
+        u0=u0s[2], beta=betas[2], mu, delta, psi=psis[2], kappa, intervention=[25, 60],
+    )
+    s3 = packsimulationtuple( ; 
+        u0=u0s[3], beta=betas[3], mu, delta, psi=psis[3], kappa, intervention=[nothing, 35],
+    )
+    packsimulations(rng, 100, s1, s2, s3; id="sim44", sampletime=14)
+end
+plotmodel(sim44; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
+safesave(simulationdir("sim44.jld2"), Dict("sim" => sim44))

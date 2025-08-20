@@ -28,11 +28,7 @@ function _analysisworkflow(
         samplerng, model, map_estimate; 
         chain, name, nsamples, kwargs...
     )
-    safesave(
-        datadir("sims", "$(name)_mcmc_$(chain)_$(nsamples)samples.jld2"), 
-        Dict("mcmcchain" => mcmcchain, "mcmcdf" => mcmcdf)
-    )
-    return Dict(
+    d = Dict(
         "priorschain" => priorschain, 
         "priorsdf" => priorsdf,
         "map_estimate" => map_estimate, 
@@ -40,6 +36,8 @@ function _analysisworkflow(
         "mcmcchain" => mcmcchain, 
         "mcmcdf" => mcmcdf,
     )
+    safesave(datadir("sims", "$(name)_results_$(chain)_$(nsamples)samples.jld2"), d)
+    return d
 end
 
 function priorsworkflow(model; priorsseed=nothing, kwargs...)
