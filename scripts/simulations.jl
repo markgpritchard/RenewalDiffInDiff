@@ -2,11 +2,9 @@
 using DrWatson 
 @quickactivate :RenewalDiffInDiff
 
-using CairoMakie
 using Distributions
 using Random
 using RenewalDiD 
-using RenewalDiD.Plotting
 
 ## Simulation 1:
 # 3 large populations 
@@ -33,7 +31,6 @@ sim1 = let
     )
     packsimulations(rng, 100, s1, s2, s3; id="sim1", sampletime=14)
 end
-plotmodel(sim1; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
 safesave(simulationdir("sim1.jld2"), Dict("sim" => sim1))
 
 ## Simulation 2:
@@ -58,7 +55,6 @@ sim2 = let
     )
     packsimulations(rng, 100, s1, s2, s3; id="sim2", sampletime=14)
 end
-plotmodel(sim2; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
 safesave(simulationdir("sim2.jld2"), Dict("sim" => sim2))
 
 ## Simulation 3:
@@ -82,7 +78,6 @@ sim3 = let
     )
     packsimulations(rng, 100, s1, s2, s3; id="sim3", sampletime=14)
 end
-plotmodel(sim3; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
 safesave(simulationdir("sim3.jld2"), Dict("sim" => sim3))
 
 ## Simulation 4:
@@ -107,7 +102,6 @@ sim4 = let
     )
     packsimulations(rng, 100, s1, s2, s3; id="sim4", sampletime=14)
 end
-plotmodel(sim4; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
 safesave(simulationdir("sim4.jld2"), Dict("sim" => sim4))
 
 ## Simulation 5:
@@ -131,7 +125,6 @@ sim5 = let
     )
     packsimulations(rng, 100, s1, s2, s3; id="sim5", sampletime=14)
 end
-plotmodel(sim5; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
 safesave(simulationdir("sim5.jld2"), Dict("sim" => sim5))
 
 ## Simulation 6:
@@ -156,7 +149,6 @@ sim6 = let
     )
     packsimulations(rng, 100, s1, s2, s3; id="sim6", sampletime=14)
 end
-plotmodel(sim6; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
 safesave(simulationdir("sim6.jld2"), Dict("sim" => sim6))
 
 ## Simulation 7:
@@ -181,7 +173,6 @@ sim7 = let
     )
     packsimulations(rng, 100, s1, s2, s3; id="sim7", sampletime=14)
 end
-plotmodel(sim7; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
 safesave(simulationdir("sim7.jld2"), Dict("sim" => sim7))
 
 ## Simulation 8:
@@ -207,7 +198,6 @@ sim8 = let
     )
     packsimulations(rng, 100, s1, s2, s3; id="sim8", sampletime=14)
 end
-plotmodel(sim8; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
 safesave(simulationdir("sim8.jld2"), Dict("sim" => sim8))
 
 
@@ -238,7 +228,6 @@ sim9 = let
     )
     packsimulations(rng, 100, s1, s2, s3; id="sim9", sampletime=14)
 end
-plotmodel(sim9; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
 safesave(simulationdir("sim9.jld2"), Dict("sim" => sim9))
 
 ## Simulation 10:
@@ -268,7 +257,6 @@ sim10 = let
     )
     packsimulations(rng, 100, s1, s2, s3; id="sim10", sampletime=14)
 end
-plotmodel(sim10; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
 safesave(simulationdir("sim10.jld2"), Dict("sim" => sim10))
 
 ## Simulation 11:
@@ -300,7 +288,6 @@ sim11 = let
     )
     packsimulations(rng, 100, s1, s2, s3; id="sim11", sampletime=14)
 end
-plotmodel(sim11; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
 safesave(simulationdir("sim11.jld2"), Dict("sim" => sim11))
 
 ## Simulation 12:
@@ -331,7 +318,6 @@ sim12 = let
     )
     packsimulations(rng, 100, s1, s2, s3; id="sim12", sampletime=14)
 end
-plotmodel(sim12; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
 safesave(simulationdir("sim12.jld2"), Dict("sim" => sim12))
 
 ## Simulation 13:
@@ -362,7 +348,6 @@ sim13 = let
     )
     packsimulations(rng, 100, s1, s2, s3; id="sim13", sampletime=14)
 end
-plotmodel(sim13; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
 safesave(simulationdir("sim13.jld2"), Dict("sim" => sim13))
 
 ## Simulation 14:
@@ -393,7 +378,6 @@ sim14 = let
     )
     packsimulations(rng, 100, s1, s2, s3; id="sim14", sampletime=14)
 end
-plotmodel(sim14; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
 safesave(simulationdir("sim14.jld2"), Dict("sim" => sim14))
 
 ## Simulation 15:
@@ -424,7 +408,6 @@ sim15 = let
     )
     packsimulations(rng, 100, s1, s2, s3; id="sim15", sampletime=14)
 end
-plotmodel(sim15; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
 safesave(simulationdir("sim15.jld2"), Dict("sim" => sim15))
 
 ## Simulation 16:
@@ -455,7 +438,6 @@ sim16 = let
     )
     packsimulations(rng, 100, s1, s2, s3; id="sim16", sampletime=14)
 end
-plotmodel(sim16; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
 safesave(simulationdir("sim16.jld2"), Dict("sim" => sim16))
 
 ## Simulation 17:
@@ -486,7 +468,6 @@ sim17 = let
     )
     packsimulations(rng, 100, s1, s2, s3; id="sim17", sampletime=14)
 end
-plotmodel(sim17; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
 safesave(simulationdir("sim17.jld2"), Dict("sim" => sim17))
 
 ## Simulation 18:
@@ -517,7 +498,6 @@ sim18 = let
     )
     packsimulations(rng, 100, s1, s2, s3; id="sim18", sampletime=14)
 end
-plotmodel(sim18; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
 safesave(simulationdir("sim18.jld2"), Dict("sim" => sim18))
 
 ## Simulation 19:
@@ -552,7 +532,6 @@ sim19 = let
     )
     packsimulations(rng, 100, s1, s2, s3; id="sim19", sampletime=14)
 end
-plotmodel(sim19; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
 safesave(simulationdir("sim19.jld2"), Dict("sim" => sim19))
 
 ## Simulation 20:
@@ -587,7 +566,6 @@ sim20 = let
     )
     packsimulations(rng, 100, s1, s2, s3; id="sim20", sampletime=14)
 end
-plotmodel(sim20; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
 safesave(simulationdir("sim20.jld2"), Dict("sim" => sim20))
 
 ## Simulation 21:
@@ -622,7 +600,6 @@ sim21 = let
     )
     packsimulations(rng, 100, s1, s2, s3; id="sim21", sampletime=14)
 end
-plotmodel(sim21; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
 safesave(simulationdir("sim21.jld2"), Dict("sim" => sim21))
 
 ## Simulation 22:
@@ -657,7 +634,6 @@ sim22 = let
     )
     packsimulations(rng, 100, s1, s2, s3; id="sim22", sampletime=14)
 end
-plotmodel(sim22; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
 safesave(simulationdir("sim22.jld2"), Dict("sim" => sim22))
 
 ## Simulation 23:
@@ -681,7 +657,6 @@ sim23 = let
     )
     packsimulations(rng, 100, s1, s2, s3; id="sim23", sampletime=14)
 end
-plotmodel(sim23; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
 safesave(simulationdir("sim23.jld2"), Dict("sim" => sim23))
 
 ## Simulation 24:
@@ -706,7 +681,6 @@ sim24 = let
     )
     packsimulations(rng, 100, s1, s2, s3; id="sim24", sampletime=14)
 end
-plotmodel(sim24; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
 safesave(simulationdir("sim24.jld2"), Dict("sim" => sim24))
 
 ## Simulation 25:
@@ -730,7 +704,6 @@ sim25 = let
     )
     packsimulations(rng, 100, s1, s2, s3; id="sim25", sampletime=14)
 end
-plotmodel(sim25; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
 safesave(simulationdir("sim25.jld2"), Dict("sim" => sim25))
 
 ## Simulation 26:
@@ -755,7 +728,6 @@ sim26 = let
     )
     packsimulations(rng, 100, s1, s2, s3; id="sim26", sampletime=14)
 end
-plotmodel(sim26; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
 safesave(simulationdir("sim26.jld2"), Dict("sim" => sim26))
 
 ## Simulation 27:
@@ -779,7 +751,6 @@ sim27 = let
     )
     packsimulations(rng, 100, s1, s2, s3; id="sim27", sampletime=14)
 end
-plotmodel(sim27; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
 safesave(simulationdir("sim27.jld2"), Dict("sim27" => sim5))
 
 ## Simulation 28:
@@ -804,7 +775,6 @@ sim28 = let
     )
     packsimulations(rng, 100, s1, s2, s3; id="sim28", sampletime=14)
 end
-plotmodel(sim28; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
 safesave(simulationdir("sim28.jld2"), Dict("sim" => sim28))
 
 ## Simulation 29:
@@ -829,7 +799,6 @@ sim29 = let
     )
     packsimulations(rng, 100, s1, s2, s3; id="sim29", sampletime=14)
 end
-plotmodel(sim29; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
 safesave(simulationdir("sim29.jld2"), Dict("sim" => sim29))
 
 ## Simulation 30:
@@ -855,7 +824,6 @@ sim30 = let
     )
     packsimulations(rng, 100, s1, s2, s3; id="sim30", sampletime=14)
 end
-plotmodel(sim30; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
 safesave(simulationdir("sim30.jld2"), Dict("sim" => sim30))
 
 ## Simulation 31:
@@ -885,7 +853,6 @@ sim31 = let
     )
     packsimulations(rng, 100, s1, s2, s3; id="sim31", sampletime=14)
 end
-plotmodel(sim31; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
 safesave(simulationdir("sim31.jld2"), Dict("sim" => sim31))
 
 ## Simulation 32:
@@ -915,7 +882,6 @@ sim32 = let
     )
     packsimulations(rng, 100, s1, s2, s3; id="sim32", sampletime=14)
 end
-plotmodel(sim32; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
 safesave(simulationdir("sim32.jld2"), Dict("sim" => sim32))
 
 ## Simulation 33:
@@ -946,7 +912,6 @@ sim33 = let
     )
     packsimulations(rng, 100, s1, s2, s3; id="sim33", sampletime=14)
 end
-plotmodel(sim33; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
 safesave(simulationdir("sim33.jld2"), Dict("sim" => sim33))
 
 ## Simulation 34:
@@ -977,7 +942,6 @@ sim34 = let
     )
     packsimulations(rng, 100, s1, s2, s3; id="sim34", sampletime=14)
 end
-plotmodel(sim34; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
 safesave(simulationdir("sim34.jld2"), Dict("sim" => sim34))
 
 ## Simulation 35:
@@ -1008,7 +972,6 @@ sim35 = let
     )
     packsimulations(rng, 100, s1, s2, s3; id="sim35", sampletime=14)
 end
-plotmodel(sim35; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
 safesave(simulationdir("sim35.jld2"), Dict("sim" => sim35))
 
 ## Simulation 36:
@@ -1039,7 +1002,6 @@ sim36 = let
     )
     packsimulations(rng, 100, s1, s2, s3; id="sim36", sampletime=14)
 end
-plotmodel(sim36; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
 safesave(simulationdir("sim36.jld2"), Dict("sim" => sim36))
 
 ## Simulation 37:
@@ -1070,7 +1032,6 @@ sim37 = let
     )
     packsimulations(rng, 100, s1, s2, s3; id="sim37", sampletime=14)
 end
-plotmodel(sim37; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
 safesave(simulationdir("sim37.jld2"), Dict("sim" => sim37))
 
 ## Simulation 38:
@@ -1101,7 +1062,6 @@ sim38 = let
     )
     packsimulations(rng, 100, s1, s2, s3; id="sim38", sampletime=14)
 end
-plotmodel(sim38; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
 safesave(simulationdir("sim38.jld2"), Dict("sim" => sim38))
 
 ## Simulation 39:
@@ -1132,7 +1092,6 @@ sim39 = let
     )
     packsimulations(rng, 100, s1, s2, s3; id="sim39", sampletime=14)
 end
-plotmodel(sim39; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
 safesave(simulationdir("sim39.jld2"), Dict("sim" => sim39))
 
 ## Simulation 40:
@@ -1163,7 +1122,6 @@ sim40 = let
     )
     packsimulations(rng, 100, s1, s2, s3; id="sim40", sampletime=14)
 end
-plotmodel(sim40; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
 safesave(simulationdir("sim40.jld2"), Dict("sim" => sim40))
 
 ## Simulation 41:
@@ -1198,7 +1156,6 @@ sim41 = let
     )
     packsimulations(rng, 100, s1, s2, s3; id="sim41", sampletime=14)
 end
-plotmodel(sim41; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
 safesave(simulationdir("sim41.jld2"), Dict("sim" => sim41))
 
 ## Simulation 42:
@@ -1233,7 +1190,6 @@ sim42 = let
     )
     packsimulations(rng, 100, s1, s2, s3; id="sim42", sampletime=14)
 end
-plotmodel(sim42; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
 safesave(simulationdir("sim42.jld2"), Dict("sim" => sim42))
 
 ## Simulation 43:
@@ -1268,7 +1224,6 @@ sim43 = let
     )
     packsimulations(rng, 100, s1, s2, s3; id="sim43", sampletime=14)
 end
-plotmodel(sim43; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
 safesave(simulationdir("sim43.jld2"), Dict("sim" => sim43))
 
 ## Simulation 44:
@@ -1303,5 +1258,4 @@ sim44 = let
     )
     packsimulations(rng, 100, s1, s2, s3; id="sim44", sampletime=14)
 end
-plotmodel(sim44; linewidth=1, interventionlinestyle=(:dot, :dense), ytickformat = "{:.0f}")
 safesave(simulationdir("sim44.jld2"), Dict("sim" => sim44))

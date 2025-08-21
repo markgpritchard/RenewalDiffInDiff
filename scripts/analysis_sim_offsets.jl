@@ -10,9 +10,23 @@ chain = parse(Int, ARGS[2])
 npriors = parse(Int, ARGS[3])
 mapmaxtime = parse(Int, ARGS[4])
 nsamples = parse(Int, ARGS[5])
+
+#= use line below for arguments when running in REPL 
+id = 1; chain = 1; npriors = 1000; mapmaxtime = 60; nsamples = 25;
+=#
+
 sampleseed = 1000 * id + chain
 
-sim = load(simulationdir("sim$id.jld2"))["sim"]
+_sim = load(simulationdir("sim$id.jld2"))["sim"]
+interventions = addoffsetstointerventionarray(_sim.interventions)
+sim = RenewalDiDData( ;
+    observedcases=_sim.observedcases, 
+    interventions, 
+    Ns=_sim.Ns, 
+    exptdseedcases=_sim.exptdseedcases, 
+    id="$(_sim.id)leadlag"
+)
+
 model = renewaldid(                      
     sim, 
     g_seir, 
@@ -26,6 +40,8 @@ model = renewaldid(
     );                          
     mu=0.2, kappa=0.5,               
 )
+
+asdf = priorsworkflow(model; chain, name="asdftest", npriors)
 
 analysis = analysisworkflow(
     model; 

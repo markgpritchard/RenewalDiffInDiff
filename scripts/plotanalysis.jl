@@ -2,6 +2,32 @@
 using DrWatson
 @quickactivate :RenewalDiffInDiff
 
+using CairoMakie 
+using RenewalDiD
+using RenewalDiD.Plotting
+
+maxchains = 8
+
+
+data = load(datadir("sims", "analysis7_results_1_1000samples.jld2"))
+
+
+df = data["mcmcdf"]
+
+p1 = trplot(df; ncols=5, nplots=50, size=(1000, 1000))  # examine 50 variables
+
+shortfittedoutputs = samplerenewaldidinfections(
+    g_seir, df, load(simulationdir("sim7.jld2"))["sim"]; 
+    mu=0.2, kappa=0.5,
+)
+shortoutputquantiles = quantilerenewaldidinfections(
+    shortfittedoutputs, [0.025, 0.05, 0.25, 0.5, 0.75, 0.95, 0.975]
+)
+p3 = plotmodel(shortoutputquantiles, load(simulationdir("sim7.jld2"))["sim"])
+
+
+
+
 using CairoMakie, StatsBase
 include("analysis.jl")
 include(srcdir("plottingfunctions.jl"))

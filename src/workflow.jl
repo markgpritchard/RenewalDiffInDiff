@@ -29,9 +29,10 @@ function _analysisworkflow(
         chain, name, nsamples, kwargs...
     )
     d = Dict(
+        # `map_estimate` contains anonymous functions and leads to warnings and errors when 
+        # saved and loaded
         "priorschain" => priorschain, 
         "priorsdf" => priorsdf,
-        "map_estimate" => map_estimate, 
         "mapdf" => map_df,
         "mcmcchain" => mcmcchain, 
         "mcmcdf" => mcmcdf,
@@ -55,12 +56,12 @@ function _priorsworkflow(
 )
     priorschain = sample(priorsrng, model, Prior(), npriors)
     priorsdf = DataFrame(priorschain)
-    if savepriors
-        safesave(
-            datadir("sims", "$(name)_prior.jld2"), 
-            Dict("priorschain" => priorschain, "priorsdf" => priorsdf)
-        )
-    end
+  #  if savepriors
+  #      safesave(
+   #         datadir("sims", "$(name)_prior.jld2"), 
+   #         Dict("priorschain" => priorschain, "priorsdf" => priorsdf)
+   #     )
+   # end
     return (priorsdf, priorschain)
 end
 
@@ -75,7 +76,8 @@ function _maximumlikelihoodworkflow(
     model, priorsdf::DataFrame, chain::Integer, name::AbstractString, mapmaxtime::Integer
 )
     indexformap = findall(x -> x == chain, ordinalrank(priorsdf.lp; rev=true))[1]
-    initparamsformap = [values(priorsdf[indexformap, 3:430])...]
+    initparamslastindex = size(priorsdf, 2) - 3
+    initparamsformap = [values(priorsdf[indexformap, 3:initparamslastindex])...]
     map_estimate = maximum_likelihood(
         model; 
         adtype=AutoReverseDiff(), initial_params=initparamsformap, maxtime=mapmaxtime,
@@ -95,10 +97,10 @@ end
 
 function __maximumlikelihoodworkflow(map_estimate, chain, name)
     map_df = map_DataFrame(map_estimate)
-    safesave(
-        datadir("sims", "$(name)_map_$chain.jld2"), 
-        Dict("map_estimate" => map_estimate, "mapdf" => map_df)
-    )
+   # safesave(
+   #     datadir("sims", "$(name)_map_$chain.jld2"), 
+   #     Dict("mapdf" => map_df)
+   # )
     return (map_df, map_estimate)
 end
 
@@ -149,10 +151,10 @@ end
 
 function __mcmcworkflow(mcmcchain, nsamples, chain, name)
     mcmcdf = DataFrame(mcmcchain)
-    safesave(
-        datadir("sims", "$(name)_mcmc_$(chain)_$(nsamples)samples.jld2"), 
-        Dict("mcmcchain" => mcmcchain, "mcmcdf" => mcmcdf)
-    )
+   # safesave(
+   #     datadir("sims", "$(name)_mcmc_$(chain)_$(nsamples)samples.jld2"), 
+   #     Dict("mcmcchain" => mcmcchain, "mcmcdf" => mcmcdf)
+   # )
     return (mcmcdf, mcmcchain)
 end
 

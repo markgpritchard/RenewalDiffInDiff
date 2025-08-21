@@ -1,5 +1,15 @@
 
 using Pkg
+
+Pkg.status()
+Pkg.add(Pkg.PackageSpec(; name="DrWatson", version="2.19.0"))
+
+using DrWatson 
+
+@quickactivate "RenewalDiffInDiff"
+
+Pkg.instantiate()
+
 #=
 Pkg.status()
 

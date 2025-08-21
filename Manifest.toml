@@ -2,7 +2,7 @@
 
 julia_version = "1.11.3"
 manifest_format = "2.0"
-project_hash = "48bc3eaa3df70c5201707450d662f06786b85910"
+project_hash = "5022b30a9bc2eaf5de0da6a815a7dc962c641efe"
 
 [[deps.ADTypes]]
 git-tree-sha1 = "60665b326b75db6517939d0e1875850bc4a54368"
@@ -1873,9 +1873,11 @@ version = "1.0.1"
 
 [[deps.RenewalDiD]]
 deps = ["AutoHashEquals", "Compat", "DataFrames", "PrettyTables", "Random", "StatsBase", "Turing"]
-path = "C:\\Users\\mpritchard\\Documents\\GitHub\\RenewalDiD"
+git-tree-sha1 = "6fa75cdbaaa3eedcd9ac75840242ff19097284fe"
+repo-rev = "main"
+repo-url = "https://github.com/markgpritchard/RenewalDiD.jl"
 uuid = "168ba0f3-27c8-4f61-a62a-678154ba4d3f"
-version = "0.0.1-DEV6"
+version = "0.0.1-DEV8"
 weakdeps = ["Makie"]
 
     [deps.RenewalDiD.extensions]
