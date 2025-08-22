@@ -6,7 +6,7 @@ import ReverseDiff
 
 using CairoMakie: Axis, Colorbar, Label, Legend, TopLeft, hidespines!
 using Distributions: Binomial, Distribution, Uniform
-using DrWatson: datadir, safesave
+using DrWatson: @ntuple, datadir, load, safesave
 using Random: AbstractRNG, Xoshiro, default_rng
 using RenewalDiD: DataFrame, InterventionArray, InterventionMatrix
 using RenewalDiD: map_DataFrame, simulationu0
@@ -18,6 +18,7 @@ export simulationdir
 export largepop, simu0, smallpop
 # workflow.jl
 export analysisworkflow, maximumlikelihoodworkflow, mcmcworkflow, priorsworkflow
+export loadsamples 
 # plotformatting.jl
 export formataxis!, labelplots!, setvalue!
 # setoffsets.jl

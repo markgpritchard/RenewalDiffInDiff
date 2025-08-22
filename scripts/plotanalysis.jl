@@ -6,13 +6,35 @@ using CairoMakie
 using RenewalDiD
 using RenewalDiD.Plotting
 
-maxchains = 8
 
 
-data = load(datadir("sims", "analysis7_results_1_1000samples.jld2"))
+analysis1 = loadsamples(25)
+priorstraceplot1 = trplot(analysis1.priorsdf; ncols=5, nplots=50, size=(1000, 1000))
+priorsoutputs1 = samplerenewaldidinfections(
+    g_seir, analysis1.priorsdf, analysis1.sim; 
+    mu=0.2, kappa=0.5,
+)
+priorsoutputsquintiles1 = quantilerenewaldidinfections(
+    priorsoutputs1, [0.025, 0.05, 0.25, 0.5, 0.75, 0.95, 0.975]
+)
+priorsoutputplot1 = plotmodel(priorsoutputsquintiles1, analysis1.sim)
+mapoutputs1 = samplerenewaldidinfections(
+    g_seir, analysis1.mapdf, analysis1.sim; 
+    mu=0.2, kappa=0.5, repeatsamples=1000
+)
+mapoutputsquintiles1 = quantilerenewaldidinfections(mapoutputs1, [0.025, 0.05, 0.25, 0.5, 0.75, 0.95, 0.975])
+mapoutputplot1 = plotmodel(mapoutputsquintiles1, analysis1.sim)
+mcmctraceplot1 = trplot(analysis1.mcmcdf; ncols=5, nplots=50, size=(1000, 1000))  # examine 50 variables
+mcmcranktraceplot1 = tracerankplot(analysis1.mcmcdf; ncols=5, nplots=50, size=(1000, 1000))  # examine 50 variables
+mcmcoutputs1 = samplerenewaldidinfections(
+    g_seir, analysis1.mcmcdf, analysis1.sim; 
+    mu=0.2, kappa=0.5,
+)
+mcmcoutputsquintiles1 = quantilerenewaldidinfections(
+    mcmcoutputs1, [0.025, 0.05, 0.25, 0.5, 0.75, 0.95, 0.975]
+)
+mcmcoutputplot1 = plotmodel(mcmcoutputsquintiles1, analysis1.sim)
 
-
-df = data["mcmcdf"]
 
 p1 = trplot(df; ncols=5, nplots=50, size=(1000, 1000))  # examine 50 variables
 
