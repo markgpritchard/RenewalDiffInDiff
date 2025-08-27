@@ -1,7 +1,7 @@
 #! /bin/bash
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
-#SBATCH --time=9:00:00
+#SBATCH --time=4:00:00
 #SBATCH --partition=short
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=mark.pritchard@ndm.ox.ac.uk

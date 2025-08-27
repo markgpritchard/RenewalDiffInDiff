@@ -164,32 +164,39 @@ _workflowrngs(rng::AbstractRNG) = rng
 
 ## load saved outputs 
 
-function loadsamples(id; nchains=8, nsamples=[25, 100, 1000, 2000])
-    initnsamples = _initnsamples(id, nsamples)
+function loadsamples(id; analysisname="analysis$(id)", kwargs...)
+    return _loadsamples(id, analysisname; kwargs...)
+end
+
+function _loadsamples(
+    id, analysisname; 
+    data=load(simulationdir("sim$(id).jld2"))["sim"], 
+    nchains=8, 
+    nsamples=[25, 100, 1000, 2000]
+)
+    initnsamples = _initnsamples(analysisname, nsamples)
     initnsamples == 0 && return nothing 
-    samples1 = load(datadir("sims", "analysis$(id)_results_1_$(initnsamples)samples.jld2"))
+    samples1 = load(datadir("sims", "$(analysisname)_results_1_$(initnsamples)samples.jld2"))
     priorsdf = samples1["priorsdf"]
     mapdf = samples1["mapdf"]
     mcmcdf = samples1["mcmcdf"]
     for i in 2:nchains 
-        if isfile(datadir("sims", "analysis$(id)_results_$(i)_$(initnsamples)samples.jld2"))
+        if isfile(datadir("sims", "$(analysisname)_results_$(i)_$(initnsamples)samples.jld2"))
             additionalrows = load(
-                datadir("sims", "analysis$(id)_results_$(i)_$(initnsamples)samples.jld2")
+                datadir("sims", "$(analysisname)_results_$(i)_$(initnsamples)samples.jld2")
             )["mcmcdf"] 
             mcmcdf = vcat(mcmcdf, additionalrows)
         end
     end 
-    sim = load(simulationdir("sim$(id).jld2"))["sim"]
-    return @ntuple priorsdf mapdf mcmcdf sim
+    return @ntuple priorsdf mapdf mcmcdf data
 end
-#safesave(datadir("sims", "$(name)_results_$(chain)_$(nsamples)samples.jld2"), d)
 
-function _initnsamples(id, nsamples)
+function _initnsamples(analysisname, nsamples)
     reversensamples = sort(nsamples; rev=true)
     initnsamples = 0 
     for s in reversensamples
         initnsamples > 0 && continue
-        if isfile(datadir("sims", "analysis$(id)_results_1_$(s)samples.jld2"))
+        if isfile(datadir("sims", "$(analysisname)_results_1_$(s)samples.jld2"))
             initnsamples += s
         end
     end

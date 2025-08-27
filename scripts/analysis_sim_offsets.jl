@@ -41,11 +41,9 @@ model = renewaldid(
     mu=0.2, kappa=0.5,               
 )
 
-asdf = priorsworkflow(model; chain, name="asdftest", npriors)
-
 analysis = analysisworkflow(
     model; 
-    name="analysis$id", 
+    name="analysis$(id)_offset", 
     chain, 
     npriors, 
     mapmaxtime, 

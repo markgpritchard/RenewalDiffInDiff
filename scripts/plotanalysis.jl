@@ -8,44 +8,100 @@ using RenewalDiD.Plotting
 
 
 
-analysis1 = loadsamples(25)
+analysis1 = loadsamples(44)
 priorstraceplot1 = trplot(analysis1.priorsdf; ncols=5, nplots=50, size=(1000, 1000))
 priorsoutputs1 = samplerenewaldidinfections(
-    g_seir, analysis1.priorsdf, analysis1.sim; 
+    g_seir, analysis1.priorsdf, analysis1.data; 
     mu=0.2, kappa=0.5,
 )
 priorsoutputsquintiles1 = quantilerenewaldidinfections(
     priorsoutputs1, [0.025, 0.05, 0.25, 0.5, 0.75, 0.95, 0.975]
 )
-priorsoutputplot1 = plotmodel(priorsoutputsquintiles1, analysis1.sim)
+priorsoutputplot1 = plotmodel(
+    priorsoutputsquintiles1, analysis1.data;
+    linewidth=1, interventionlinestyle=(:dot, :dense)
+)
 mapoutputs1 = samplerenewaldidinfections(
-    g_seir, analysis1.mapdf, analysis1.sim; 
+    g_seir, analysis1.mapdf, analysis1.data; 
     mu=0.2, kappa=0.5, repeatsamples=1000
 )
 mapoutputsquintiles1 = quantilerenewaldidinfections(mapoutputs1, [0.025, 0.05, 0.25, 0.5, 0.75, 0.95, 0.975])
-mapoutputplot1 = plotmodel(mapoutputsquintiles1, analysis1.sim)
+mapoutputplot1 = plotmodel(
+    mapoutputsquintiles1, analysis1.data;
+    linewidth=1, interventionlinestyle=(:dot, :dense)
+)
 mcmctraceplot1 = trplot(analysis1.mcmcdf; ncols=5, nplots=50, size=(1000, 1000))  # examine 50 variables
 mcmcranktraceplot1 = tracerankplot(analysis1.mcmcdf; ncols=5, nplots=50, size=(1000, 1000))  # examine 50 variables
 mcmcoutputs1 = samplerenewaldidinfections(
-    g_seir, analysis1.mcmcdf, analysis1.sim; 
+    g_seir, analysis1.mcmcdf, analysis1.data; 
     mu=0.2, kappa=0.5,
 )
 mcmcoutputsquintiles1 = quantilerenewaldidinfections(
     mcmcoutputs1, [0.025, 0.05, 0.25, 0.5, 0.75, 0.95, 0.975]
 )
-mcmcoutputplot1 = plotmodel(mcmcoutputsquintiles1, analysis1.sim)
-
-
-p1 = trplot(df; ncols=5, nplots=50, size=(1000, 1000))  # examine 50 variables
-
-shortfittedoutputs = samplerenewaldidinfections(
-    g_seir, df, load(simulationdir("sim7.jld2"))["sim"]; 
-    mu=0.2, kappa=0.5,
+mcmcoutputplot1 = plotmodel(
+    mcmcoutputsquintiles1, analysis1.data;
+    linewidth=1, interventionlinestyle=(:dot, :dense)
 )
-shortoutputquantiles = quantilerenewaldidinfections(
-    shortfittedoutputs, [0.025, 0.05, 0.25, 0.5, 0.75, 0.95, 0.975]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+###
+
+
+analysis1 = loadsamples(
+    1; 
+    analysisname="covidmaskanalysis1", 
+    data=load(datadir("exp_pro", "covidmaskdata1.jld2"))["data"]
 )
-p3 = plotmodel(shortoutputquantiles, load(simulationdir("sim7.jld2"))["sim"])
+priorstraceplot1 = trplot(analysis1.priorsdf; ncols=5, nplots=50, size=(1000, 1000))
+priorsoutputs1 = samplerenewaldidinfections(
+    g_covid, analysis1.priorsdf, analysis1.data
+)
+priorsoutputsquintiles1 = quantilerenewaldidinfections(
+    priorsoutputs1, [0.025, 0.05, 0.25, 0.5, 0.75, 0.95, 0.975]
+)
+priorsoutputplot1 = plotmodel(
+    priorsoutputsquintiles1, analysis1.data;
+    linewidth=1, interventionlinestyle=(:dot, :dense), plotproportions=true
+)
+mapoutputs1 = samplerenewaldidinfections(
+    g_covid, analysis1.mapdf, analysis1.data; 
+    repeatsamples=1000
+)
+mapoutputsquintiles1 = quantilerenewaldidinfections(mapoutputs1, [0.025, 0.05, 0.25, 0.5, 0.75, 0.95, 0.975])
+mapoutputplot1 = plotmodel(
+    mapoutputsquintiles1, analysis1.data;
+    linewidth=1, interventionlinestyle=(:dot, :dense)
+)
+mcmctraceplot1 = trplot(analysis1.mcmcdf; ncols=5, nplots=50, size=(1000, 1000))  # examine 50 variables
+mcmcranktraceplot1 = tracerankplot(analysis1.mcmcdf; ncols=5, nplots=50, size=(1000, 1000))  # examine 50 variables
+mcmcoutputs1 = samplerenewaldidinfections(
+    g_covid, analysis1.mcmcdf, analysis1.data
+)
+mcmcoutputsquintiles1 = quantilerenewaldidinfections(
+    mcmcoutputs1, [0.025, 0.05, 0.25, 0.5, 0.75, 0.95, 0.975]
+)
+mcmcoutputplot1 = plotmodel(
+    mcmcoutputsquintiles1, analysis1.data;
+    linewidth=1, interventionlinestyle=(:dot, :dense), plotproportions=true,
+)
+
+
+
+
+
 
 
 
