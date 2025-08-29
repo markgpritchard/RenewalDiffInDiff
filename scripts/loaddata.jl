@@ -6,6 +6,7 @@ using DrWatson
 import CSV 
 using DataFrames
 using Dates
+using RenewalDiD
 
 # UK masking data ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

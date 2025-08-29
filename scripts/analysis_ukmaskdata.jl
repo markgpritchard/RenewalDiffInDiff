@@ -49,7 +49,7 @@ using RenewalDiD.Plotting
 
 asdf = priorsworkflow(model; chain, name="testprior", npriors, priorsseed=id)
 priorsoutputs1 = samplerenewaldidinfections(
-    g_covid, asdf[1], data
+    g_covid, asdf, data
 )
 priorsoutputsquintiles1 = quantilerenewaldidinfections(
     priorsoutputs1, [0.025, 0.05, 0.25, 0.5, 0.75, 0.95, 0.975]

@@ -1873,9 +1873,11 @@ version = "1.0.1"
 
 [[deps.RenewalDiD]]
 deps = ["AutoHashEquals", "Compat", "DataFrames", "PrettyTables", "Random", "StatsBase", "Turing"]
-path = "C:\\Users\\mpritchard\\Documents\\GitHub\\RenewalDiD"
+git-tree-sha1 = "2daae343005ebc906c48884a6e022d33be22e133"
+repo-rev = "main"
+repo-url = "https://github.com/markgpritchard/RenewalDiD.jl"
 uuid = "168ba0f3-27c8-4f61-a62a-678154ba4d3f"
-version = "0.0.1-DEV10"
+version = "0.0.1-DEV12"
 weakdeps = ["Makie"]
 
     [deps.RenewalDiD.extensions]
