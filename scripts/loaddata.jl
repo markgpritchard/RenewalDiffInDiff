@@ -76,7 +76,10 @@ safesave(datadir("exp_pro", "covidmaskdata4.jld2"), Dict("data" => covidmaskdata
 
 covidmaskdata5 = RenewalDiDData( ;
     observedcases=observedcases[1:161, :],
-    interventions=cat(masksrecommended, endstayathome_160, comprehensivecontacttracing_160; dims=3),
+    interventions=cat(
+        masksrecommended, endstayathome_160, comprehensivecontacttracing_160; 
+        dims=3
+    ),
     Ns=UKPOPULATION2020,
     sampletime=30,
     id="data5: masks recommended, competing interventions"
@@ -85,7 +88,13 @@ safesave(datadir("exp_pro", "covidmaskdata5.jld2"), Dict("data" => covidmaskdata
 
 covidmaskdata6 = RenewalDiDData( ;
     observedcases=observedcases[1:227, :],
-    interventions=cat(masksrequired, schoolreopening_226, endstayathome_226, comprehensivecontacttracing_226; dims=3),
+    interventions=cat(
+        masksrequired,
+        schoolreopening_226, 
+        endstayathome_226, 
+        comprehensivecontacttracing_226; 
+        dims=3
+    ),
     Ns=UKPOPULATION2020,
     sampletime=30,
     id="data6: masks required, competing interventions"
@@ -108,7 +117,10 @@ covidmaskdata8 = RenewalDiDData( ;
     observedcases=observedcases[1:227, :],
     interventions=(
         iv = InterventionArray(masksrequired; offset=-35:7:35);
-        cat(iv, schoolreopening_226, endstayathome_226, comprehensivecontacttracing_226; dims=3)
+        cat(
+            iv, schoolreopening_226, endstayathome_226, comprehensivecontacttracing_226; 
+            dims=3
+        )
     ),
     Ns=UKPOPULATION2020,
     sampletime=30,
@@ -135,27 +147,38 @@ const LOCATIONINDEXES = [
 
 testcoviddf, liverpoolpopulations = let 
     casesdf1 = CSV.read(
-        datadir("exp_raw", "North_West_epidemiological_charts__data_set_2021-01-04_cases.csv"),
+        datadir(
+            "exp_raw", "North_West_epidemiological_charts__data_set_2021-01-04_cases.csv"
+        ),
         DataFrame;
         header=4,
     )
     casesdf2 = CSV.read(
-        datadir("exp_raw", "North_West_epidemiological_charts__data_set_2021-06-07_cases.csv"),
+        datadir(
+            "exp_raw", "North_West_epidemiological_charts__data_set_2021-06-07_cases.csv"
+        ),
         DataFrame;
         header=4,
     )
     testsdf1 = CSV.read(
-        datadir("exp_raw", "North_West_epidemiological_charts__data_set_2021-01-04_tests.csv"),
+        datadir(
+            "exp_raw", "North_West_epidemiological_charts__data_set_2021-01-04_tests.csv"
+        ),
         DataFrame;
         header=4,
     )
     testsdf2 = CSV.read(
-        datadir("exp_raw", "North_West_epidemiological_charts__data_set_2021-06-07_tests.csv"),
+        datadir(
+            "exp_raw", "North_West_epidemiological_charts__data_set_2021-06-07_tests.csv"
+        ),
         DataFrame;
         header=4,
     )
     popdf = CSV.read(
-        datadir("exp_raw", "North_West_epidemiological_charts__data_set_2021-06-07_population.csv"),
+        datadir(
+            "exp_raw", 
+            "North_West_epidemiological_charts__data_set_2021-06-07_population.csv"
+        ),
         DataFrame;
         header=4,
     )
