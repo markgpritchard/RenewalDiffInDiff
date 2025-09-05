@@ -2,18 +2,12 @@
 using DrWatson
 @quickactivate :RenewalDiffInDiff
 
+using CairoMakie
 using Distributions
 using RenewalDiD
+using RenewalDiD.Plotting
 
-id = parse(Int, ARGS[1])
-chain = parse(Int, ARGS[2])
-npriors = parse(Int, ARGS[3])
-mapmaxtime = parse(Int, ARGS[4])
-nsamples = parse(Int, ARGS[5])
-
-#= use line below for arguments when running in REPL 
-id = 1; chain = 1; npriors = 1000; mapmaxtime = 60; nsamples = 25;
-=#
+id = 5; chain = 1; npriors = 1000; mapmaxtime = 60; nsamples = 25;
 
 sampleseed = 1000 * id + chain
 
@@ -25,20 +19,19 @@ model = renewaldid(
         alphaprior=Normal(log(2), 1), 
         sigma_gammaprior=Exponential(0.2),
         sigma_thetaprior=Exponential(0.075), 
-        psiprior=Beta(16, 4),
+        psiprior=Beta(8, 2),
         tauprior=Normal(0, 0.2),
         delaydistn=Exponential(1 / 0.3),
     );                          
     mu=0.2, kappa=0.5,               
 )
 
-analysis = analysisworkflow(
-    model; 
-    name="analysis$id", 
-    chain, 
-    npriors, 
-    mapmaxtime, 
-    nsamples, 
-    priorsseed=id, 
-    sampleseed,
+d = priorsworkflow(model; chain, name="testprior", npriors, priorsseed=id)
+priorsoutputs1 = samplerenewaldidinfections(model, d)
+priorsoutputsquintiles1 = quantilerenewaldidinfections(
+    priorsoutputs1, [0.025, 0.05, 0.25, 0.5, 0.75, 0.95, 0.975]
+)
+priorsoutputplot1 = plotmodel(
+    priorsoutputsquintiles1, sim;
+    linewidth=1, interventionlinestyle=(:dot, :dense), plotproportions=true
 )

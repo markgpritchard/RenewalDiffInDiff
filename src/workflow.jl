@@ -65,6 +65,20 @@ function _priorsworkflow(
     return (priorsdf, priorschain)
 end
 
+function indexesformap(df, chain::Integer)
+    return findall(
+        x -> x == chain, ordinalrank([isnan(x) ? -Inf : x for x in df.loglikelihood]; 
+        rev=true)
+    )
+end
+
+function indexesformap(df, chain::AbstractVector)
+    return findall(
+        x -> x ∈ chain, ordinalrank([isnan(x) ? -Inf : x for x in df.loglikelihood]; 
+        rev=true)
+    )
+end
+
 function maximumlikelihoodworkflow(
     model, priorsdf=nothing; 
     chain, name, mapmaxtime=600, kwargs...
@@ -75,7 +89,8 @@ end
 function _maximumlikelihoodworkflow(
     model, priorsdf::DataFrame, chain::Integer, name::AbstractString, mapmaxtime::Integer
 )
-    indexformap = findall(x -> x == chain, ordinalrank(priorsdf.lp; rev=true))[1]
+
+    indexformap = indexesformap(priorsdf, chain)[1]
     initparamslastindex = size(priorsdf, 2) - 3
     initparamsformap = [values(priorsdf[indexformap, 3:initparamslastindex])...]
     map_estimate = maximum_likelihood(
@@ -151,6 +166,9 @@ end
 
 function __mcmcworkflow(mcmcchain, nsamples, chain, name)
     mcmcdf = DataFrame(mcmcchain)
+    for i in axes(mcmcdf, 1)
+        mcmcdf.chain = chain 
+    end
    # safesave(
    #     datadir("sims", "$(name)_mcmc_$(chain)_$(nsamples)samples.jld2"), 
    #     Dict("mcmcchain" => mcmcchain, "mcmcdf" => mcmcdf)

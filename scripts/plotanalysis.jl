@@ -61,9 +61,9 @@ mcmcoutputplot1 = plotmodel(
 
 
 analysis1 = loadsamples(
-    1; 
-    analysisname="covidmaskanalysis1", 
-    data=load(datadir("exp_pro", "covidmaskdata1.jld2"))["data"]
+    3; 
+    analysisname="covidmaskanalysis3", 
+    data=load(datadir("exp_pro", "covidmaskdata3.jld2"))["data"]
 )
 priorstraceplot1 = trplot(analysis1.priorsdf; ncols=5, nplots=50, size=(1000, 1000))
 priorsoutputs1 = samplerenewaldidinfections(
@@ -85,6 +85,17 @@ mapoutputplot1 = plotmodel(
     mapoutputsquintiles1, analysis1.data;
     linewidth=1, interventionlinestyle=(:dot, :dense)
 )
+#=
+## temporary solution when needed 
+for i in axes(analysis1.mcmcdf, 1)
+    i == 1 && continue 
+    if analysis1.mcmcdf.iteration[i] == analysis1.mcmcdf.iteration[i-1] + 1 
+        analysis1.mcmcdf.chain[i] = analysis1.mcmcdf.chain[i-1] 
+    else 
+        analysis1.mcmcdf.chain[i] = analysis1.mcmcdf.chain[i-1] + 1 
+    end
+end
+=#
 mcmctraceplot1 = trplot(analysis1.mcmcdf; ncols=5, nplots=50, size=(1000, 1000))  # examine 50 variables
 mcmcranktraceplot1 = tracerankplot(analysis1.mcmcdf; ncols=5, nplots=50, size=(1000, 1000))  # examine 50 variables
 mcmcoutputs1 = samplerenewaldidinfections(
@@ -104,7 +115,7 @@ mcmcoutputplot1 = plotmodel(
 
 
 
-
+#=
 
 using CairoMakie, StatsBase
 include("analysis.jl")
@@ -4728,3 +4739,4 @@ safesave(plotsdir("subsetmaskdatafit5plot.pdf"), subsetmaskdatafit5plot)
 
 
 
+=#

@@ -42,7 +42,8 @@ covidmaskdata1 = RenewalDiDData( ;
     observedcases=observedcases[1:161, :],
     interventions=masksrecommended,
     Ns=UKPOPULATION2020,
-    sampletime=30,
+    minvalue=0.1, 
+    sampletime=10,
     id="data1: masks recommended, no other interventions"
 )
 safesave(datadir("exp_pro", "covidmaskdata1.jld2"), Dict("data" => covidmaskdata1))
@@ -51,7 +52,8 @@ covidmaskdata2 = RenewalDiDData( ;
     observedcases=observedcases[1:227, :],
     interventions=masksrequired,
     Ns=UKPOPULATION2020,
-    sampletime=30,
+    minvalue=0.1, 
+    sampletime=10,
     id="data2: masks required, no other interventions"
 )
 safesave(datadir("exp_pro", "covidmaskdata2.jld2"), Dict("data" => covidmaskdata2))
@@ -60,7 +62,8 @@ covidmaskdata3 = RenewalDiDData( ;
     observedcases=observedcases[1:161, :],
     interventions=InterventionArray(masksrecommended; offset=-35:7:35),
     Ns=UKPOPULATION2020,
-    sampletime=30,
+    minvalue=0.1, 
+    sampletime=10,
     id="data3: masks recommended, lead and lag placebos"
 )
 safesave(datadir("exp_pro", "covidmaskdata3.jld2"), Dict("data" => covidmaskdata3))
@@ -69,7 +72,8 @@ covidmaskdata4 = RenewalDiDData( ;
     observedcases=observedcases[1:227, :],
     interventions=InterventionArray(masksrequired; offset=-35:7:35),
     Ns=UKPOPULATION2020,
-    sampletime=30,
+    minvalue=0.1, 
+    sampletime=10,
     id="data4: masks required, lead and lag placebos"
 )
 safesave(datadir("exp_pro", "covidmaskdata4.jld2"), Dict("data" => covidmaskdata4))
@@ -81,7 +85,8 @@ covidmaskdata5 = RenewalDiDData( ;
         dims=3
     ),
     Ns=UKPOPULATION2020,
-    sampletime=30,
+    minvalue=0.1, 
+    sampletime=10,
     id="data5: masks recommended, competing interventions"
 )
 safesave(datadir("exp_pro", "covidmaskdata5.jld2"), Dict("data" => covidmaskdata5))
@@ -96,7 +101,8 @@ covidmaskdata6 = RenewalDiDData( ;
         dims=3
     ),
     Ns=UKPOPULATION2020,
-    sampletime=30,
+    minvalue=0.1, 
+    sampletime=10,
     id="data6: masks required, competing interventions"
 )
 safesave(datadir("exp_pro", "covidmaskdata6.jld2"), Dict("data" => covidmaskdata6))
@@ -108,7 +114,8 @@ covidmaskdata7 = RenewalDiDData( ;
         cat(iv, endstayathome_160, comprehensivecontacttracing_160; dims=3)
     ),
     Ns=UKPOPULATION2020,
-    sampletime=30,
+    minvalue=0.1, 
+    sampletime=10,
     id="data7: masks recommended, competing interventions and lead and lag placebos"
 )
 safesave(datadir("exp_pro", "covidmaskdata7.jld2"), Dict("data" => covidmaskdata7))
@@ -123,7 +130,8 @@ covidmaskdata8 = RenewalDiDData( ;
         )
     ),
     Ns=UKPOPULATION2020,
-    sampletime=30,
+    minvalue=0.1, 
+    sampletime=10,
     id="data8: masks required, competing interventions and lead and lag placebos"
 )
 safesave(datadir("exp_pro", "covidmaskdata8.jld2"), Dict("data" => covidmaskdata8))
@@ -271,7 +279,8 @@ covidtestingdata1 = RenewalDiDData( ;
     observedcases=allcovidcases,
     interventions=testingintervention,
     Ns=selectpops,
-    sampletime=14,
+    minvalue=0.1, 
+    sampletime=10,
     id="data1: all cases, no placebo interventions"
 )
 safesave(datadir("exp_pro", "covidtestingdata1.jld2"), Dict("data" => covidtestingdata1))
@@ -280,7 +289,8 @@ covidtestingdata2 = RenewalDiDData( ;
     observedcases=pil1covidcases,
     interventions=testingintervention,
     Ns=selectpops,
-    sampletime=14,
+    minvalue=0.1, 
+    sampletime=10,
     id="data2: pillar 1 cases, no placebo interventions"
 )
 safesave(datadir("exp_pro", "covidtestingdata2.jld2"), Dict("data" => covidtestingdata2))
@@ -289,7 +299,8 @@ covidtestingdata3 = RenewalDiDData( ;
     observedcases=allcovidcases,
     interventions=InterventionArray(testingintervention; offset=-35:7:35),
     Ns=selectpops,
-    sampletime=14,
+    minvalue=0.1, 
+    sampletime=10,
     id="data3: all cases, lead and lag placebos"
 )
 safesave(datadir("exp_pro", "covidtestingdata3.jld2"), Dict("data" => covidtestingdata3))
@@ -298,7 +309,8 @@ covidtestingdata4 = RenewalDiDData( ;
     observedcases=pil1covidcases,
     interventions=InterventionArray(testingintervention; offset=-35:7:35),
     Ns=selectpops,
-    sampletime=14,
+    minvalue=0.1, 
+    sampletime=10,
     id="data4: pillar 1 cases, lead and lag placebos"
 )
 safesave(datadir("exp_pro", "covidtestingdata4.jld2"), Dict("data" => covidtestingdata4))

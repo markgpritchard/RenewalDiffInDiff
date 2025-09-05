@@ -29,7 +29,7 @@ sim1 = let
     s3 = packsimulationtuple( ; 
         u0=u0s[3], beta=betas[3], mu, delta, psi, kappa, intervention=nothing,
     )
-    packsimulations(rng, 100, s1, s2, s3; id="sim1", sampletime=14)
+    packsimulations(rng, 100, s1, s2, s3; id="sim1", minvalue=0.1, sampletime=10,)
 end
 safesave(simulationdir("sim1.jld2"), Dict("sim" => sim1))
 
@@ -53,7 +53,7 @@ sim2 = let
     s3 = packsimulationtuple( ; 
         u0=u0s[3], beta=betas[3], mu, delta, psi, kappa, intervention=nothing,
     )
-    packsimulations(rng, 100, s1, s2, s3; id="sim2", sampletime=14)
+    packsimulations(rng, 100, s1, s2, s3; id="sim2", minvalue=0.1, sampletime=10,)
 end
 safesave(simulationdir("sim2.jld2"), Dict("sim" => sim2))
 
@@ -76,7 +76,7 @@ sim3 = let
     s3 = packsimulationtuple( ; 
         u0=u0s[3], beta=betas[3], mu, delta, psi, kappa, intervention=nothing,
     )
-    packsimulations(rng, 100, s1, s2, s3; id="sim3", sampletime=14)
+    packsimulations(rng, 100, s1, s2, s3; id="sim3", minvalue=0.1, sampletime=10,)
 end
 safesave(simulationdir("sim3.jld2"), Dict("sim" => sim3))
 
@@ -100,7 +100,7 @@ sim4 = let
     s3 = packsimulationtuple( ; 
         u0=u0s[3], beta=betas[3], mu, delta, psi, kappa, intervention=nothing,
     )
-    packsimulations(rng, 100, s1, s2, s3; id="sim4", sampletime=14)
+    packsimulations(rng, 100, s1, s2, s3; id="sim4", minvalue=0.1, sampletime=10,)
 end
 safesave(simulationdir("sim4.jld2"), Dict("sim" => sim4))
 
@@ -123,7 +123,7 @@ sim5 = let
     s3 = packsimulationtuple( ; 
         u0=u0s[3], beta=betas[3], mu, delta, psi, kappa, intervention=nothing,
     )
-    packsimulations(rng, 100, s1, s2, s3; id="sim5", sampletime=14)
+    packsimulations(rng, 100, s1, s2, s3; id="sim5", minvalue=0.1, sampletime=10,)
 end
 safesave(simulationdir("sim5.jld2"), Dict("sim" => sim5))
 
@@ -147,7 +147,7 @@ sim6 = let
     s3 = packsimulationtuple( ; 
         u0=u0s[3], beta=betas[3], mu, delta, psi, kappa, intervention=nothing,
     )
-    packsimulations(rng, 100, s1, s2, s3; id="sim6", sampletime=14)
+    packsimulations(rng, 100, s1, s2, s3; id="sim6", minvalue=0.1, sampletime=10,)
 end
 safesave(simulationdir("sim6.jld2"), Dict("sim" => sim6))
 
@@ -171,7 +171,7 @@ sim7 = let
     s3 = packsimulationtuple( ; 
         u0=u0s[3], beta=betas[3], mu, delta, psi, kappa, intervention=nothing,
     )
-    packsimulations(rng, 100, s1, s2, s3; id="sim7", sampletime=14)
+    packsimulations(rng, 100, s1, s2, s3; id="sim7", minvalue=0.1, sampletime=10,)
 end
 safesave(simulationdir("sim7.jld2"), Dict("sim" => sim7))
 
@@ -196,7 +196,7 @@ sim8 = let
     s3 = packsimulationtuple( ; 
         u0=u0s[3], beta=betas[3], mu, delta, psi, kappa, intervention=nothing,
     )
-    packsimulations(rng, 100, s1, s2, s3; id="sim8", sampletime=14)
+    packsimulations(rng, 100, s1, s2, s3; id="sim8", minvalue=0.1, sampletime=10,)
 end
 safesave(simulationdir("sim8.jld2"), Dict("sim" => sim8))
 
@@ -226,7 +226,7 @@ sim9 = let
     s3 = packsimulationtuple( ; 
         u0=u0s[3], beta=betas[3], mu, delta, psi, kappa, intervention=nothing,
     )
-    packsimulations(rng, 100, s1, s2, s3; id="sim9", sampletime=14)
+    packsimulations(rng, 100, s1, s2, s3; id="sim9", minvalue=0.1, sampletime=10,)
 end
 safesave(simulationdir("sim9.jld2"), Dict("sim" => sim9))
 
@@ -255,7 +255,7 @@ sim10 = let
     s3 = packsimulationtuple( ; 
         u0=u0s[3], beta=betas[3], mu, delta, psi, kappa, intervention=nothing,
     )
-    packsimulations(rng, 100, s1, s2, s3; id="sim10", sampletime=14)
+    packsimulations(rng, 100, s1, s2, s3; id="sim10", minvalue=0.1, sampletime=10,)
 end
 safesave(simulationdir("sim10.jld2"), Dict("sim" => sim10))
 
@@ -286,7 +286,7 @@ sim11 = let
     s3 = packsimulationtuple( ; 
         u0=u0s[3], beta=betas[3], mu, delta, psi, kappa, intervention=[nothing, 35],
     )
-    packsimulations(rng, 100, s1, s2, s3; id="sim11", sampletime=14)
+    packsimulations(rng, 100, s1, s2, s3; id="sim11", minvalue=0.1, sampletime=10,)
 end
 safesave(simulationdir("sim11.jld2"), Dict("sim" => sim11))
 
@@ -316,7 +316,7 @@ sim12 = let
     s3 = packsimulationtuple( ; 
         u0=u0s[3], beta=betas[3], mu, delta, psi, kappa, intervention=[nothing, 35],
     )
-    packsimulations(rng, 100, s1, s2, s3; id="sim12", sampletime=14)
+    packsimulations(rng, 100, s1, s2, s3; id="sim12", minvalue=0.1, sampletime=10,)
 end
 safesave(simulationdir("sim12.jld2"), Dict("sim" => sim12))
 
@@ -346,7 +346,7 @@ sim13 = let
     s3 = packsimulationtuple( ; 
         u0=u0s[3], beta=betas[3], mu, delta, psi, kappa, intervention=[nothing, 35],
     )
-    packsimulations(rng, 100, s1, s2, s3; id="sim13", sampletime=14)
+    packsimulations(rng, 100, s1, s2, s3; id="sim13", minvalue=0.1, sampletime=10,)
 end
 safesave(simulationdir("sim13.jld2"), Dict("sim" => sim13))
 
@@ -376,7 +376,7 @@ sim14 = let
     s3 = packsimulationtuple( ; 
         u0=u0s[3], beta=betas[3], mu, delta, psi, kappa, intervention=[nothing, 35],
     )
-    packsimulations(rng, 100, s1, s2, s3; id="sim14", sampletime=14)
+    packsimulations(rng, 100, s1, s2, s3; id="sim14", minvalue=0.1, sampletime=10,)
 end
 safesave(simulationdir("sim14.jld2"), Dict("sim" => sim14))
 
@@ -406,7 +406,7 @@ sim15 = let
     s3 = packsimulationtuple( ; 
         u0=u0s[3], beta=betas[3], mu, delta, psi, kappa, intervention=[nothing, 35],
     )
-    packsimulations(rng, 100, s1, s2, s3; id="sim15", sampletime=14)
+    packsimulations(rng, 100, s1, s2, s3; id="sim15", minvalue=0.1, sampletime=10,)
 end
 safesave(simulationdir("sim15.jld2"), Dict("sim" => sim15))
 
@@ -436,7 +436,7 @@ sim16 = let
     s3 = packsimulationtuple( ; 
         u0=u0s[3], beta=betas[3], mu, delta, psi, kappa, intervention=[nothing, 35],
     )
-    packsimulations(rng, 100, s1, s2, s3; id="sim16", sampletime=14)
+    packsimulations(rng, 100, s1, s2, s3; id="sim16", minvalue=0.1, sampletime=10,)
 end
 safesave(simulationdir("sim16.jld2"), Dict("sim" => sim16))
 
@@ -466,7 +466,7 @@ sim17 = let
     s3 = packsimulationtuple( ; 
         u0=u0s[3], beta=betas[3], mu, delta, psi, kappa, intervention=[nothing, 35],
     )
-    packsimulations(rng, 100, s1, s2, s3; id="sim17", sampletime=14)
+    packsimulations(rng, 100, s1, s2, s3; id="sim17", minvalue=0.1, sampletime=10,)
 end
 safesave(simulationdir("sim17.jld2"), Dict("sim" => sim17))
 
@@ -496,7 +496,7 @@ sim18 = let
     s3 = packsimulationtuple( ; 
         u0=u0s[3], beta=betas[3], mu, delta, psi, kappa, intervention=[nothing, 35],
     )
-    packsimulations(rng, 100, s1, s2, s3; id="sim18", sampletime=14)
+    packsimulations(rng, 100, s1, s2, s3; id="sim18", minvalue=0.1, sampletime=10,)
 end
 safesave(simulationdir("sim18.jld2"), Dict("sim" => sim18))
 
@@ -530,7 +530,7 @@ sim19 = let
     s3 = packsimulationtuple( ; 
         u0=u0s[3], beta=betas[3], mu, delta, psi=psis[3], kappa, intervention=[nothing, 35],
     )
-    packsimulations(rng, 100, s1, s2, s3; id="sim19", sampletime=14)
+    packsimulations(rng, 100, s1, s2, s3; id="sim19", minvalue=0.1, sampletime=10,)
 end
 safesave(simulationdir("sim19.jld2"), Dict("sim" => sim19))
 
@@ -564,7 +564,7 @@ sim20 = let
     s3 = packsimulationtuple( ; 
         u0=u0s[3], beta=betas[3], mu, delta, psi=psis[3], kappa, intervention=[nothing, 35],
     )
-    packsimulations(rng, 100, s1, s2, s3; id="sim20", sampletime=14)
+    packsimulations(rng, 100, s1, s2, s3; id="sim20", minvalue=0.1, sampletime=10,)
 end
 safesave(simulationdir("sim20.jld2"), Dict("sim" => sim20))
 
@@ -598,7 +598,7 @@ sim21 = let
     s3 = packsimulationtuple( ; 
         u0=u0s[3], beta=betas[3], mu, delta, psi=psis[3], kappa, intervention=[nothing, 35],
     )
-    packsimulations(rng, 100, s1, s2, s3; id="sim21", sampletime=14)
+    packsimulations(rng, 100, s1, s2, s3; id="sim21", minvalue=0.1, sampletime=10,)
 end
 safesave(simulationdir("sim21.jld2"), Dict("sim" => sim21))
 
@@ -632,7 +632,7 @@ sim22 = let
     s3 = packsimulationtuple( ; 
         u0=u0s[3], beta=betas[3], mu, delta, psi=psis[3], kappa, intervention=[nothing, 35],
     )
-    packsimulations(rng, 100, s1, s2, s3; id="sim22", sampletime=14)
+    packsimulations(rng, 100, s1, s2, s3; id="sim22", minvalue=0.1, sampletime=10,)
 end
 safesave(simulationdir("sim22.jld2"), Dict("sim" => sim22))
 
@@ -655,7 +655,7 @@ sim23 = let
     s3 = packsimulationtuple( ; 
         u0=u0s[3], beta=betas[3], mu, delta, psi, kappa, intervention=nothing,
     )
-    packsimulations(rng, 100, s1, s2, s3; id="sim23", sampletime=14)
+    packsimulations(rng, 100, s1, s2, s3; id="sim23", minvalue=0.1, sampletime=10,)
 end
 safesave(simulationdir("sim23.jld2"), Dict("sim" => sim23))
 
@@ -679,7 +679,7 @@ sim24 = let
     s3 = packsimulationtuple( ; 
         u0=u0s[3], beta=betas[3], mu, delta, psi, kappa, intervention=nothing,
     )
-    packsimulations(rng, 100, s1, s2, s3; id="sim24", sampletime=14)
+    packsimulations(rng, 100, s1, s2, s3; id="sim24", minvalue=0.1, sampletime=10,)
 end
 safesave(simulationdir("sim24.jld2"), Dict("sim" => sim24))
 
@@ -702,7 +702,7 @@ sim25 = let
     s3 = packsimulationtuple( ; 
         u0=u0s[3], beta=betas[3], mu, delta, psi, kappa, intervention=nothing,
     )
-    packsimulations(rng, 100, s1, s2, s3; id="sim25", sampletime=14)
+    packsimulations(rng, 100, s1, s2, s3; id="sim25", minvalue=0.1, sampletime=10,)
 end
 safesave(simulationdir("sim25.jld2"), Dict("sim" => sim25))
 
@@ -726,7 +726,7 @@ sim26 = let
     s3 = packsimulationtuple( ; 
         u0=u0s[3], beta=betas[3], mu, delta, psi, kappa, intervention=nothing,
     )
-    packsimulations(rng, 100, s1, s2, s3; id="sim26", sampletime=14)
+    packsimulations(rng, 100, s1, s2, s3; id="sim26", minvalue=0.1, sampletime=10,)
 end
 safesave(simulationdir("sim26.jld2"), Dict("sim" => sim26))
 
@@ -749,7 +749,7 @@ sim27 = let
     s3 = packsimulationtuple( ; 
         u0=u0s[3], beta=betas[3], mu, delta, psi, kappa, intervention=nothing,
     )
-    packsimulations(rng, 100, s1, s2, s3; id="sim27", sampletime=14)
+    packsimulations(rng, 100, s1, s2, s3; id="sim27", minvalue=0.1, sampletime=10,)
 end
 safesave(simulationdir("sim27.jld2"), Dict("sim27" => sim5))
 
@@ -773,7 +773,7 @@ sim28 = let
     s3 = packsimulationtuple( ; 
         u0=u0s[3], beta=betas[3], mu, delta, psi, kappa, intervention=nothing,
     )
-    packsimulations(rng, 100, s1, s2, s3; id="sim28", sampletime=14)
+    packsimulations(rng, 100, s1, s2, s3; id="sim28", minvalue=0.1, sampletime=10,)
 end
 safesave(simulationdir("sim28.jld2"), Dict("sim" => sim28))
 
@@ -797,7 +797,7 @@ sim29 = let
     s3 = packsimulationtuple( ; 
         u0=u0s[3], beta=betas[3], mu, delta, psi, kappa, intervention=nothing,
     )
-    packsimulations(rng, 100, s1, s2, s3; id="sim29", sampletime=14)
+    packsimulations(rng, 100, s1, s2, s3; id="sim29", minvalue=0.1, sampletime=10,)
 end
 safesave(simulationdir("sim29.jld2"), Dict("sim" => sim29))
 
@@ -822,7 +822,7 @@ sim30 = let
     s3 = packsimulationtuple( ; 
         u0=u0s[3], beta=betas[3], mu, delta, psi, kappa, intervention=nothing,
     )
-    packsimulations(rng, 100, s1, s2, s3; id="sim30", sampletime=14)
+    packsimulations(rng, 100, s1, s2, s3; id="sim30", minvalue=0.1, sampletime=10,)
 end
 safesave(simulationdir("sim30.jld2"), Dict("sim" => sim30))
 
@@ -851,7 +851,7 @@ sim31 = let
     s3 = packsimulationtuple( ; 
         u0=u0s[3], beta=betas[3], mu, delta, psi, kappa, intervention=nothing,
     )
-    packsimulations(rng, 100, s1, s2, s3; id="sim31", sampletime=14)
+    packsimulations(rng, 100, s1, s2, s3; id="sim31", minvalue=0.1, sampletime=10,)
 end
 safesave(simulationdir("sim31.jld2"), Dict("sim" => sim31))
 
@@ -880,7 +880,7 @@ sim32 = let
     s3 = packsimulationtuple( ; 
         u0=u0s[3], beta=betas[3], mu, delta, psi, kappa, intervention=nothing,
     )
-    packsimulations(rng, 100, s1, s2, s3; id="sim32", sampletime=14)
+    packsimulations(rng, 100, s1, s2, s3; id="sim32", minvalue=0.1, sampletime=10,)
 end
 safesave(simulationdir("sim32.jld2"), Dict("sim" => sim32))
 
@@ -910,7 +910,7 @@ sim33 = let
     s3 = packsimulationtuple( ; 
         u0=u0s[3], beta=betas[3], mu, delta, psi, kappa, intervention=[nothing, 35],
     )
-    packsimulations(rng, 100, s1, s2, s3; id="sim33", sampletime=14)
+    packsimulations(rng, 100, s1, s2, s3; id="sim33", minvalue=0.1, sampletime=10,)
 end
 safesave(simulationdir("sim33.jld2"), Dict("sim" => sim33))
 
@@ -940,7 +940,7 @@ sim34 = let
     s3 = packsimulationtuple( ; 
         u0=u0s[3], beta=betas[3], mu, delta, psi, kappa, intervention=[nothing, 35],
     )
-    packsimulations(rng, 100, s1, s2, s3; id="sim34", sampletime=14)
+    packsimulations(rng, 100, s1, s2, s3; id="sim34", minvalue=0.1, sampletime=10,)
 end
 safesave(simulationdir("sim34.jld2"), Dict("sim" => sim34))
 
@@ -970,7 +970,7 @@ sim35 = let
     s3 = packsimulationtuple( ; 
         u0=u0s[3], beta=betas[3], mu, delta, psi, kappa, intervention=[nothing, 35],
     )
-    packsimulations(rng, 100, s1, s2, s3; id="sim35", sampletime=14)
+    packsimulations(rng, 100, s1, s2, s3; id="sim35", minvalue=0.1, sampletime=10,)
 end
 safesave(simulationdir("sim35.jld2"), Dict("sim" => sim35))
 
@@ -1000,7 +1000,7 @@ sim36 = let
     s3 = packsimulationtuple( ; 
         u0=u0s[3], beta=betas[3], mu, delta, psi, kappa, intervention=[nothing, 35],
     )
-    packsimulations(rng, 100, s1, s2, s3; id="sim36", sampletime=14)
+    packsimulations(rng, 100, s1, s2, s3; id="sim36", minvalue=0.1, sampletime=10,)
 end
 safesave(simulationdir("sim36.jld2"), Dict("sim" => sim36))
 
@@ -1030,7 +1030,7 @@ sim37 = let
     s3 = packsimulationtuple( ; 
         u0=u0s[3], beta=betas[3], mu, delta, psi, kappa, intervention=[nothing, 35],
     )
-    packsimulations(rng, 100, s1, s2, s3; id="sim37", sampletime=14)
+    packsimulations(rng, 100, s1, s2, s3; id="sim37", minvalue=0.1, sampletime=10,)
 end
 safesave(simulationdir("sim37.jld2"), Dict("sim" => sim37))
 
@@ -1060,7 +1060,7 @@ sim38 = let
     s3 = packsimulationtuple( ; 
         u0=u0s[3], beta=betas[3], mu, delta, psi, kappa, intervention=[nothing, 35],
     )
-    packsimulations(rng, 100, s1, s2, s3; id="sim38", sampletime=14)
+    packsimulations(rng, 100, s1, s2, s3; id="sim38", minvalue=0.1, sampletime=10,)
 end
 safesave(simulationdir("sim38.jld2"), Dict("sim" => sim38))
 
@@ -1090,7 +1090,7 @@ sim39 = let
     s3 = packsimulationtuple( ; 
         u0=u0s[3], beta=betas[3], mu, delta, psi, kappa, intervention=[nothing, 35],
     )
-    packsimulations(rng, 100, s1, s2, s3; id="sim39", sampletime=14)
+    packsimulations(rng, 100, s1, s2, s3; id="sim39", minvalue=0.1, sampletime=10,)
 end
 safesave(simulationdir("sim39.jld2"), Dict("sim" => sim39))
 
@@ -1120,7 +1120,7 @@ sim40 = let
     s3 = packsimulationtuple( ; 
         u0=u0s[3], beta=betas[3], mu, delta, psi, kappa, intervention=[nothing, 35],
     )
-    packsimulations(rng, 100, s1, s2, s3; id="sim40", sampletime=14)
+    packsimulations(rng, 100, s1, s2, s3; id="sim40", minvalue=0.1, sampletime=10,)
 end
 safesave(simulationdir("sim40.jld2"), Dict("sim" => sim40))
 
@@ -1154,7 +1154,7 @@ sim41 = let
     s3 = packsimulationtuple( ; 
         u0=u0s[3], beta=betas[3], mu, delta, psi=psis[3], kappa, intervention=[nothing, 35],
     )
-    packsimulations(rng, 100, s1, s2, s3; id="sim41", sampletime=14)
+    packsimulations(rng, 100, s1, s2, s3; id="sim41", minvalue=0.1, sampletime=10,)
 end
 safesave(simulationdir("sim41.jld2"), Dict("sim" => sim41))
 
@@ -1188,7 +1188,7 @@ sim42 = let
     s3 = packsimulationtuple( ; 
         u0=u0s[3], beta=betas[3], mu, delta, psi=psis[3], kappa, intervention=[nothing, 35],
     )
-    packsimulations(rng, 100, s1, s2, s3; id="sim42", sampletime=14)
+    packsimulations(rng, 100, s1, s2, s3; id="sim42", minvalue=0.1, sampletime=10,)
 end
 safesave(simulationdir("sim42.jld2"), Dict("sim" => sim42))
 
@@ -1222,7 +1222,7 @@ sim43 = let
     s3 = packsimulationtuple( ; 
         u0=u0s[3], beta=betas[3], mu, delta, psi=psis[3], kappa, intervention=[nothing, 35],
     )
-    packsimulations(rng, 100, s1, s2, s3; id="sim43", sampletime=14)
+    packsimulations(rng, 100, s1, s2, s3; id="sim43", minvalue=0.1, sampletime=10,)
 end
 safesave(simulationdir("sim43.jld2"), Dict("sim" => sim43))
 
@@ -1256,6 +1256,6 @@ sim44 = let
     s3 = packsimulationtuple( ; 
         u0=u0s[3], beta=betas[3], mu, delta, psi=psis[3], kappa, intervention=[nothing, 35],
     )
-    packsimulations(rng, 100, s1, s2, s3; id="sim44", sampletime=14)
+    packsimulations(rng, 100, s1, s2, s3; id="sim44", minvalue=0.1, sampletime=10,)
 end
 safesave(simulationdir("sim44.jld2"), Dict("sim" => sim44))

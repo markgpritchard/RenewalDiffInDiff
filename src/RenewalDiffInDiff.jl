@@ -23,8 +23,8 @@ export largepop, simu0, smallpop
 # loaddata.jl
 export loadukmaskdata, ukinterventions, ukobservedcasesmatrix
 # workflow.jl
+export indexesformap, loadsamples 
 export analysisworkflow, maximumlikelihoodworkflow, mcmcworkflow, priorsworkflow
-export loadsamples 
 # plotformatting.jl
 export formataxis!, labelplots!, setvalue!
 # setoffsets.jl
