@@ -167,12 +167,8 @@ end
 function __mcmcworkflow(mcmcchain, nsamples, chain, name)
     mcmcdf = DataFrame(mcmcchain)
     for i in axes(mcmcdf, 1)
-        mcmcdf.chain = chain 
+        mcmcdf.chain[i] = chain 
     end
-   # safesave(
-   #     datadir("sims", "$(name)_mcmc_$(chain)_$(nsamples)samples.jld2"), 
-   #     Dict("mcmcchain" => mcmcchain, "mcmcdf" => mcmcdf)
-   # )
     return (mcmcdf, mcmcchain)
 end
 
