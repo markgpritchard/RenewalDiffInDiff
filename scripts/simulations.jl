@@ -29,7 +29,7 @@ sim1 = let
     s3 = packsimulationtuple( ; 
         u0=u0s[3], beta=betas[3], mu, delta, psi, kappa, intervention=nothing,
     )
-    packsimulations(rng, 100, s1, s2, s3; id="sim1", minvalue=0.1, sampletime=10,)
+    packsimulations(rng, 100, s1, s2, s3; id="sim1", minvalue=0.5, sampletime=10,)
 end
 safesave(simulationdir("sim1.jld2"), Dict("sim" => sim1))
 

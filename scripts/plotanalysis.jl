@@ -6,42 +6,158 @@ using CairoMakie
 using RenewalDiD
 using RenewalDiD.Plotting
 
+# simulations 
 
+id = 4 
 
-analysis1 = loadsamples(44)
-priorstraceplot1 = trplot(analysis1.priorsdf; ncols=5, nplots=50, size=(1000, 1000))
-priorsoutputs1 = samplerenewaldidinfections(
-    g_seir, analysis1.priorsdf, analysis1.data; 
-    mu=0.2, kappa=0.5,
+data = load(simulationdir("sim$(id).jld2"))["sim"]
+model = renewaldid(                      
+    sim, 
+    g_seir, 
+    RenewalDiDPriors( ; 
+        alphaprior=Normal(log(2), 1), 
+        sigma_gammaprior=Exponential(0.2),
+        sigma_thetaprior=Exponential(0.075), 
+        psiprior=Beta(16, 4),
+        tauprior=Normal(0, 0.2),
+        delaydistn=Exponential(1 / 0.3),
+    );                          
+    mu=0.2, kappa=0.5,               
 )
+
+analysis1 = loadsamples(id; data)
+priorstraceplot1 = trplot(analysis1.priorsdf; ncols=5, nplots=50, size=(1000, 1000))
+priorsoutputs1 = samplerenewaldidinfections(model, analysis1.priorsdf)
 priorsoutputsquintiles1 = quantilerenewaldidinfections(
     priorsoutputs1, [0.025, 0.05, 0.25, 0.5, 0.75, 0.95, 0.975]
 )
 priorsoutputplot1 = plotmodel(
     priorsoutputsquintiles1, analysis1.data;
-    linewidth=1, interventionlinestyle=(:dot, :dense)
+    linewidth=1, interventionlinestyle=(:dot, :dense), size=(1000, 1000), plotproportions=true,
 )
-mapoutputs1 = samplerenewaldidinfections(
-    g_seir, analysis1.mapdf, analysis1.data; 
-    mu=0.2, kappa=0.5, repeatsamples=1000
+mapoutputs1 = samplerenewaldidinfections(model, analysis1.mapdf; repeatsamples=1000,)
+mapoutputsquintiles1 = quantilerenewaldidinfections(
+    mapoutputs1, [0.025, 0.05, 0.25, 0.5, 0.75, 0.95, 0.975]
 )
-mapoutputsquintiles1 = quantilerenewaldidinfections(mapoutputs1, [0.025, 0.05, 0.25, 0.5, 0.75, 0.95, 0.975])
 mapoutputplot1 = plotmodel(
     mapoutputsquintiles1, analysis1.data;
-    linewidth=1, interventionlinestyle=(:dot, :dense)
+    linewidth=1, interventionlinestyle=(:dot, :dense), size=(1000, 1000), plotproportions=true,
 )
-mcmctraceplot1 = trplot(analysis1.mcmcdf; ncols=5, nplots=50, size=(1000, 1000))  # examine 50 variables
-mcmcranktraceplot1 = tracerankplot(analysis1.mcmcdf; ncols=5, nplots=50, size=(1000, 1000))  # examine 50 variables
-mcmcoutputs1 = samplerenewaldidinfections(
-    g_seir, analysis1.mcmcdf, analysis1.data; 
-    mu=0.2, kappa=0.5,
-)
+# examine 50 variables:
+mcmctraceplot1 = trplot(analysis1.mcmcdf; ncols=5, nplots=50, size=(1000, 1000))  
+mcmcranktraceplot1 = tracerankplot(analysis1.mcmcdf; ncols=5, nplots=50, size=(1000, 1000)) 
+
+mcmcoutputs1 = samplerenewaldidinfections(model, analysis1.mcmcdf)
 mcmcoutputsquintiles1 = quantilerenewaldidinfections(
     mcmcoutputs1, [0.025, 0.05, 0.25, 0.5, 0.75, 0.95, 0.975]
 )
 mcmcoutputplot1 = plotmodel(
     mcmcoutputsquintiles1, analysis1.data;
-    linewidth=1, interventionlinestyle=(:dot, :dense)
+    linewidth=1, interventionlinestyle=(:dot, :dense), size=(1000, 1000), plotproportions=true
+)
+
+
+# masking data
+
+id = 1
+analysisname = "covidmaskanalysis$id"
+dataname = "covidmaskdata$id"
+
+data = load(datadir("exp_pro", "$dataname.jld2"))["data"]
+model = renewaldid(                      
+    data, 
+    g_covid, 
+    RenewalDiDPriors( ; 
+        alphaprior=Normal(0, 0.5), 
+        sigma_gammaprior=Exponential(0.1),
+        sigma_thetaprior=Exponential(0.025), 
+        psiprior=Beta(10, 10),
+        tauprior=Normal(0, 0.2),
+        delaydistn=LogNormal(log(5), log(2)),
+    );                                            
+)
+
+analysis1 = loadsamples(id; analysisname, data)
+priorstraceplot1 = trplot(analysis1.priorsdf; ncols=5, nplots=50, size=(1000, 1000))
+priorsoutputs1 = samplerenewaldidinfections(model, analysis1.priorsdf)
+priorsoutputsquintiles1 = quantilerenewaldidinfections(
+    priorsoutputs1, [0.025, 0.05, 0.25, 0.5, 0.75, 0.95, 0.975]
+)
+priorsoutputplot1 = plotmodel(
+    priorsoutputsquintiles1, analysis1.data;
+    linewidth=1, interventionlinestyle=(:dot, :dense), size=(1000, 1000), plotproportions=true,
+)
+mapoutputs1 = samplerenewaldidinfections(model, analysis1.mapdf; repeatsamples=1000,)
+mapoutputsquintiles1 = quantilerenewaldidinfections(
+    mapoutputs1, [0.025, 0.05, 0.25, 0.5, 0.75, 0.95, 0.975]
+)
+mapoutputplot1 = plotmodel(
+    mapoutputsquintiles1, analysis1.data;
+    linewidth=1, interventionlinestyle=(:dot, :dense), size=(1000, 1000), plotproportions=true,
+)
+# examine 50 variables:
+mcmctraceplot1 = trplot(analysis1.mcmcdf; ncols=5, nplots=50, size=(1000, 1000))  
+mcmcranktraceplot1 = tracerankplot(analysis1.mcmcdf; ncols=5, nplots=50, size=(1000, 1000)) 
+
+mcmcoutputs1 = samplerenewaldidinfections(model, analysis1.mcmcdf)
+mcmcoutputsquintiles1 = quantilerenewaldidinfections(
+    mcmcoutputs1, [0.025, 0.05, 0.25, 0.5, 0.75, 0.95, 0.975]
+)
+mcmcoutputplot1 = plotmodel(
+    mcmcoutputsquintiles1, analysis1.data;
+    linewidth=1, interventionlinestyle=(:dot, :dense), size=(1000, 1000), #plotproportions=true
+)
+
+
+# testing data
+
+id = 2
+analysisname = "covidtestinganalysis$id"
+dataname = "covidtestingdata$id"
+
+data = load(datadir("exp_pro", "$dataname.jld2"))["data"]
+model = renewaldid(                      
+    data, 
+    g_covid, 
+    RenewalDiDPriors( ; 
+        alphaprior=Normal(0, 0.5), 
+        sigma_gammaprior=Exponential(0.1),
+        sigma_thetaprior=Exponential(0.025), 
+        psiprior=Beta(10, 10),
+        tauprior=Normal(0, 0.2),
+        delaydistn=LogNormal(log(5), log(2)),
+    );                     
+)
+
+analysis1 = loadsamples(id; analysisname, data)
+priorstraceplot1 = trplot(analysis1.priorsdf; ncols=5, nplots=50, size=(1000, 1000))
+priorsoutputs1 = samplerenewaldidinfections(model, analysis1.priorsdf)
+priorsoutputsquintiles1 = quantilerenewaldidinfections(
+    priorsoutputs1, [0.025, 0.05, 0.25, 0.5, 0.75, 0.95, 0.975]
+)
+priorsoutputplot1 = plotmodel(
+    priorsoutputsquintiles1, analysis1.data;
+    linewidth=1, interventionlinestyle=(:dot, :dense), size=(1000, 1000), plotproportions=true,
+)
+mapoutputs1 = samplerenewaldidinfections(model, analysis1.mapdf; repeatsamples=1000,)
+mapoutputsquintiles1 = quantilerenewaldidinfections(
+    mapoutputs1, [0.025, 0.05, 0.25, 0.5, 0.75, 0.95, 0.975]
+)
+mapoutputplot1 = plotmodel(
+    mapoutputsquintiles1, analysis1.data;
+    linewidth=1, interventionlinestyle=(:dot, :dense), size=(1000, 1000), plotproportions=true,
+)
+# examine 50 variables:
+mcmctraceplot1 = trplot(analysis1.mcmcdf; ncols=5, nplots=50, size=(1000, 1000))  
+mcmcranktraceplot1 = tracerankplot(analysis1.mcmcdf; ncols=5, nplots=50, size=(1000, 1000)) 
+
+mcmcoutputs1 = samplerenewaldidinfections(model, analysis1.mcmcdf)
+mcmcoutputsquintiles1 = quantilerenewaldidinfections(
+    mcmcoutputs1, [0.025, 0.05, 0.25, 0.5, 0.75, 0.95, 0.975]
+)
+mcmcoutputplot1 = plotmodel(
+    mcmcoutputsquintiles1, analysis1.data;
+    linewidth=1, interventionlinestyle=(:dot, :dense), size=(1000, 1000),
 )
 
 

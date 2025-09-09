@@ -26,7 +26,7 @@ model = renewaldid(
 )
 
 d = priorsworkflow(model; chain, name="testprior", npriors, priorsseed=id)
-priorsoutputs1 = samplerenewaldidinfections(model, map[1])#d, indexesformap(d[1]5))
+priorsoutputs1 = samplerenewaldidinfections(model, mapoutput[1])#d, indexesformap(d[1]5))
 priorsoutputsquintiles1 = quantilerenewaldidinfections(
     priorsoutputs1, [0.025, 0.05, 0.25, 0.5, 0.75, 0.95, 0.975]
 )
@@ -40,7 +40,7 @@ priorsoutputplot1 = plotmodel(
 indexesformap(d[1], 1)
 
 
-map = maximumlikelihoodworkflow(
+mapoutput = maximumaposterioriworkflow(
         model, d[1]; 
         chain, name="asdf", 
     )

@@ -20,7 +20,7 @@ function _analysisworkflow(
         priorsrng, model; 
         chain, name, kwargs...
     )
-    map_df, map_estimate = maximumlikelihoodworkflow(
+    map_df, map_estimate = maximumaposterioriworkflow(
         model, priorsdf; 
         chain, name, kwargs...
     )
@@ -56,12 +56,6 @@ function _priorsworkflow(
 )
     priorschain = sample(priorsrng, model, Prior(), npriors)
     priorsdf = DataFrame(priorschain)
-  #  if savepriors
-  #      safesave(
-   #         datadir("sims", "$(name)_prior.jld2"), 
-   #         Dict("priorschain" => priorschain, "priorsdf" => priorsdf)
-   #     )
-   # end
     return (priorsdf, priorschain)
 end
 
@@ -89,7 +83,6 @@ end
 function _maximumlikelihoodworkflow(
     model, priorsdf::DataFrame, chain::Integer, name::AbstractString, mapmaxtime::Integer
 )
-
     indexformap = indexesformap(priorsdf, chain)[1]
     initparamslastindex = size(priorsdf, 2) - 3
     initparamsformap = [values(priorsdf[indexformap, 3:initparamslastindex])...]
@@ -112,10 +105,41 @@ end
 
 function __maximumlikelihoodworkflow(map_estimate, chain, name)
     map_df = map_DataFrame(map_estimate)
-   # safesave(
-   #     datadir("sims", "$(name)_map_$chain.jld2"), 
-   #     Dict("mapdf" => map_df)
-   # )
+    return (map_df, map_estimate)
+end
+
+function maximumaposterioriworkflow(
+    model, priorsdf=nothing; 
+    chain, name, mapmaxtime=600, kwargs...
+)
+    return _maximumaposterioriworkflow(model, priorsdf, chain, name, mapmaxtime)
+end
+
+function _maximumaposterioriworkflow(
+    model, priorsdf::DataFrame, chain::Integer, name::AbstractString, mapmaxtime::Integer
+)
+    indexformap = indexesformap(priorsdf, chain)[1]
+    initparamslastindex = size(priorsdf, 2) - 3
+    initparamsformap = [values(priorsdf[indexformap, 3:initparamslastindex])...]
+    map_estimate = maximum_a_posteriori(
+        model; 
+        adtype=AutoReverseDiff(), initial_params=initparamsformap, maxtime=mapmaxtime,
+    )
+    return __maximumaposterioriworkflow(map_estimate, chain, name)
+end
+
+function _maximumaposterioriworkflow(
+    model, ::Nothing, chain::Integer, name::AbstractString, mapmaxtime::Integer
+)
+    map_estimate = maximum_a_posteriori(
+        model; 
+        adtype=AutoReverseDiff(), maxtime=mapmaxtime,
+    )
+    return __maximumaposterioriworkflow(map_estimate, chain, name)
+end
+
+function __maximumaposterioriworkflow(map_estimate, chain, name)
+    map_df = map_DataFrame(map_estimate)
     return (map_df, map_estimate)
 end
 
