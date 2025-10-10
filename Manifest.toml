@@ -1887,11 +1887,11 @@ version = "1.0.1"
 
 [[deps.RenewalDiD]]
 deps = ["Compat", "DataFrames", "DynamicPPL", "NaNMath", "PrettyTables", "Random", "StatsBase", "Turing"]
-git-tree-sha1 = "123859049675dd9e4021d99375891215c50fa0a0"
+git-tree-sha1 = "d726bb7b69091a61817a4c84f5e2cf9bb83badf1"
 repo-rev = "main"
 repo-url = "https://github.com/markgpritchard/RenewalDiD.jl"
 uuid = "168ba0f3-27c8-4f61-a62a-678154ba4d3f"
-version = "0.0.1-DEV24"
+version = "0.0.1-DEV25"
 weakdeps = ["Makie"]
 
     [deps.RenewalDiD.extensions]
