@@ -1,10 +1,9 @@
 """ 
-    formataxis!(axis::Axis, width = 800; <keyword arguments>)
-    formataxis!(axis::Axis3, width = 800; setorigin = false)
-    formataxis!(cb::Colorbar, width = 800; horizontal = false)
-    formataxis!(label::Label, width = 800)
-    formataxis!(legend::Legend, width = 800; horizontal = true)
-    formataxis!(axes::Array, args...; kwargs...)
+    formataxis!(axis::Axis; <keyword arguments>)
+    formataxis!(cb::Colorbar; horizontal=false)
+    formataxis!(label::Label)
+    formataxis!(legend::Legend; horizontal=true)
+    formataxis!(axes::Array; <keyword arguments>)
 
 Apply consistent formatting to components of figures.
 
@@ -56,40 +55,25 @@ function formataxis!(
     axis.yticklabelsize = 10
     axis.titlealign = :left
     axis.titlesize = 12
-    if setorigin 
-        setorigin!(axis) 
-    end 
+    setorigin && setorigin!(axis) 
     setvalue!(axis, setpoint)
-    if hidex 
-        hidexdecorations!(axis; ticks=hidexticks) 
-    end
-    if hidey 
-        hideydecorations!(axis; ticks=hideyticks) 
-    end 
-    return nothing
+    hidex && hidexdecorations!(axis; ticks=hidexticks) 
+    hidey && hideydecorations!(axis; ticks=hideyticks)  
+    return axis
 end 
 
-function formataxis!(legend::Legend; horizontal=true, titleposition=automatic)
+function formataxis!(legend::Legend; horizontal=true, titleposition=RenewalDiD.automatic)
     legend.framevisible = false
+    legend.titleposition = _legendtitleposition(titleposition, horizontal)
     legend.labelsize = 10
     legend.titlesize = 10
     legend.patchsize = (20, 20)
     if horizontal
         legend.orientation = :horizontal
-        if titleposition == automatic
-            legend.titleposition = :left
-        else
-            legend.titleposition = titleposition 
-        end
     else 
         legend.margin = (10, 10, 10, 10)
-        if titleposition == automatic
-            legend.titleposition = :top
-        else
-            legend.titleposition = titleposition 
-        end
     end 
-    return nothing
+    return legend
 end 
 
 function formataxis!(cb::Colorbar; horizontal=false)
@@ -100,7 +84,7 @@ function formataxis!(cb::Colorbar; horizontal=false)
     else 
         cb.width = 10 
     end
-    return nothing
+    return cb
 end 
 
 formataxis!(label::Label) = label.fontsize = 12 
@@ -109,7 +93,11 @@ function formataxis!(axes::AbstractArray; kwargs...)
     for ax ∈ axes 
         formataxis!(ax; kwargs...) 
     end 
+    return nothing
 end 
+
+_legendtitleposition(titleposition::Symbol, ::Any) = titleposition 
+_legendtitleposition(::RenewalDiD.Automatic, horizontal) = horizontal ? :left : :top
 
 """
     setvalue!(axis, <additional arguments>)
@@ -127,18 +115,20 @@ For an `Axis3`, the `z` value may be provided alone, which assumes `x = y = 0`.
 
 """
 setvalue!(axis::Axis, y::Real=0) = setvalue!(axis, 0, y)
-setvalue!(axis::Axis, x, y) = scatter!(axis, [ x ], [ y ]; markersize=0)
+setvalue!(axis::Axis, x, y) = scatter!(axis, [x], [y]; markersize=0)
 setvalue!(::Any, ::Nothing) = nothing 
 setvalue!(axis, xy::Tuple) = setvalue!(axis, xy...)
 setorigin!(axis) = setvalue!(axis)
 
-# Function to hide spines. Not exported.
-
-_formataxishidespines!(axis, hidespines::Nothing) = nothing
+# hide spines
+_formataxishidespines!(::Any, ::Nothing) = nothing
 _formataxishidespines!(axis, hidespines::Symbol) = hidespines!(axis, hidespines)
 
 function _formataxishidespines!(axis, hidespines::T) where T <: Union{<:AbstractArray, <:Tuple}
-    for d ∈ hidespines hidespines!(axis, d) end
+    for d ∈ hidespines 
+        hidespines!(axis, d) 
+    end
+    return nothing
 end 
 
 """ 
@@ -164,41 +154,46 @@ function labelplots!(labels, layouts; cols=0, rows=0, kwargs...)
     return _labelplots!(labels, layouts, rows, cols; kwargs...)
 end 
 
-function _labelplots!(labels::Vector{String}, layouts, rows::Int, cols; kwargs...)
-    rowvector=(zeros(Int, length(labels)) .+ rows) 
+function _labelplots!(
+    labels::Vector{String}, layouts, rows::T, cols; 
+    kwargs...
+) where T <: Integer
+    rowvector=(zeros(T, length(labels)) .+ rows) 
     return _labelplots!(labels, layouts, rowvector, cols; kwargs...)
 end 
 
 function _labelplots!(
-    labels::Vector{String}, layouts, rows::Vector{<:Int}, cols::Int; 
+    labels::Vector{String}, layouts, rows::Vector{<:Integer}, cols::T; 
     kwargs...
-)
-    colvector = zeros(Int, length(labels)) .+ cols 
+) where T <: Integer
+    colvector = zeros(T, length(labels)) .+ cols 
     return _labelplots!(labels, layouts, rows, colvector; kwargs...)
 end 
 
 function _labelplots!(
-    labels::Vector{String}, layouts::Vector, rows::Vector{<:Int}, cols::Vector{<:Int};
+    labels::Vector{String}, layouts::Vector, rows::Vector{<:Integer}, cols::Vector{<:Integer};
     kwargs...
 )
     @assert length(labels) == length(layouts)
-    for (row, col, label, layout) ∈ zip(rows, cols, labels, layouts)
+    for (row, col, label, layout) in zip(rows, cols, labels, layouts)
         _labelplots!(label, layout, row, col; kwargs...)
     end 
+    return nothing
 end
 
 function _labelplots!(
-    labels::Vector{String}, layout, rows::Vector{<:Int}, cols::Vector{<:Int};
+    labels::Vector{String}, layout, rows::Vector{<:Integer}, cols::Vector{<:Integer};
     kwargs...
 )
-    for (row, col, label) ∈ zip(rows, cols, labels)
+    for (row, col, label) in zip(rows, cols, labels)
         _labelplots!(label, layout, row, col; kwargs...)
     end 
+    return nothing
 end
 
 function _labelplots!(
-    label::String, layout, row::Int, col::Int;
-    font="TeX Gyre Heros Bold", fontsize=14, halign=:left, padding=( 0, 5, 5, 0 )
+    label::String, layout, row::Integer, col::Integer;
+    font="TeX Gyre Heros Bold", fontsize=14, halign=:left, padding=(0, 5, 5, 0)
 )
-    Label(layout[row, col, TopLeft()], label; font, fontsize, halign, padding)
+    return Label(layout[row, col, TopLeft()], label; font, fontsize, halign, padding)
 end 

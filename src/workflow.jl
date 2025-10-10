@@ -46,7 +46,10 @@ function priorsworkflow(model; priorsseed=nothing, kwargs...)
     return priorsworkflow(priorsrng, model; kwargs...)
 end
 
-function priorsworkflow(priorsrng::AbstractRNG, model; chain, name, npriors=10_000, kwargs...)
+function priorsworkflow(
+    priorsrng::AbstractRNG, model; 
+    chain, name, npriors=10_000, kwargs...
+)
     return _priorsworkflow(priorsrng, model, chain, name, npriors; kwargs...)
 end
 
@@ -88,7 +91,9 @@ function _maximumlikelihoodworkflow(
     initparamsformap = [values(priorsdf[indexformap, 3:initparamslastindex])...]
     map_estimate = maximum_likelihood(
         model; 
-        adtype=AutoReverseDiff(), initial_params=initparamsformap, maxtime=mapmaxtime,
+        adtype=AutoReverseDiff(; compile=Val(true)), 
+        initial_params=initparamsformap, 
+        maxtime=mapmaxtime,
     )
     return __maximumlikelihoodworkflow(map_estimate, chain, name)
 end
@@ -98,7 +103,7 @@ function _maximumlikelihoodworkflow(
 )
     map_estimate = maximum_likelihood(
         model; 
-        adtype=AutoReverseDiff(), maxtime=mapmaxtime,
+        adtype=AutoReverseDiff(; compile=Val(true)), maxtime=mapmaxtime,
     )
     return __maximumlikelihoodworkflow(map_estimate, chain, name)
 end
@@ -123,7 +128,9 @@ function _maximumaposterioriworkflow(
     initparamsformap = [values(priorsdf[indexformap, 3:initparamslastindex])...]
     map_estimate = maximum_a_posteriori(
         model; 
-        adtype=AutoReverseDiff(), initial_params=initparamsformap, maxtime=mapmaxtime,
+        adtype=AutoReverseDiff(; compile=Val(true)), 
+        initial_params=initparamsformap, 
+        maxtime=mapmaxtime,
     )
     return __maximumaposterioriworkflow(map_estimate, chain, name)
 end
@@ -133,7 +140,7 @@ function _maximumaposterioriworkflow(
 )
     map_estimate = maximum_a_posteriori(
         model; 
-        adtype=AutoReverseDiff(), maxtime=mapmaxtime,
+        adtype=AutoReverseDiff(; compile=Val(true)), maxtime=mapmaxtime,
     )
     return __maximumaposterioriworkflow(map_estimate, chain, name)
 end
@@ -167,7 +174,10 @@ function _mcmcworkflow(
     name::AbstractString
 )
     mcmcchain = sample(
-        samplerng, model, NUTS(acceptancedelta; adtype=AutoReverseDiff()), nsamples; 
+        samplerng, 
+        model, 
+        NUTS(acceptancedelta; adtype=AutoReverseDiff(; compile=Val(true))), 
+        nsamples; 
         initial_params=map_estimate.values.array
     ) 
     return __mcmcworkflow(mcmcchain, nsamples, chain, name)
@@ -183,7 +193,10 @@ function _mcmcworkflow(
     name::AbstractString
 )
     mcmcchain = sample(
-        samplerng, model, NUTS(acceptancedelta; adtype=AutoReverseDiff()), nsamples; 
+        samplerng, 
+        model, 
+        NUTS(acceptancedelta; adtype=AutoReverseDiff(; compile=Val(true))), 
+        nsamples; 
     ) 
     return __mcmcworkflow(mcmcchain, nsamples, chain, name)
 end
@@ -210,11 +223,14 @@ function _loadsamples(
     id, analysisname; 
     data=load(simulationdir("sim$(id).jld2"))["sim"], 
     nchains=8, 
-    nsamples=[25, 100, 1000, 2000]
+    nsamples=[25, 100, 1000, 2000],
+    initchain=1,
 )
-    initnsamples = _initnsamples(analysisname, nsamples)
+    initnsamples = _initnsamples(analysisname, nsamples; chain=initchain)
     initnsamples == 0 && return nothing 
-    samples1 = load(datadir("sims", "$(analysisname)_results_1_$(initnsamples)samples.jld2"))
+    samples1 = load(
+        datadir("sims", "$(analysisname)_results_$(initchain)_$(initnsamples)samples.jld2")
+    )
     priorsdf = samples1["priorsdf"]
     mapdf = samples1["mapdf"]
     mcmcdf = samples1["mcmcdf"]
@@ -229,12 +245,12 @@ function _loadsamples(
     return @ntuple priorsdf mapdf mcmcdf data
 end
 
-function _initnsamples(analysisname, nsamples)
+function _initnsamples(analysisname, nsamples; chain=1)
     reversensamples = sort(nsamples; rev=true)
     initnsamples = 0 
     for s in reversensamples
         initnsamples > 0 && continue
-        if isfile(datadir("sims", "$(analysisname)_results_1_$(s)samples.jld2"))
+        if isfile(datadir("sims", "$(analysisname)_results_$(chain)_$(s)samples.jld2"))
             initnsamples += s
         end
     end

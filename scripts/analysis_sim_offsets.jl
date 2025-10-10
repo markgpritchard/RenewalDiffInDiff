@@ -17,26 +17,28 @@ id = 1; chain = 1; npriors = 1000; mapmaxtime = 60; nsamples = 25;
 
 sampleseed = 1000 * id + chain
 
-_sim = load(simulationdir("sim$id.jld2"))["sim"]
-interventions = addoffsetstointerventionarray(_sim.interventions)
-sim = RenewalDiDData( ;
-    observedcases=_sim.observedcases, 
-    interventions, 
-    Ns=_sim.Ns, 
-    exptdseedcases=_sim.exptdseedcases, 
-    id="$(_sim.id)leadlag"
-)
+sim = let
+    initsim = load(simulationdir("sim$id.jld2"))["sim"]
+    offsetinterventions = addoffsetstointerventionarray(initsim.interventions)
+    RenewalDiDData( ;
+        observedcases=initsim.observedcases, 
+        interventions=offsetinterventions, 
+        Ns=initsim.Ns, 
+        exptdseedcases=initsim.exptdseedcases, 
+        id="$(initsim.id)leadlag"
+    )
+end
 
 model = renewaldid(                      
     sim, 
     g_seir, 
     RenewalDiDPriors( ; 
         alphaprior=Normal(log(2), 1), 
-        mu_delayprior=log(5),
         sigma_gammaprior=Exponential(0.2),
         sigma_thetaprior=Exponential(0.075), 
-        psiprior=Beta(8, 2),
+        psiprior=Beta(16, 4),
         tauprior=Normal(0, 0.2),
+        delaydistn=Exponential(1 / 0.3),
     );                          
     mu=0.2, kappa=0.5,               
 )

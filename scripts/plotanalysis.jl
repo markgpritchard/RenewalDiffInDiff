@@ -8,7 +8,7 @@ using RenewalDiD.Plotting
 
 # simulations 
 
-id = 4 
+id = 14 
 
 data = load(simulationdir("sim$(id).jld2"))["sim"]
 model = renewaldid(                      
@@ -59,7 +59,7 @@ mcmcoutputplot1 = plotmodel(
 
 # masking data
 
-id = 1
+id = 8
 analysisname = "covidmaskanalysis$id"
 dataname = "covidmaskdata$id"
 
