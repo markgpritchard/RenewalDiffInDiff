@@ -29,7 +29,9 @@ model = renewaldid(
         tauprior=Normal(0, 0.2),
         delaydistn=Exponential(1 / 0.3),
     );                          
-    mu=0.2, kappa=0.5,               
+    mu=0.2, 
+    kappa=0.5,
+    thetainterval=7,
 )
 
 analysis = analysisworkflow(

@@ -28,7 +28,8 @@ model = renewaldid(
         psiprior=Beta(10, 10),
         tauprior=Normal(0, 0.2),
         delaydistn=LogNormal(log(5), log(2)),
-    );                          
+    );
+    thetainterval=7,                
 )
 
 analysis = analysisworkflow(
