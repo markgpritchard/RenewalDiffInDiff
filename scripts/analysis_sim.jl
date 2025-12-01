@@ -116,7 +116,7 @@ predictionquantiles = quantilerenewaldidinfections(
     predmodel, predictions, [0.025, 0.05, 0.25, 0.5, 0.75, 0.95, 0.975]
 )
 predictionquantilesr0 = quantilerenewaldidinfections(
-    predmodel, predictions, [0.025, 0.05, 0.25, 0.5, 0.75, 0.95, 0.975]
+    predmodel, predictionsr0, [0.025, 0.05, 0.25, 0.5, 0.75, 0.95, 0.975]
 )
 fittedplot = plotmodel(
     predictionquantilesr0, predictionquantiles, sim; 
