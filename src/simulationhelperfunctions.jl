@@ -19,7 +19,7 @@ function simu0(rng::AbstractRNG, population::Integer, proportionexposed::Float64
 end
 
 function simu0(::AbstractRNG, population::Integer, numberexposed::Integer)
-    return simulationu0(; s=(population - numberexposed), e=numberexposed)
+    return simulationu0(; S=(population - numberexposed), E=numberexposed)
 end
 
 function _propexposederror(proportionexposed)

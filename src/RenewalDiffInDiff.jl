@@ -3,7 +3,7 @@
 module RenewalDiffInDiff
 
 import CSV
-import ReverseDiff
+import Mooncake
 
 using CairoMakie: Axis, Colorbar, Label, Legend, TopLeft
 using CairoMakie: hidespines!, hidexdecorations!, hideydecorations!, scatter!
@@ -12,11 +12,9 @@ using Dates: Date
 using Distributions: Binomial, Distribution, Uniform
 using DrWatson: @ntuple, datadir, load, safesave
 using Random: AbstractRNG, Xoshiro, default_rng
-using RenewalDiD: RenewalDiD, InterventionArray, InterventionMatrix
-using RenewalDiD: map_DataFrame, simulationu0
+using RenewalDiD: RenewalDiD, InterventionArray, InterventionMatrix, simulationu0
 using StatsBase: ordinalrank, sample
-using Turing: AutoReverseDiff, MCMCThreads, NUTS, Prior
-using Turing: maximum_a_posteriori, maximum_likelihood 
+using Turing: AutoMooncake, MCMCThreads, NUTS, Prior
 
 export simulationdir
 # consts.jl

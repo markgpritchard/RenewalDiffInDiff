@@ -91,7 +91,7 @@ function _maximumlikelihoodworkflow(
     initparamsformap = [values(priorsdf[indexformap, 3:initparamslastindex])...]
     map_estimate = maximum_likelihood(
         model; 
-        adtype=AutoReverseDiff(; compile=Val(true)), 
+        adtype=AutoMooncake(), 
         initial_params=initparamsformap, 
         maxtime=mapmaxtime,
     )
@@ -103,7 +103,7 @@ function _maximumlikelihoodworkflow(
 )
     map_estimate = maximum_likelihood(
         model; 
-        adtype=AutoReverseDiff(; compile=Val(true)), maxtime=mapmaxtime,
+        adtype=AutoMooncake(), maxtime=mapmaxtime,
     )
     return __maximumlikelihoodworkflow(map_estimate, chain, name)
 end
@@ -128,7 +128,7 @@ function _maximumaposterioriworkflow(
     initparamsformap = [values(priorsdf[indexformap, 3:initparamslastindex])...]
     map_estimate = maximum_a_posteriori(
         model; 
-        adtype=AutoReverseDiff(; compile=Val(true)), 
+        adtype=AutoMooncake(), 
         initial_params=initparamsformap, 
         maxtime=mapmaxtime,
     )
@@ -140,7 +140,7 @@ function _maximumaposterioriworkflow(
 )
     map_estimate = maximum_a_posteriori(
         model; 
-        adtype=AutoReverseDiff(; compile=Val(true)), maxtime=mapmaxtime,
+        adtype=AutoMooncake(), maxtime=mapmaxtime,
     )
     return __maximumaposterioriworkflow(map_estimate, chain, name)
 end
@@ -176,7 +176,7 @@ function _mcmcworkflow(
     mcmcchain = sample(
         samplerng, 
         model, 
-        NUTS(acceptancedelta; adtype=AutoReverseDiff(; compile=Val(true))), 
+        NUTS(acceptancedelta; adtype=AutoMooncake()), 
         nsamples; 
         initial_params=map_estimate.values.array
     ) 
@@ -195,7 +195,7 @@ function _mcmcworkflow(
     mcmcchain = sample(
         samplerng, 
         model, 
-        NUTS(acceptancedelta; adtype=AutoReverseDiff(; compile=Val(true))), 
+        NUTS(acceptancedelta; adtype=AutoMooncake()), 
         nsamples; 
     ) 
     return __mcmcworkflow(mcmcchain, nsamples, chain, name)
