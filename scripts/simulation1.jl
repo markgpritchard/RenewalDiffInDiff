@@ -20,8 +20,12 @@ sim1 = let
     eta = 0.2
     sigma = 0.5
     phi = 0.8
-    betas_a = repeat([2 * eta]; inner=2)
-    betas_b = [betas_a[1], t -> betas_a[2] * (t < 50 ? 1 : 0.8)]
+    beta1 = x -> 0.4 + 0.02 * cos(x * 2pi / 365)
+    beta2ratio = rand(rng, Uniform(0.9, 1.1))
+    beta2_a = x -> beta2ratio * beta1(x)
+    beta2_b = x -> beta2_a(x) * (x < 50 ? 1 : 0.8)
+    betas_a = [beta1, beta2_a]
+    betas_b = [beta1, beta2_b]
     s1a = packsimulationtuple( ; 
         u0=u0s[1], beta=betas_a[1], sigma, eta, phi, intervention=nothing,
     )
