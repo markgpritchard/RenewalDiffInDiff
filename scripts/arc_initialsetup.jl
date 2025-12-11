@@ -2,7 +2,7 @@
 using Pkg
 
 Pkg.status()
-Pkg.add(Pkg.PackageSpec(; name="DrWatson", version="2.19.0"))
+Pkg.add(Pkg.PackageSpec(; name="DrWatson", version="2.19.1"))
 
 using DrWatson 
 
