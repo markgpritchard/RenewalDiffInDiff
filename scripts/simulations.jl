@@ -235,7 +235,7 @@ sim6 = let
     betas_a = [beta1, beta2, beta3_a, beta4_a]
     betas_b = [beta1, beta2, beta3_b, beta4_b]
     s1a = packsimulationtuple( ; 
-        u0=u0s[1], beta=betas_a[1], sigma, eta, phi, intervention=nothing,
+        u0=u0s[1], beta=betas_a[1], sigma, eta, phi, intervention=[nothing, nothing],
     )
     s2a = packsimulationtuple( ; 
         u0=u0s[2], beta=betas_a[2], sigma, eta, phi, intervention=[nothing, 75],
@@ -251,16 +251,16 @@ sim6 = let
         id="sim6a", minvalue=0.5, sampletime=10,
     )
     s1b = packsimulationtuple( ; 
-        u0=u0s[1], beta=betas_b[1], sigma, eta, phi, intervention=nothing,
+        u0=u0s[1], beta=betas_b[1], sigma, eta, phi, intervention=[nothing, nothing],
     )
     s2b = packsimulationtuple( ; 
-        u0=u0s[2], beta=betas_b[2], sigma, eta, phi, intervention=nothing,
+        u0=u0s[2], beta=betas_b[2], sigma, eta, phi, intervention=[nothing, 75],
     )
     s3b = packsimulationtuple( ; 
-        u0=u0s[3], beta=betas_b[3], sigma, eta, phi, intervention=40,
+        u0=u0s[3], beta=betas_b[3], sigma, eta, phi, intervention=[60, nothing],
     )
     s4b = packsimulationtuple( ; 
-        u0=u0s[4], beta=betas_b[4], sigma, eta, phi, intervention=65,
+        u0=u0s[4], beta=betas_b[4], sigma, eta, phi, intervention=[45, 65],
     )
     simb = packsimulations(
         rngb, 100, s1b, s2b, s3b, s4b; 
@@ -294,7 +294,7 @@ sim7 = let
     betas_a = [beta1, beta2, beta3_a, beta4_a]
     betas_b = [beta1, beta2, beta3_b, beta4_b]
     s1a = packsimulationtuple( ; 
-        u0=u0s[1], beta=betas_a[1], sigma, eta, phi, intervention=nothing,
+        u0=u0s[1], beta=betas_a[1], sigma, eta, phi, intervention=[nothing, nothing],
     )
     s2a = packsimulationtuple( ; 
         u0=u0s[2], beta=betas_a[2], sigma, eta, phi, intervention=[nothing, 75],
@@ -310,16 +310,16 @@ sim7 = let
         id="sim7a", minvalue=0.5, sampletime=10,
     )
     s1b = packsimulationtuple( ; 
-        u0=u0s[1], beta=betas_b[1], sigma, eta, phi, intervention=nothing,
+        u0=u0s[1], beta=betas_b[1], sigma, eta, phi, intervention=[nothing, nothing],
     )
     s2b = packsimulationtuple( ; 
-        u0=u0s[2], beta=betas_b[2], sigma, eta, phi, intervention=nothing,
+        u0=u0s[2], beta=betas_b[2], sigma, eta, phi, intervention=[nothing, 75],
     )
     s3b = packsimulationtuple( ; 
-        u0=u0s[3], beta=betas_b[3], sigma, eta, phi, intervention=40,
+        u0=u0s[3], beta=betas_b[3], sigma, eta, phi, intervention=[60, nothing],
     )
     s4b = packsimulationtuple( ; 
-        u0=u0s[4], beta=betas_b[4], sigma, eta, phi, intervention=65,
+        u0=u0s[4], beta=betas_b[4], sigma, eta, phi, intervention=[45, 65],
     )
     simb = packsimulations(
         rngb, 100, s1b, s2b, s3b, s4b; 
@@ -353,7 +353,7 @@ sim8 = let
     betas_a = [beta1, beta2, beta3_a, beta4_a]
     betas_b = [beta1, beta2, beta3_b, beta4_b]
     s1a = packsimulationtuple( ; 
-        u0=u0s[1], beta=betas_a[1], sigma, eta, phi, intervention=nothing,
+        u0=u0s[1], beta=betas_a[1], sigma, eta, phi, intervention=[nothing, nothing],
     )
     s2a = packsimulationtuple( ; 
         u0=u0s[2], beta=betas_a[2], sigma, eta, phi, intervention=[nothing, 75],
@@ -369,16 +369,16 @@ sim8 = let
         id="sim8a", minvalue=0.5, sampletime=10,
     )
     s1b = packsimulationtuple( ; 
-        u0=u0s[1], beta=betas_b[1], sigma, eta, phi, intervention=nothing,
+        u0=u0s[1], beta=betas_b[1], sigma, eta, phi, intervention=[nothing, nothing],
     )
     s2b = packsimulationtuple( ; 
-        u0=u0s[2], beta=betas_b[2], sigma, eta, phi, intervention=nothing,
+        u0=u0s[2], beta=betas_b[2], sigma, eta, phi, intervention=[nothing, 75],
     )
     s3b = packsimulationtuple( ; 
-        u0=u0s[3], beta=betas_b[3], sigma, eta, phi, intervention=40,
+        u0=u0s[3], beta=betas_b[3], sigma, eta, phi, intervention=[60, nothing],
     )
     s4b = packsimulationtuple( ; 
-        u0=u0s[4], beta=betas_b[4], sigma, eta, phi, intervention=65,
+        u0=u0s[4], beta=betas_b[4], sigma, eta, phi, intervention=[45, 65],
     )
     simb = packsimulations(
         rngb, 100, s1b, s2b, s3b, s4b; 

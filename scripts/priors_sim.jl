@@ -52,6 +52,7 @@ model = renewaldid(
     mu=0.2, 
     kappa=0.5,
     thetainterval,
+    Ns=nothing
 )
 
 priorsamples = sample(priorsrng, model, Prior(), npriors)
