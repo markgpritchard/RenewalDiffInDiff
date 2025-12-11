@@ -8,7 +8,7 @@ using Turing
 using AdvancedHMC
 
 id = parse(Int, ARGS[1])  # simulation number (1:8)
-modeltype = parse(Int, ARGS[2])  # without or with effective intervention
+modeltype = parse(Int, ARGS[2])  # not used with data
 chain = parse(Int, ARGS[3])
 thetainterval = parse(Int, ARGS[4])
 nsamples = parse(Int, ARGS[5])
@@ -24,23 +24,19 @@ id = 1; modeltype = 1; chain = 1; thetainterval = 7; nsamples = 1000; psi_beta_1
 id = 1; modeltype = 2; chain = 1; thetainterval = 7; nsamples = 1000; psi_beta_1 = 16; psi_beta_2 = 4;
 =#
 
-@info "running file analysis_sim.jl, with parameters id = $id; modeltype = $modeltype; \
+@info "running file analysis_ukdata.jl, with parameters id = $id; \
     chain = $chain; thetainterval = $thetainterval; nsamples = $nsamples; \
     psi_beta_1 = $psi_beta_1; psi_beta_2 = $psi_beta_2"
 
-samplesrng = Xoshiro(1000 * id + chain)
+samplesrng = Xoshiro(2000 * id + chain)
 
-if modeltype == 1 
-    sim = load(simulationdir("sim$id.jld2"))["sim"].sima
-else 
-    sim = load(simulationdir("sim$id.jld2"))["sim"].simb
-end
+data = load(datadir("exp_pro", "covidmaskdata$id.jld2"))["data"]
 
-filename = "sim$(id)_model$(modeltype)_chain$(chain)_thetainterval$(thetainterval)_samples$(nsamples).jld2"
+filename = "ukmaskdata$(id)_model$(modeltype)_chain$(chain)_thetainterval$(thetainterval)_samples$(nsamples).jld2"
 
 model = renewaldid(                      
-    sim, 
-    g_seir, 
+    data, 
+    g_covid, 
     RenewalDiDPriors( ; 
         alphaprior=Normal(log(2), 1), 
         sigma_gammaprior=Exponential(0.2),
@@ -49,12 +45,9 @@ model = renewaldid(
         tauprior=Normal(0, 0.2),
         delaydistn=Exponential(1 / 0.3),
     );                          
-    mu=0.2, 
-    kappa=0.5,
     thetainterval,
     Ns=nothing
 )
-
 
 samples = sample(
     samplesrng, model, externalsampler(AdvancedHMC.NUTS(0.9; )), nsamples; 
