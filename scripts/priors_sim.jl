@@ -24,6 +24,10 @@ id = 1; modeltype = 1; chain = 1; thetainterval = 7; npriors = 1000; psi_beta_1 
 id = 1; modeltype = 2; chain = 1; thetainterval = 7; npriors = 1000; psi_beta_1 = 16; psi_beta_2 = 4;
 =#
 
+@info "running file prior_sim.jl, with parameters id = $id; modeltype = $modeltype; \
+    chain = $chain; thetainterval = $thetainterval; npriors = $npriors; \
+    psi_beta_1 = $psi_beta_1; psi_beta_2 = $psi_beta_2"
+
 priorsrng = Xoshiro(1000 * id + chain) 
 
 if modeltype == 1 
@@ -32,7 +36,7 @@ else
     sim = load(simulationdir("sim$id.jld2"))["sim"].simb
 end
 
-filename = "sim$(id)_model$(modeltype)_chain$(chain)_thetainterval$(thetainterval)_samples$(nsamples).jld2"
+filename = "sim$(id)_model$(modeltype)_chain$(chain)_thetainterval$(thetainterval)_priors$(npriors).jld2"
 
 model = renewaldid(                      
     sim, 
@@ -51,3 +55,8 @@ model = renewaldid(
 )
 
 priorsamples = sample(priorsrng, model, Prior(), npriors)
+
+safesave(
+    datadir("sims", filename), 
+    Dict("priorsamples" => priorsamples, "rng" => priorsrng)
+)

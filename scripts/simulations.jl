@@ -154,7 +154,7 @@ safesave(simulationdir("sim4.jld2"), Dict("sim" => sim4))
 
 ## Simulation 5:
 # as in simulation 3 but with four groups, two of which have the intervention
-sim4 = let 
+sim5 = let 
     rng = Xoshiro(5)
     rnga = Xoshiro(5)
     rngb = Xoshiro(5)
