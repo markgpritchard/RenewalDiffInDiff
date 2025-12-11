@@ -4,15 +4,11 @@ using DrWatson
 
 using RenewalDiD
 using Random
-#using LineSearches
-#using Optim
 using Turing
-#using PosteriorStats
-#using InferenceObjects
 using AdvancedHMC
 
-id = parse(Int, ARGS[1])
-modeltype = parse(Int, ARGS[2])
+id = parse(Int, ARGS[1])  # simulation number (1:8)
+modeltype = parse(Int, ARGS[2])  # without or with effective intervention
 chain = parse(Int, ARGS[3])
 thetainterval = parse(Int, ARGS[4])
 npriors = parse(Int, ARGS[5])
@@ -27,7 +23,7 @@ id = 1; modeltype = 1; chain = 1; thetainterval = 7; npriors = 1000; nsamples = 
 id = 1; modeltype = 2; chain = 1; thetainterval = 7; npriors = 1000; nsamples = 1000;
 =#
 
-priorsrng = Xoshiro(id) 
+priorsrng = Xoshiro(1000 * id + chain) 
 samplesrng = Xoshiro(1000 * id + chain)
 
 if modeltype == 1 

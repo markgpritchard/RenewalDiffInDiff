@@ -82,7 +82,7 @@ safesave(simulationdir("sim2.jld2"), Dict("sim" => sim2))
 
 ## Simulation 3:
 # as in simulation 2 but smaller proportion detected
-sim2 = let 
+sim3 = let 
     rng = Xoshiro(3)
     rnga = Xoshiro(3)
     rngb = Xoshiro(3)
