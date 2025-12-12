@@ -695,9 +695,9 @@ version = "2.19.1"
 
 [[deps.DynamicPPL]]
 deps = ["ADTypes", "AbstractMCMC", "AbstractPPL", "Accessors", "BangBang", "Bijectors", "Chairmarks", "Compat", "ConstructionBase", "DifferentiationInterface", "Distributions", "DocStringExtensions", "InteractiveUtils", "LinearAlgebra", "LogDensityProblems", "MacroTools", "OrderedCollections", "Printf", "Random", "Statistics", "Test"]
-git-tree-sha1 = "b87bc878118011066248821177ba26b62a999248"
+git-tree-sha1 = "8ac86fccee14ea5ff3dc4cd906aa74e5f3aaefab"
 uuid = "366bfd00-2699-11ea-058f-f148b4cae6d8"
-version = "0.39.1"
+version = "0.39.2"
 
     [deps.DynamicPPL.extensions]
     DynamicPPLChainRulesCoreExt = ["ChainRulesCore"]
@@ -1969,11 +1969,11 @@ version = "1.0.1"
 
 [[deps.RenewalDiD]]
 deps = ["Compat", "DataFrames", "Distributions", "DistributionsAD", "DynamicPPL", "MCMCChains", "NaNMath", "PrettyTables", "Random", "StatsBase"]
-git-tree-sha1 = "3788e67d8989fc62c8c9c92dce67604e843d32af"
+git-tree-sha1 = "f855a3d351b73122b64086db47f21bb37a9e1731"
 repo-rev = "main"
 repo-url = "https://github.com/markgpritchard/RenewalDiD.jl"
 uuid = "168ba0f3-27c8-4f61-a62a-678154ba4d3f"
-version = "0.0.2-DEV15"
+version = "0.0.2-DEV16"
 
     [deps.RenewalDiD.extensions]
     RenewalDiDMakieExt = "Makie"

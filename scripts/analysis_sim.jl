@@ -45,7 +45,7 @@ model = renewaldid(
         alphaprior=Normal(log(2), 1), 
         sigma_gammaprior=Exponential(0.2),
         sigma_thetaprior=Exponential(0.075), 
-        psiprior=Beta(16, 4),
+        psiprior=Beta(psi_beta_1, psi_beta_2),
         tauprior=Normal(0, 0.2),
         delaydistn=Exponential(1 / 0.3),
     );                          
