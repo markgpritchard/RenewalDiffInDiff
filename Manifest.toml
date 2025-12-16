@@ -2,7 +2,7 @@
 
 julia_version = "1.12.0"
 manifest_format = "2.0"
-project_hash = "6a52323b97b108e087f097c60bfe3919787b6a85"
+project_hash = "37c1986628c18de04d4b7fc2c31fb3b218bb43a2"
 
 [[deps.ADTypes]]
 git-tree-sha1 = "8b2b045b22740e4be20654175cc38291d48539db"
@@ -695,9 +695,9 @@ version = "2.19.1"
 
 [[deps.DynamicPPL]]
 deps = ["ADTypes", "AbstractMCMC", "AbstractPPL", "Accessors", "BangBang", "Bijectors", "Chairmarks", "Compat", "ConstructionBase", "DifferentiationInterface", "Distributions", "DocStringExtensions", "InteractiveUtils", "LinearAlgebra", "LogDensityProblems", "MacroTools", "OrderedCollections", "Printf", "Random", "Statistics", "Test"]
-git-tree-sha1 = "8ac86fccee14ea5ff3dc4cd906aa74e5f3aaefab"
+git-tree-sha1 = "d88519865d90a3c4c7bbda8c879bd168da7c4e4f"
 uuid = "366bfd00-2699-11ea-058f-f148b4cae6d8"
-version = "0.39.2"
+version = "0.39.4"
 
     [deps.DynamicPPL.extensions]
     DynamicPPLChainRulesCoreExt = ["ChainRulesCore"]
@@ -1969,11 +1969,11 @@ version = "1.0.1"
 
 [[deps.RenewalDiD]]
 deps = ["Compat", "DataFrames", "Distributions", "DistributionsAD", "DynamicPPL", "MCMCChains", "NaNMath", "PrettyTables", "Random", "StatsBase"]
-git-tree-sha1 = "087ae56fa5b92d76a69a1ce89db7ad7f2e90c8f9"
+git-tree-sha1 = "ab9d6a99f4a24f19545927aa105688c0e2cba2e4"
 repo-rev = "main"
 repo-url = "https://github.com/markgpritchard/RenewalDiD.jl"
 uuid = "168ba0f3-27c8-4f61-a62a-678154ba4d3f"
-version = "0.0.2-DEV18"
+version = "0.0.2-DEV20"
 
     [deps.RenewalDiD.extensions]
     RenewalDiDMakieExt = "Makie"
