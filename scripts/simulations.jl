@@ -387,3 +387,104 @@ sim8 = let
     @ntuple sima simb
 end
 safesave(simulationdir("sim8.jld2"), Dict("sim" => sim8))
+
+## Simulation 9:
+# as in simulation 6 with reporting delayed after weekends 
+sim9 = let 
+    rng = Xoshiro(6)
+    rnga = Xoshiro(6)
+    rngb = Xoshiro(6)
+    Ns = [round(Int, rand(rng, Uniform(500_000, 2_000_000))) for _ in 1:4]
+    Es = rand.(rng, Binomial.(Ns, 0.0001))
+    u0s = [simulationu0(S=(Ns[i] - Es[i]), E=Es[i]) for i in 1:4]
+    eta = 0.2
+    sigma = 0.5
+    phi = 0.05
+    beta1 = x -> 0.4 + 0.02 * cos(x * 2pi / 365)
+    beta2ratio = rand(rng, Uniform(0.9, 1.1))
+    beta3ratio = rand(rng, Uniform(0.9, 1.1))
+    beta4ratio = rand(rng, Uniform(0.9, 1.1))
+    beta2 = x -> beta2ratio * beta1(x) * (x < 75 ? 1 : 1.2)
+    beta3_a = x -> beta3ratio * beta1(x)
+    beta3_b = x -> beta3_a(x) * (x < 60 ? 1 : 0.8)
+    beta4_a = x -> beta4ratio * beta1(x) * (x < 65 ? 1 : 1.2)
+    beta4_b = x -> beta4_a(x) * (x < 45 ? 1 : 0.8)
+    betas_a = [beta1, beta2, beta3_a, beta4_a]
+    betas_b = [beta1, beta2, beta3_b, beta4_b]
+    s1a = packsimulationtuple( ; 
+        u0=u0s[1], beta=betas_a[1], sigma, eta, phi, intervention=[nothing, nothing],
+    )
+    s2a = packsimulationtuple( ; 
+        u0=u0s[2], beta=betas_a[2], sigma, eta, phi, intervention=[nothing, 75],
+    )
+    s3a = packsimulationtuple( ; 
+        u0=u0s[3], beta=betas_a[3], sigma, eta, phi, intervention=[60, nothing],
+    )
+    s4a = packsimulationtuple( ; 
+        u0=u0s[4], beta=betas_a[4], sigma, eta, phi, intervention=[45, 65],
+    )
+    sima = packsimulations(
+        rnga, 100, s1a, s2a, s3a, s4a; 
+        id="sim9a", minvalue=0.5, sampletime=10,
+    )
+    s1b = packsimulationtuple( ; 
+        u0=u0s[1], beta=betas_b[1], sigma, eta, phi, intervention=[nothing, nothing],
+    )
+    s2b = packsimulationtuple( ; 
+        u0=u0s[2], beta=betas_b[2], sigma, eta, phi, intervention=[nothing, 75],
+    )
+    s3b = packsimulationtuple( ; 
+        u0=u0s[3], beta=betas_b[3], sigma, eta, phi, intervention=[60, nothing],
+    )
+    s4b = packsimulationtuple( ; 
+        u0=u0s[4], beta=betas_b[4], sigma, eta, phi, intervention=[45, 65],
+    )
+    simb = packsimulations(
+        rngb, 100, s1b, s2b, s3b, s4b; 
+        id="sim9b", minvalue=0.5, sampletime=10,
+    )
+
+    # delay the diagnoses 
+    delayedcasesa = similar(sima.observedcases)
+    delayedcasesb = similar(simb.observedcases)
+
+    for (delayedcases, sim, simrng) in zip(
+        [delayedcasesa, delayedcasesb], [sima, simb], [rnga, rngb]
+    )
+        for j in 1:4 
+            carried = 0 
+            for t in 1:101 
+                if t % 7 in [0, 6]
+                    delayedcases[t, j] = rand(
+                        simrng, Binomial(sim.observedcases[t, j], 0.25)
+                    )
+                    carried += sim.observedcases[t, j] - delayedcases[t, j] 
+                else 
+                    _suppl = rand(simrng, Binomial(carried, 0.5))
+                    delayedcases[t, j] = sim.observedcases[t, j] + _suppl
+                    carried += -_suppl 
+                end
+            end
+        end
+    end
+
+    delayedsima = SimulationData( ; 
+        observedcases=delayedcasesa, 
+        interventions=sima.interventions, 
+        Ns=sima.Ns, 
+        rng=rnga,
+        u0s=sima.u0s,
+        id=sima.id,
+    )
+    delayedsimb = SimulationData( ; 
+        observedcases=delayedcasesb, 
+        interventions=simb.interventions, 
+        Ns=simb.Ns, 
+        rng=rngb,
+        u0s=simb.u0s,
+        id=simb.id,
+    )
+
+    @ntuple sima=delayedsima simb=delayedsimb
+end
+safesave(simulationdir("sim9.jld2"), Dict("sim" => sim9))
