@@ -39,16 +39,16 @@ function _loadfittedvalues_sim(sim, model, thetai, sampletries::AbstractVector, 
     end
 end
 
-function _loadfittedvalues_sim(sim, model, thetai, samples::Integer, stype, key)
-    samples = _loadfittedvalues_sim_samples(sim, model, thetai, samples, stype, key)
+function _loadfittedvalues_sim(sim, model, thetai, sample::Integer, stype, key)
+    samples = _loadfittedvalues_sim_samples(sim, model, thetai, sample, stype, key)
 end
 
-function _loadfittedvalues_sim_samples(sim, model, thetai, samples::Integer, stype, key)
-    _fn = "sim$(sim)_model$(model)_chain1_thetainterval$(thetai)_$(stype)$(s).jld2"
+function _loadfittedvalues_sim_samples(sim, model, thetai, sample::Integer, stype, key)
+    _fn = "sim$(sim)_model$(model)_chain1_thetainterval$(thetai)_$(stype)$(sample).jld2"
     samples = load(datadir("sims", _fn))[key] 
 
     for i in 2:10
-        _fn = "sim$(sim)_model$(model)_chain$(i)_thetainterval$(thetai)_$(stype)$(s).jld2"
+        _fn = "sim$(sim)_model$(model)_chain$(i)_thetainterval$(thetai)_$(stype)$(sample).jld2"
         if isfile(datadir("sims", _fn))
             samples = cat(samples, load(datadir("sims", _fn))[key]; dims=3,)
         end
@@ -60,30 +60,8 @@ end
 ## ineffective intervention
 
 sim1a = load(simulationdir("sim1.jld2"))["sim"].sima
-
-sim1apriors = let 
-    samples = load(datadir("sims", "sim1_model1_chain1_thetainterval7_priors10000.jld2"))["priorsamples"] 
-    for i in 2:4 
-        samples = cat(
-            samples,
-            load(datadir("sims", "sim1_model1_chain$(i)_thetainterval7_priors10000.jld2"))["priorsamples"];
-            dims=3,
-        )
-    end 
-    samples
-end
-
-sim1asamples = let 
-    samples = load(datadir("sims", "sim1_model1_chain1_thetainterval7_samples10000.jld2"))["samples"] 
-    for i in 2:4 
-        samples = cat(
-            samples,
-            load(datadir("sims", "sim1_model1_chain$(i)_thetainterval7_samples10000.jld2"))["samples"];
-            dims=3,
-        )
-    end 
-    samples
-end
+sim1apriors = loadfittedpriorsampless_sim(1, 1)
+sim1asamples = loadfittedsamples_sim(1, 1)
 
 RenewalDiD.trplot(DataFrame(sim1asamples); ncols=5, nplots=25)
 
